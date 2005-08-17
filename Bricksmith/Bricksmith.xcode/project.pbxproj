@@ -113,6 +113,31 @@
 			settings = {
 			};
 		};
+		0B34306508B2E93D00A06A40 = {
+			children = (
+				0B34306608B2E93D00A06A40,
+			);
+			isa = PBXVariantGroup;
+			name = Localizable.strings;
+			path = "";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B34306608B2E93D00A06A40 = {
+			fileEncoding = 10;
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = English;
+			path = Resources/English.lproj/Localizable.strings;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B34306708B2E93D00A06A40 = {
+			fileRef = 0B34306508B2E93D00A06A40;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		0B491DA207F5555B00AC0C10 = {
 			fileEncoding = 4;
 			isa = PBXFileReference;
@@ -2779,6 +2804,7 @@
 				0B6F427107CDAE8C007B1075,
 				0B9FE5C308AD97990046511D,
 				8D15AC360486D014006FF6A4,
+				0B34306508B2E93D00A06A40,
 				0B9FE56408AD97280046511D,
 				0B9FE54E08AD971E0046511D,
 			);
@@ -3010,6 +3036,7 @@
 				0B9FE5BD08AD977F0046511D,
 				0B9FE5D208AD97990046511D,
 				0B9FE5D308AD97990046511D,
+				0B34306708B2E93D00A06A40,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

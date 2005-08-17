@@ -743,8 +743,6 @@
 	Matrix4	transformation;
 	Matrix4	inversed;
 	
-	NSLog(@"x: %f, y:%f", rotationAboutX, rotationAboutY);
-	
 	glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
 	transformation = matrix4FromGLMatrix4(currentMatrix); //convert to the format of our utility library
 	inverse( &transformation, &inversed);
@@ -768,9 +766,6 @@
 	glRotatef( rotationAboutY, transformedVectorY.x, transformedVectorY.y, transformedVectorY.z);
 	glRotatef( rotationAboutX, transformedVectorX.x, transformedVectorX.y, transformedVectorX.z);
 	
-	NSLog(@"y: %f; <%f, %f, %f>", rotationAboutY, transformedVectorY.x, transformedVectorY.y, transformedVectorY.z);
-	NSLog(@"x: %f; <%f, %f, %f>\n\n", rotationAboutX, transformedVectorX.x, transformedVectorX.y, transformedVectorX.z);
-
 	[self setNeedsDisplay: YES];
 	
 	//Now we dragged!

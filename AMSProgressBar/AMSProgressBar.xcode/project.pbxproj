@@ -15,6 +15,8 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INSTALL_PATH = "";
+				LIBRARY_STYLE = DYNAMIC;
+				SKIP_INSTALL = NO;
 				ZERO_LINK = YES;
 			};
 			isa = PBXBuildStyle;
@@ -24,6 +26,9 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_STYLE = DYNAMIC;
+				SKIP_INSTALL = YES;
 				ZERO_LINK = NO;
 			};
 			isa = PBXBuildStyle;
@@ -345,7 +350,6 @@
 			buildRules = (
 			);
 			buildSettings = {
-				"" = "@executable_path/../Frameworks";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
@@ -354,7 +358,6 @@
 				GCC_PREFIX_HEADER = AMSProgressBar_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "";
-				LIBRARY_STYLE = DYNAMIC;
 				PREBINDING = NO;
 				PRODUCT_NAME = AMSProgressBar;
 				SKIP_INSTALL = YES;

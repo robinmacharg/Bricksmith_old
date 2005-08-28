@@ -1,0 +1,13 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {okButtonClicked = id; }; 
+            CLASS = DimensionsPanel; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {dimensionsPanel = DimensionsPanel; }; 
+            SUPERCLASS = NSPanel; 
+        }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+    ); 
+    IBVersion = 1; 
+}

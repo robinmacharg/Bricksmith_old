@@ -25,6 +25,7 @@
 #import "LDrawQuadrilateral.h"
 #import "LDrawTriangle.h"
 
+#import "DimensionsPanel.h"
 #import "DocumentToolbarController.h"
 #import "IconTextCell.h"
 #import "Inspector.h"
@@ -759,6 +760,27 @@
 	
 	[self setGridSpacingMode:newGridMode];
 }
+
+
+//========== showDimensions: ===================================================
+//
+// Purpose:		Shows the dimensions window for this model.
+//
+//==============================================================================
+- (IBAction) showDimensions:(id)sender {
+
+	DimensionsPanel *dimensions = nil;
+	
+	dimensions = [DimensionsPanel dimensionPanelForContainer:[self documentContents]];
+	
+	[NSApp beginSheet:dimensions
+	   modalForWindow:[self windowForSheet]
+		modalDelegate:self
+	   didEndSelector:NULL
+		  contextInfo:NULL ];
+		  
+}//end showDimensions
+
 
 #pragma mark -
 #pragma mark View Menu

@@ -126,6 +126,7 @@
 			
 			[parsedQuadrilateral setVertex4:workingVertex];
 			
+			[parsedQuadrilateral fixBowtie];
 		}
 		
 	NS_HANDLER
@@ -215,10 +216,16 @@
 //==============================================================================
 - (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor {
 	
+	int normalMultiplier = 1;
+	if((optionsMask & DRAW_REVERSE_NORMALS) != 0)
+		normalMultiplier = -1;
+		
 	//Have we already begun drawing somewhere upstream? If so, all we need to 
 	// do here is add the vertices.
 	if((optionsMask & DRAW_BEGUN) != 0) {
-		glNormal3f(normal.x, normal.y, normal.z);
+		glNormal3f(normal.x * normalMultiplier,
+				   normal.y * normalMultiplier,
+				   normal.z * normalMultiplier );
 		
 		glVertex3f(vertex1.x, vertex1.y, vertex1.z);
 		glVertex3f(vertex2.x, vertex2.y, vertex2.z);
@@ -228,8 +235,10 @@
 	//Drawing not begun; we must start it explicitly.
 	else {
 		glBegin(GL_QUADS);
-			glNormal3f(normal.x, normal.y, normal.z);
-			
+			glNormal3f(normal.x * normalMultiplier,
+					   normal.y * normalMultiplier,
+					   normal.z * normalMultiplier );
+		
 			glVertex3f(vertex1.x, vertex1.y, vertex1.z);
 			glVertex3f(vertex2.x, vertex2.y, vertex2.z);
 			glVertex3f(vertex3.x, vertex3.y, vertex3.z);
@@ -447,6 +456,69 @@
 #pragma mark -
 #pragma mark UTILITIES
 #pragma mark -
+
+//========== fixBowtie =========================================================
+//
+// Purpose:		Four points in any order define a quadrilateral, but if you want 
+//				to draw one in OpenGL, you need to be able to trace around the 
+//				edges in order. If two vertices are out of order, you wind up 
+//				with a "bowtie" shape, which needs to be corrected back into a
+//				quadilateral.
+//
+//					   4        3     3        4     4        2
+//						+------+       +------+       +      +
+//						|      |        \    /        |\    /|
+//						|      |         \  /         | \  / |
+//						|      |          \/          |  \/  |
+//						|      |          /\          |  /\  |
+//						|      |         /  \         | /  \ |
+//						|      |        /    \        |/    \|
+//						+------+       +------+       +      +
+//					   1        2     1        2     1        3
+//
+//						correct         case 1         case 2
+//									switch 3 & 4   switch 2 & 3
+//
+//==============================================================================
+- (void) fixBowtie {
+	//If correct, the crosses of these three pairs should all point up.
+	Vector3 vector1_2, vector1_4; //1 to 2, 1 to 4
+	Vector3 vector3_4, vector3_2;
+	Vector3 vector4_1, vector4_3;
+	Vector3 cross1, cross3, cross4;
+	
+	V3Sub(&(self->vertex2), &(self->vertex1), &vector1_2);
+	V3Sub(&(self->vertex4), &(self->vertex1), &vector1_4);
+	V3Sub(&(self->vertex4), &(self->vertex3), &vector3_4);
+	V3Sub(&(self->vertex2), &(self->vertex3), &vector3_2);
+	V3Sub(&(self->vertex1), &(self->vertex4), &vector4_1);
+	V3Sub(&(self->vertex3), &(self->vertex4), &vector4_3);
+	
+	V3Cross(&vector1_2, &vector1_4, &cross1);
+	V3Cross(&vector3_4, &vector3_2, &cross3);
+	V3Cross(&vector4_1, &vector4_3, &cross4);
+	
+	//When crosses point different directions, we have a bowtie. To test this, 
+	// recall that cos x = (u • v) / (||u|| ||v||)
+	// cos(180) = -1 and cos(0) = 1. So if u•v is negative, we have opposing 
+	// vectors (since the denominator is always positive, we can ignore it).
+	
+	//If 1 & 4 point opposite directions, we have a case 1 bowtie
+	if(V3Dot(&cross1, &cross4) < 0) {
+		//vectors point in opposite directions
+		Point3 swapPoint = self->vertex3;
+		vertex3 = vertex4;
+		vertex4 = swapPoint;
+	}
+	//If 3 & 4 point opposite directions, we have a case 2 bowtie
+	else if(V3Dot(&cross3, &cross4) < 0){
+		Point3 swapPoint = self->vertex2;
+		vertex2 = vertex3;
+		vertex3 = swapPoint;
+	}
+	
+}//end fixBowtie
+
 
 //========== recomputeNormal ===================================================
 //

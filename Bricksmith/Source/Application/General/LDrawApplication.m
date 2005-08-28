@@ -63,6 +63,17 @@
 }
 
 
+//========== sharedOpenGLContext ===============================================
+//
+// Purpose:		Returns the OpenGLContext which unifies our display-list tags.
+//				Every LDrawGLView should share this context.
+//
+//==============================================================================
++ (NSOpenGLContext *) sharedOpenGLContext {
+	return [[NSApp delegate] openGLContext];
+}
+
+
 //========== sharedPartLibrary =================================================
 //
 // Purpose:		Returns the part libary, which contains the part catalog, which 
@@ -107,6 +118,17 @@
 }//end partLibrary
 
 
+//========== sharedOpenGLContext ===============================================
+//
+// Purpose:		Returns the OpenGLContext which unifies our display-list tags.
+//				Every LDrawGLView should share this context.
+//
+//==============================================================================
+- (NSOpenGLContext *) openGLContext {
+	return self->sharedGLContext;
+}
+
+
 #pragma mark -
 #pragma mark APPLICATION DELEGATE
 #pragma mark -
@@ -119,6 +141,12 @@
 //==============================================================================
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification
 {
+	NSOpenGLPixelFormatAttribute	pixelAttributes[]	= { NSOpenGLPFADoubleBuffer,
+															NSOpenGLPFADepthSize, 32,
+															nil};
+	NSOpenGLPixelFormat				*pixelFormat		= nil;
+	
+	
 	//Make sure the standard preferences exist so they will be available 
 	// throughout the application.
 	[PreferencesDialogController ensureDefaults];
@@ -126,6 +154,10 @@
 	//Create shared objects.
 	inspector = [Inspector new];
 	partLibrary = [PartLibrary new]; // creates a new part library which hasn't loaded the parts.
+	
+	pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes: pixelAttributes];
+	sharedGLContext = [[NSOpenGLContext alloc] initWithFormat:pixelFormat shareContext:nil];
+	[sharedGLContext makeCurrentContext];
 	
 	//Try to define an LDraw path before the application even finishes starting.
 	[self findLDrawPath];
@@ -140,6 +172,7 @@
 		// a new one.
 	}
 	
+	[pixelFormat release];
 }
 
 #pragma mark -
@@ -208,8 +241,9 @@
 //
 //==============================================================================
 - (void) dealloc{
-	[partLibrary	release];
-	[inspector		release];
+	[partLibrary		release];
+	[inspector			release];
+	[sharedGLContext	release];
 
 	[super dealloc];
 }

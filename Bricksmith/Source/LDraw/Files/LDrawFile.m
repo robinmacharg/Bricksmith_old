@@ -383,6 +383,17 @@
 #pragma mark UTILITIES
 #pragma mark -
 
+//========== boundingBox3 ======================================================
+//
+// Purpose:		Returns the minimum and maximum points of the box which 
+//				perfectly contains the part of this file being displayed.
+//
+//==============================================================================
+- (Box3) boundingBox3 {
+	return [[self activeModel] boundingBox3];
+}
+
+
 //========== optimize ==========================================================
 //
 // Purpose:		Arranges the directives in such a way that the file will be 

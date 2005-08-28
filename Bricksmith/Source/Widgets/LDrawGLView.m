@@ -11,6 +11,7 @@
 
 #import <GLUT/glut.h>
 #import <OpenGL/glu.h>
+#import "LDrawApplication.h"
 #import "LDrawDirective.h"
 #import "LDrawDocument.h"
 #import "LDrawFile.h"
@@ -65,21 +66,31 @@
 	NSOpenGLPixelFormatAttribute	pixelAttributes[]	= { NSOpenGLPFADoubleBuffer,
 															NSOpenGLPFADepthSize, 32,
 															nil};
-	NSOpenGLPixelFormat				*pixelFormat;
-	long							swapInterval		= 1;
+	NSOpenGLContext					*context			= nil;
+	NSOpenGLPixelFormat				*pixelFormat		= nil;
+	long							swapInterval		= 15;
 	
 	self = [super initWithCoder: coder];
 	
 	[self setHasInfiniteDepth:NO];
 	[self setLDrawColor:LDrawCurrentColor];
 	
-	//Set up our OpenGL context
-	
+	//Set up our OpenGL context. We need to base it on a shared context so that 
+	// display-list names can be shared globally throughout the application.
 	pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes: pixelAttributes];
+	
+	context = [[NSOpenGLContext alloc] initWithFormat:pixelFormat
+										 shareContext:[LDrawApplication sharedOpenGLContext]];
+	[self setOpenGLContext:context];
+//	[context setView:self]; //documentation says to do this, but it generates an error. Weird.
+	[[self openGLContext] makeCurrentContext];
+		
 	[self setPixelFormat:pixelFormat];
 	[[self openGLContext] setValues: &swapInterval
 					   forParameter: NSOpenGLCPSwapInterval ];
 			
+	[pixelFormat release];
+
 	return self;
 }
 
@@ -96,7 +107,7 @@
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_LINE_SMOOTH);
+//	glEnable(GL_LINE_SMOOTH);
 //	glEnableClientState(GL_VERTEX_ARRAY);
 	
 	//orient us correctly for an LDraw coordinate system, which is 
@@ -108,16 +119,26 @@
 	//float position0[] = {0, 0, 1, 0};
 	float position0[] = {0, 0, -1, 0};
 	
-//	glShadeModel(GL_SMOOTH);
-//	glEnable(GL_NORMALIZE);
-//	glEnable(GL_LIGHTING);
-//	glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE );
-//	glEnable(GL_COLOR_MATERIAL);
-//	glEnable(GL_LIGHT0);
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_LIGHTING);
+	glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE );
+	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_LIGHT0);
 	
 	glLineWidth(2);
 	
 	glLightfv(GL_LIGHT0, GL_POSITION, position0);
+	
+//	GLfloat ambient[4] = { 1, 1, 1, 1.0 };
+//	GLfloat diffuse[4] = { 0, 0, 0, 1.0 };
+//	GLfloat specular[4]= { 0, 0, 0, 1.0 };
+//	GLfloat shininess  = 30;
+//	
+//	glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, ambient );
+//	glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );
+//	glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, specular );
+//	glMaterialfv( GL_FRONT_AND_BACK, GL_SHININESS, &shininess );
 }
 
 #pragma mark -
@@ -131,10 +152,8 @@
 //==============================================================================
 - (void) drawRect:(NSRect)rect {
 
-//    NSRect bounds = [self bounds];
-//    [[NSColor whiteColor] set];
-//    NSRectFill(bounds);
-
+	NSDate *startTime = [NSDate date];
+	
 	//Load the model matrix to make sure we are applying the right stuff.
 	glMatrixMode(GL_MODELVIEW);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -148,6 +167,7 @@
 	glFlush();
 	[[self openGLContext] flushBuffer];
 	
+	NSLog(@"draw time: %f", -[startTime timeIntervalSinceNow]);
 	
 
 //	NSRect visibleRect = [self visibleRect];
@@ -896,6 +916,12 @@
 			-fieldDepth,	//near (points beyond these are clipped)
 			fieldDepth );	//far
 	
+//	glFrustum(NSMinX(visibleRect) - NSWidth(frame)/2,	//left
+//			  NSMinX(visibleRect) - NSWidth(frame)/2 + NSWidth(visibleRect),	//right
+//			  NSMinY(visibleRect) - NSHeight(frame)/2,	//bottom
+//			  NSMinY(visibleRect) - NSHeight(frame)/2 + NSHeight(visibleRect),	//top
+//			  1,	//near (points beyond these are clipped)
+//			  2);
 }//end makeProjection
 
 

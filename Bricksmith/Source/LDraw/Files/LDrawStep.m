@@ -136,20 +136,21 @@
 
 	if(hasDisplayList == YES){
 		glCallList(self->displayListTag);
+		glColor4fv(parentColor);
 	}
 	else {
 		NSArray			*commandsInStep		= [self subdirectives];
 		int				 numberCommands		= [commandsInStep count];
-		LDrawDirective	*currentDirective;
-		int				 counter;
+		LDrawDirective	*currentDirective	= nil;
+		int				 counter			= 0;
 		
 		//Check for optimized steps.
-		if(self->stepFlavor == LDrawStepLines)
-			glBegin(GL_LINES);
+		if(stepFlavor == LDrawStepQuadrilaterals)
+			glBegin(GL_QUADS);
 		else if(stepFlavor == LDrawStepTriangles)
 			glBegin(GL_TRIANGLES);
-		else if(stepFlavor == LDrawStepQuadrilaterals)
-			glBegin(GL_QUADS);
+		else if(self->stepFlavor == LDrawStepLines)
+			glBegin(GL_LINES);
 		
 		//If we have any specialized flavor above, then we have already begun 
 		// drawing. This little tidbit must be passed on down to the lower reaches.
@@ -318,58 +319,62 @@
 //==============================================================================
 - (void) optimize {
 
-	NSArray			*commandsInStep		= [self subdirectives];
-	int				 numberCommands		= [commandsInStep count];
-	id				 currentDirective;
-	LDrawColorT		 currentColor		= LDrawColorBogus;
-	LDrawColorT		 stepColor;
-	BOOL			 isColorOptimizable	= YES; //assume YES at first.
-	int				 counter;
+	if(stepFlavor == LDrawStepLines) {
 	
-	//See if everything is the same color.
-	//Draw each element in the step.
-	for(counter = 0; counter < numberCommands; counter++){
-		currentDirective = [commandsInStep objectAtIndex:counter];
+		NSArray			*commandsInStep		= [self subdirectives];
+		int				 numberCommands		= [commandsInStep count];
+		id				 currentDirective	= nil;
+		LDrawColorT		 currentColor		= LDrawColorBogus;
+		LDrawColorT		 stepColor			= LDrawColorBogus;
+		BOOL			 isColorOptimizable	= YES; //assume YES at first.
+		int				 counter			= 0;
 		
-		if([currentDirective conformsToProtocol:@protocol(LDrawColorable)])
-		{
-			currentColor = [currentDirective LDrawColor];
-			if(stepColor == LDrawColorBogus)
-				stepColor = currentColor;
-		}
-		
-		if(currentColor != stepColor) {
-			isColorOptimizable = NO;
-			break;
-		}
-		
-	}
-	
-	//Put what we can in a display list. I haven't figured out how to overcome 
-	// the hierarchical nature of LDraw with display lists yet, so our options 
-	// are really very limited here.
-	if(		stepFlavor != LDrawStepAnyDirectives
-		&&	stepColor == LDrawCurrentColor
-		&&	numberCommands > 4 )
-	{
-		//create 1 new, empty display list.
-		self->displayListTag = glGenLists(1);
-		
-		GLfloat glColor[4];
-		rgbafForCode(LDrawCurrentColor, glColor);
-
-		glNewList(displayListTag, GL_COMPILE);
-		
-			for(counter = 0; counter < numberCommands; counter++){
-				currentDirective = [commandsInStep objectAtIndex:counter];
-				[currentDirective draw:DRAW_NO_OPTIONS parentColor:glColor];
+		//See if everything is the same color.
+		//Draw each element in the step.
+		for(counter = 0; counter < numberCommands; counter++){
+			currentDirective = [commandsInStep objectAtIndex:counter];
+			
+			if([currentDirective conformsToProtocol:@protocol(LDrawColorable)])
+			{
+				currentColor = [currentDirective LDrawColor];
+				if(stepColor == LDrawColorBogus)
+					stepColor = currentColor;
 			}
 			
-		glEndList();
+			if(currentColor != stepColor) {
+				isColorOptimizable = NO;
+				break;
+			}
+			
+		}
 		
-		//We have generated the list; we can now safely flag this step to be 
-		// henceforth drawn via the list.
-		self->hasDisplayList = YES;
+		//Put what we can in a display list. I haven't figured out how to overcome 
+		// the hierarchical nature of LDraw with display lists yet, so our options 
+		// are really very limited here.
+		//
+		//Another note: Display list IDs are by default unique to their context. 
+		// We want them to be global to the application! Solution: we set up a 
+		// shared context in LDrawApplication.
+		if(		stepColor == LDrawEdgeColor
+			&&	numberCommands >= 4 )
+		{
+			//create 1 new, empty display list.
+			self->displayListTag = glGenLists(1);
+			
+			GLfloat glColor[4];
+			rgbafForCode(LDrawEdgeColor, glColor);
+
+			glNewList(displayListTag, GL_COMPILE);
+				
+				[self draw:DRAW_NO_OPTIONS parentColor:glColor];
+				
+			glEndList();
+			
+			//We have generated the list; we can now safely flag this step to be 
+			// henceforth drawn via the list.
+			self->hasDisplayList = YES;
+		}
+		
 	}
 }
 

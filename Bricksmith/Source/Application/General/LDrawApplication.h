@@ -10,6 +10,7 @@
 {
 	PartLibrary		*partLibrary; //centralized location for part information.
 	Inspector		*inspector; //system for graphically inspecting classes.
+	NSOpenGLContext	*sharedGLContext;
 }
 
 //Actions
@@ -18,9 +19,11 @@
 
 //Accessors
 + (Inspector *) sharedInspector;
++ (NSOpenGLContext *) sharedOpenGLContext;
 + (PartLibrary *) sharedPartLibrary;
 - (Inspector *) inspector;
 - (PartLibrary *) partLibrary;
+- (NSOpenGLContext *) openGLContext;
 
 //Utilities
 - (NSString *) findLDrawPath;

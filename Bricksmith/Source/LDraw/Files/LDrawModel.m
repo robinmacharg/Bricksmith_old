@@ -18,6 +18,7 @@
 #import "LDrawModel.h"
 
 #import <AddressBook/AddressBook.h>
+#import "LDrawConditionalLine.h"
 #import "LDrawFile.h"
 #import "LDrawLine.h"
 #import "LDrawQuadrilateral.h"
@@ -685,12 +686,15 @@
 		//Sort out all the different types of directives into their own arrays.
 		for(counter = 0; counter < [directives count]; counter++) {
 			currentObject = [directives objectAtIndex:counter];
-			if([currentObject isKindOfClass:[LDrawLine class]])
+			if([currentObject isMemberOfClass:[LDrawLine class]])
 				[lines addDirective:currentObject];
 			else if([currentObject isKindOfClass:[LDrawTriangle class]])
 				[triangles addDirective:currentObject];
 			else if([currentObject isKindOfClass:[LDrawQuadrilateral class]])
 				[quadrilaterals addDirective:currentObject];
+			else if([currentObject isKindOfClass:[LDrawConditionalLine class]]) {
+				//Die, miserable directives. Die!
+			}
 			else
 				[everythingElse addDirective:currentObject];
 		}

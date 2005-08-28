@@ -198,10 +198,16 @@
 //==============================================================================
 - (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor {
 	
+	int normalMultiplier = 1;
+	if((optionsMask & DRAW_REVERSE_NORMALS) != 0)
+		normalMultiplier = -1;
+
 	//Have we already begun drawing somewhere upstream? If so, all we need to 
 	// do here is add the vertices.
 	if((optionsMask & DRAW_BEGUN) != 0) {
-		glNormal3f(normal.x, normal.y, normal.z);
+		glNormal3f(normal.x * normalMultiplier,
+				   normal.y * normalMultiplier,
+				   normal.z * normalMultiplier );
 		
 		glVertex3f(vertex1.x, vertex1.y, vertex1.z);
 		glVertex3f(vertex2.x, vertex2.y, vertex2.z);
@@ -210,8 +216,10 @@
 	//Drawing not begun; we must start it explicitly.
 	else {
 		glBegin(GL_TRIANGLES);
-			glNormal3f(normal.x, normal.y, normal.z);
-			
+			glNormal3f(normal.x * normalMultiplier,
+					   normal.y * normalMultiplier,
+					   normal.z * normalMultiplier );
+		
 			glVertex3f(vertex1.x, vertex1.y, vertex1.z);
 			glVertex3f(vertex2.x, vertex2.y, vertex2.z);
 			glVertex3f(vertex3.x, vertex3.y, vertex3.z);

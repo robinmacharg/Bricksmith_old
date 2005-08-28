@@ -241,6 +241,7 @@
 #pragma mark DIRECTIVES
 #pragma mark -
 
+
 //========== drawElement =======================================================
 //
 // Purpose:		Draws the graphic of the element represented. This call is a 
@@ -248,14 +249,17 @@
 //
 //==============================================================================
 - (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor {
+	
 	LDrawModel *modelToDraw = [[LDrawApplication sharedPartLibrary] modelForPart:self];
+	
+	if(self->matrixIsReversed)
+		optionsMask ^= DRAW_REVERSE_NORMALS;
 	
 	//glMatrixMode(GL_MODELVIEW); //unnecessary, we set the matrix mode at the beginning of drawing.
 	glPushMatrix();
 		glMultMatrixf(glTransformation);
 		[modelToDraw draw:optionsMask parentColor:parentColor];
 	glPopMatrix();
-	
 }
 
 
@@ -507,6 +511,22 @@
 - (void) setTransformationMatrix:(Matrix4 *)newMatrix
 {
 	int row, column;
+	float determinant = det3x3( newMatrix->element[0][0],
+								newMatrix->element[1][0],
+								newMatrix->element[2][0],
+								
+								newMatrix->element[0][1],
+								newMatrix->element[1][1],
+								newMatrix->element[2][1],
+								
+								newMatrix->element[0][2],
+								newMatrix->element[1][2],
+								newMatrix->element[2][2]
+							);
+	if(determinant < 0)
+		self->matrixIsReversed = YES;
+	else
+		self->matrixIsReversed = NO;
 	
 	for(row = 0; row < 4; row++)
 		for(column = 0; column < 4; column++)

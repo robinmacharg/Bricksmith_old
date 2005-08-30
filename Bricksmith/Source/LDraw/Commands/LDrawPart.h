@@ -25,13 +25,13 @@
 	
 	GLfloat			glTransformation[16];
 	BOOL			matrixIsReversed;
-		
-	BOOL				hasDisplayList;
-	GLuint				displayListTag;
 }
 
+//Initialization
 + (LDrawPart *) partWithDirectiveText:(NSString *)directive;
 
+//Directives
+- (void) drawBounds;
 - (NSString *) write;
 
 //Accessors

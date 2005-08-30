@@ -104,6 +104,7 @@
 #define DRAW_BEGUN								1 << 0
 #define DRAW_HIT_TEST_MODE						1 << 1
 #define DRAW_REVERSE_NORMALS					1 << 2
+#define DRAW_BOUNDS_ONLY						1 << 3
 
 //The tags used for mouse-click hit-testing are formed by: 
 // stepIndex * STEP_NAME_MULTIPLIER + partIndexInStep   (see LDrawDrawableElement)

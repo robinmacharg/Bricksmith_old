@@ -15,23 +15,28 @@
 @class LDrawDirective;
 @class LDrawDocument;
 
+typedef enum {
+	LDrawGLDrawNormal,			//full draw
+	LDrawGLDrawExtremelyFast	//bounds only
+} RotationDrawModeT;
+
 //
 // Class
 //
 @interface LDrawGLView : NSOpenGLView <LDrawColorable>
 {
-	LDrawDirective	*fileBeingDrawn; //Should only be an LDrawFile or LDrawModel.
-									//if you want to do anything else, you must 
-									//tweak the selection code in LDrawDrawableElement
-									//and here in -mouseUp: to handle such cases.
+	LDrawDirective		*fileBeingDrawn; //Should only be an LDrawFile or LDrawModel.
+										//if you want to do anything else, you must 
+										//tweak the selection code in LDrawDrawableElement
+										//and here in -mouseUp: to handle such cases.
 	
-	LDrawColorT		color; //default color to draw parts if none is specified
-	GLfloat			glColor[4]; //OpenGL equivalent of the LDrawColor.
-	BOOL			hasInfiniteDepth;
+	LDrawColorT			color; //default color to draw parts if none is specified
+	GLfloat				glColor[4]; //OpenGL equivalent of the LDrawColor.
+	BOOL				hasInfiniteDepth;
 	
 	IBOutlet LDrawDocument	*document;
-	
-	BOOL			mouseDidDrag; //true if the last mousedown was followed by a drag.
+	BOOL				isRotating; //true if the last mousedown was followed by a drag.
+	RotationDrawModeT	rotationDrawMode; //drawing detail while rotating.
 }
 
 //Accessors

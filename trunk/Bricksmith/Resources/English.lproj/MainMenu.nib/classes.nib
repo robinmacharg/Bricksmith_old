@@ -16,6 +16,7 @@
                 exportSteps = id; 
                 gridGranularityMenuChanged = id; 
                 showColors = id; 
+                showDimensions = id; 
                 snapSelectionToGrid = id; 
                 toggleFileContentsDrawer = id; 
                 togglePartBrowserDrawer = id; 

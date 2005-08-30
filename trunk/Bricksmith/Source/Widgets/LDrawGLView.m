@@ -74,6 +74,8 @@
 	
 	[self setHasInfiniteDepth:NO];
 	[self setLDrawColor:LDrawCurrentColor];
+	rotationDrawMode = LDrawGLDrawNormal;
+	
 	
 	//Set up our OpenGL context. We need to base it on a shared context so that 
 	// display-list names can be shared globally throughout the application.
@@ -108,7 +110,7 @@
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //	glEnable(GL_LINE_SMOOTH);
-//	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_VERTEX_ARRAY);
 	
 	//orient us correctly for an LDraw coordinate system, which is 
 	// inexplicably upside-down.
@@ -152,7 +154,13 @@
 //==============================================================================
 - (void) drawRect:(NSRect)rect {
 
-	NSDate *startTime = [NSDate date];
+	NSDate			*startTime	= [NSDate date];
+	unsigned		 options	= DRAW_NO_OPTIONS;
+	NSTimeInterval	 drawTime	= 0;
+	
+	//If we're rotating, we may need to simplify large models.
+	if(self->isRotating && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
+		options |= DRAW_BOUNDS_ONLY;
 	
 	//Load the model matrix to make sure we are applying the right stuff.
 	glMatrixMode(GL_MODELVIEW);
@@ -161,13 +169,20 @@
 	glLineWidth(1.0);
 	glColor4fv(glColor);
 	
-	[self->fileBeingDrawn draw:DRAW_NO_OPTIONS parentColor:glColor];
-	
+	[self->fileBeingDrawn draw:options parentColor:glColor];
 
 	glFlush();
 	[[self openGLContext] flushBuffer];
 	
-	NSLog(@"draw time: %f", -[startTime timeIntervalSinceNow]);
+	//If we just did a full draw, let's see if rotating needs to be done simply.
+	drawTime = -[startTime timeIntervalSinceNow];
+	if(self->isRotating == NO) {
+		if( drawTime > 0.4 )
+			rotationDrawMode = LDrawGLDrawExtremelyFast;
+		else
+			rotationDrawMode = LDrawGLDrawNormal;
+	}
+	NSLog(@"draw time: %f", drawTime);
 	
 
 //	NSRect visibleRect = [self visibleRect];
@@ -485,7 +500,7 @@
 //==============================================================================
 - (void)mouseDown:(NSEvent *)theEvent
 {
-	self->mouseDidDrag = NO; //not yet, anyway. If it does, that will be 
+	self->isRotating = NO; //not yet, anyway. If it does, that will be 
 		//recorded in mouseDragged. Otherwise, this value will remain NO.
 }	
 
@@ -528,7 +543,7 @@
 	
 	//We only want to select a part if this was NOT part of a mouseDrag event.
 	// Otherwise, the selection should remain intact.
-	if(self->mouseDidDrag == NO){
+	if(self->isRotating == NO){
 		
 		//Prepare OpenGL to record hits in the viewing area. We need to feed it 
 		// a buffer which will be filled with the tags of things that got hit.
@@ -588,6 +603,11 @@
 				   byExtendingSelection:([theEvent modifierFlags] & NSShiftKeyMask) != 0 ];
 		}
 	}//end mouseDrag test.
+	else{
+		self->isRotating = NO; //not anymore.
+		if(	rotationDrawMode == LDrawGLDrawExtremelyFast )
+			[self setNeedsDisplay:YES];
+	}
 	
 }//end mouseUp:
 
@@ -699,7 +719,7 @@
 //		 |             y /|\               |      /     /   \    \
 //		 |                |                |    //      /   \     \\
 //		 |                |vertical        |    |   /--+-----+-\   |
-//		 |                |motion (around x)     |   |///    |     |   \\\|
+//		 |                |motion (around x)   |///    |     |   \\\|
 //		 |                |              x |   |       |     |      |
 //		 |<---------------+--------------->|   |       |     |      |
 //		 |                |     horizontal |   |\\\    |     |   ///|
@@ -720,7 +740,7 @@
 //
 //				Last Note: A horizontal drag from left-to-right is a 
 //					counterclockwise rotation around the projection's y axis.
-//					The means a positive number of degrees caused by a positive 
+//					This means a positive number of degrees caused by a positive 
 //					mouse displacement.
 //					But, a vertical drag from bottom-to-top is a clockwise 
 //					rotation around the projection's x-axis. That means a 
@@ -736,6 +756,8 @@
 	// horrible things happen without this call.
 	[[self openGLContext] makeCurrentContext];
 
+	//Now we dragged!
+	self->isRotating = YES;
 
 	//Find the mouse displacement from the last known mouse point.
 	NSPoint	newPoint		= [theEvent locationInWindow];
@@ -788,8 +810,6 @@
 	
 	[self setNeedsDisplay: YES];
 	
-	//Now we dragged!
-	self->mouseDidDrag = YES;
 }
 
 

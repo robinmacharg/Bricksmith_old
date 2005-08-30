@@ -258,9 +258,53 @@
 	//glMatrixMode(GL_MODELVIEW); //unnecessary, we set the matrix mode at the beginning of drawing.
 	glPushMatrix();
 		glMultMatrixf(glTransformation);
-		[modelToDraw draw:optionsMask parentColor:parentColor];
+		if((optionsMask & DRAW_BOUNDS_ONLY) == 0)
+			[modelToDraw draw:optionsMask parentColor:parentColor];
+		else
+			[self drawBounds];
 	glPopMatrix();
 }
+
+
+//========== drawBounds ========================================================
+//
+// Purpose:		Draws the part's bounding box as a wireframe. Nonrecursive.
+//
+//==============================================================================
+- (void) drawBounds {
+
+	//Pull the bounds directly from the model; we can't use the part's because 
+	// it mangles them based on rotation. In this case, we want to do a raw 
+	// draw and let the model matrix transform our drawing appropriately.
+	LDrawModel	*modelToDraw	= [[LDrawApplication sharedPartLibrary] modelForPart:self];
+	Box3		bounds			= [modelToDraw boundingBox3];
+	
+	GLfloat		vertices[8][3]	= {	
+									{bounds.min.x, bounds.min.y, bounds.min.z},
+									{bounds.min.x, bounds.min.y, bounds.max.z},
+									{bounds.min.x, bounds.max.y, bounds.max.z},
+									{bounds.min.x, bounds.max.y, bounds.min.z},
+									
+									{bounds.max.x, bounds.min.y, bounds.min.z},
+									{bounds.max.x, bounds.min.y, bounds.max.z},
+									{bounds.max.x, bounds.max.y, bounds.max.z},
+									{bounds.max.x, bounds.max.y, bounds.min.z},
+								  };
+	GLubyte		indices[]		= {	0, 3, 2, 1,
+	
+									0, 4, 7, 3,
+									3, 7, 6, 2,
+									5, 1, 2, 6,
+									1, 5, 4, 0,
+									
+									4, 5, 6, 7
+								  };
+								  
+	//Draw using vertex arrays; 42 functions -> 2 calls.
+	glVertexPointer(3, GL_FLOAT, 0, vertices);
+	glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices);
+	
+}//end drawBounds
 
 
 //========== write =============================================================

@@ -4,7 +4,11 @@
             ACTIONS = {okButtonClicked = id; }; 
             CLASS = DimensionsPanel; 
             LANGUAGE = ObjC; 
-            OUTLETS = {dimensionsPanel = DimensionsPanel; }; 
+            OUTLETS = {
+                dimensionsPanel = DimensionsPanel; 
+                dimensionsTable = NSTableView; 
+                objectController = NSObjectController; 
+            }; 
             SUPERCLASS = NSPanel; 
         }, 
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }

@@ -1,7 +1,14 @@
 {
     IBClasses = (
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
-        {CLASS = LDrawGLView; LANGUAGE = ObjC; SUPERCLASS = NSOpenGLView; }, 
+        {
+            ACTIONS = {zoomIn = id; zoomOut = id; }; 
+            CLASS = LDrawGLView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {document = LDrawDocument; }; 
+            SUPERCLASS = NSOpenGLView; 
+        }, 
+        {CLASS = NSObject; LANGUAGE = ObjC; }, 
         {
             ACTIONS = {categoryComboBoxChanged = id; }; 
             CLASS = PartBrowserDataSource; 

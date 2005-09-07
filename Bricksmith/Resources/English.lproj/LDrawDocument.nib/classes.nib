@@ -68,9 +68,10 @@
         {CLASS = LDrawDocumentWindow; LANGUAGE = ObjC; SUPERCLASS = NSWindow; }, 
         {CLASS = LDrawFileOutlineView; LANGUAGE = ObjC; SUPERCLASS = NSOutlineView; }, 
         {
+            ACTIONS = {zoomIn = id; zoomOut = id; }; 
             CLASS = LDrawGLView; 
             LANGUAGE = ObjC; 
-            OUTLETS = {delegate = id; document = LDrawDocument; }; 
+            OUTLETS = {document = LDrawDocument; }; 
             SUPERCLASS = NSOpenGLView; 
         }, 
         {CLASS = NSObject; LANGUAGE = ObjC; }, 

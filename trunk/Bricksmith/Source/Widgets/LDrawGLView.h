@@ -15,6 +15,8 @@
 @class LDrawDirective;
 @class LDrawDocument;
 
+#define SIMPLIFICATION_THRESHOLD 0.4 //seconds
+
 typedef enum {
 	LDrawGLDrawNormal,			//full draw
 	LDrawGLDrawExtremelyFast	//bounds only
@@ -49,6 +51,10 @@ typedef enum {
 - (void) setLDrawDirective:(LDrawDirective *) newFile;
 - (void) setZoomPercentage:(float) newPercentage;
 
+//Actions
+- (IBAction) zoomIn:(id)sender;
+- (IBAction) zoomOut:(id)sender;
+
 //Events
 - (LDrawDirective *) getPartFromHits:(GLuint *)nameBuffer hitCount:(GLuint)numberHits;
 
@@ -56,6 +62,7 @@ typedef enum {
 - (void) displayNeedsUpdating:(NSNotification *)notification;
 
 //Utilities
+- (void) resetFrameSize;
 - (void) makeProjection;
 - (void) scrollCenterToPoint:(NSPoint)newCenter;
 

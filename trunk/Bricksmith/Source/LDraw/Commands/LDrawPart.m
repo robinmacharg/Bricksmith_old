@@ -268,7 +268,7 @@
 
 //========== drawBounds ========================================================
 //
-// Purpose:		Draws the part's bounding box as a wireframe. Nonrecursive.
+// Purpose:		Draws the part's bounds as a solid box. Nonrecursive.
 //
 //==============================================================================
 - (void) drawBounds {
@@ -290,19 +290,59 @@
 									{bounds.max.x, bounds.max.y, bounds.max.z},
 									{bounds.max.x, bounds.max.y, bounds.min.z},
 								  };
-	GLubyte		indices[]		= {	0, 3, 2, 1,
-	
-									0, 4, 7, 3,
-									3, 7, 6, 2,
-									5, 1, 2, 6,
-									1, 5, 4, 0,
-									
-									4, 5, 6, 7
+								  
+	GLfloat		normals[6][3]	= {
+									{ 1,  0,  0}, //0: +x
+									{ 0,  1,  0}, //1: +y
+									{ 0,  0,  1}, //2: +z
+									{-1,  0,  0}, //3: -x
+									{ 1, -1,  0}, //4: -y
+									{ 0,  0, -1}, //5: -z
 								  };
 								  
-	//Draw using vertex arrays; 42 functions -> 2 calls.
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
-	glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices);
+	//Well, this hardly looks like the most efficient block of code in the world.
+	// I tried using vertex arrays, but it was a stunning failue.
+	glBegin(GL_QUADS);
+		
+		//The normal vectors all are backwards from what I expected them to be. 
+		//  Why?
+		glNormal3fv(normals[0]);//expected 3
+		glVertex3fv(vertices[0]);
+		glVertex3fv(vertices[3]);
+		glVertex3fv(vertices[2]);
+		glVertex3fv(vertices[1]);
+		
+		glNormal3fv(normals[2]);//expected 5, etc.
+		glVertex3fv(vertices[0]);
+		glVertex3fv(vertices[4]);
+		glVertex3fv(vertices[7]);
+		glVertex3fv(vertices[3]);
+		
+		glNormal3fv(normals[4]);
+		glVertex3fv(vertices[3]);
+		glVertex3fv(vertices[7]);
+		glVertex3fv(vertices[6]);
+		glVertex3fv(vertices[2]);
+		
+		glNormal3fv(normals[5]);
+		glVertex3fv(vertices[2]);
+		glVertex3fv(vertices[6]);
+		glVertex3fv(vertices[5]);
+		glVertex3fv(vertices[1]);
+		
+		glNormal3fv(normals[1]);
+		glVertex3fv(vertices[1]);
+		glVertex3fv(vertices[5]);
+		glVertex3fv(vertices[4]);
+		glVertex3fv(vertices[0]);
+		
+		glNormal3fv(normals[3]);
+		glVertex3fv(vertices[4]);
+		glVertex3fv(vertices[5]);
+		glVertex3fv(vertices[6]);
+		glVertex3fv(vertices[7]);
+		
+	glEnd();
 	
 }//end drawBounds
 

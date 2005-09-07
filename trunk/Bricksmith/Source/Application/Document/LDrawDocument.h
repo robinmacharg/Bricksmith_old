@@ -94,6 +94,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (IBAction) addModelClicked:(id)sender;
 - (IBAction) addStepClicked:(id)sender;
 - (IBAction) addPartClicked:(id)sender;
+- (void) addSubmodelReferenceClicked:(id)sender;
 - (IBAction) addLineClicked:(id)sender;
 - (IBAction) addTriangleClicked:(id)sender;
 - (IBAction) addQuadrilateralClicked:(id)sender;
@@ -117,11 +118,12 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 //Utilites
 - (void) addModel:(LDrawMPDModel *)newModel;
 - (void) addStep:(LDrawStep *)newStep;
+- (void) addPartNamed:(NSString *)partName;
 - (void) addStepComponent:(LDrawDirective *)newDirective;
 
 - (void) addModelsToMenu;
 - (BOOL) canDeleteDirective:(LDrawDirective *)directive displayErrors:(BOOL)errorFlag;
-- (void) clearModelsMenu;
+- (void) clearModelMenus;
 - (NSAttributedString *) formatDirective:(LDrawDirective *)item withStringRepresentation:(NSString *)representation;
 - (NSArray *) selectedObjects;
 - (LDrawMPDModel *) selectedModel;

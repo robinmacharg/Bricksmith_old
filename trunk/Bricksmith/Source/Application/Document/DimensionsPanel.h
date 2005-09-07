@@ -9,21 +9,26 @@
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 
-@class LDrawContainer;
+@class LDrawFile;
 
 @interface DimensionsPanel : NSPanel{
-	LDrawContainer *container;
+	LDrawFile	*file;
+	NSString	*activeModelName;
 	
-	IBOutlet DimensionsPanel *dimensionsPanel;
+	IBOutlet DimensionsPanel	*dimensionsPanel;
+	IBOutlet NSObjectController	*objectController;
+	IBOutlet NSTableView		*dimensionsTable;
 }
 
 //Initialization
-+ (DimensionsPanel *) dimensionPanelForContainer:(LDrawContainer *)containerIn;
-- (id) initWithContainer:(LDrawContainer *)container;
++ (DimensionsPanel *) dimensionPanelForFile:(LDrawFile *)fileIn;
+- (id) initWithFile:(LDrawFile *)file;
 
 //Accessors
-- (LDrawContainer *) container;
-- (void) setContainer:(LDrawContainer *)newContainer;
+- (NSString *) activeModelName;
+- (LDrawFile *) file;
+- (void) setActiveModelName:(NSString *)newName;
+- (void) setFile:(LDrawFile *)newFile;
 
 //Actions
 - (IBAction) okButtonClicked:(id)sender;

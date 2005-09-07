@@ -27,6 +27,7 @@
 
 //Accessors
 - (void) addSubmodel:(LDrawMPDModel *)newSubmodel;
+- (NSArray *) modelNames;
 - (LDrawMPDModel *) modelWithName:(NSString *)soughtName;
 - (NSArray *) submodels;
 - (LDrawMPDModel *) activeModel;

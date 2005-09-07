@@ -263,6 +263,28 @@
 }//end addSubmodel:
 
 
+//========== modelNames ========================================================
+//
+// Purpose:		Returns the the names of all the submodels in the file.
+//
+//==============================================================================
+- (NSArray *) modelNames {
+	NSArray			*submodels		= [self subdirectives];
+	int				 numberModels	= [submodels count];
+	LDrawMPDModel	*currentModel	= nil;
+	NSMutableArray	*modelNames		= [NSMutableArray array];
+	int				 counter		= 0;
+	
+	//Look through the models and see if we find one.
+	for(counter = 0; counter < numberModels; counter++){
+		currentModel = [submodels objectAtIndex:counter];
+		[modelNames addObject:[currentModel modelName]];
+	}
+	
+	return modelNames;
+}//end modelNames
+
+
 //========== modelWithName: ====================================================
 //
 // Purpose:		Returns the submodel with the given name, or nil if one couldn't 

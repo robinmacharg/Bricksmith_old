@@ -93,6 +93,7 @@
 
     [super windowControllerDidLoadNib:aController];
 	
+	
 	//Create the toolbar.
 	NSToolbar *toolbar = [[[NSToolbar alloc] initWithIdentifier:@"LDrawDocumentToolbar"] autorelease];
 	[toolbar setAutosavesConfiguration:YES];
@@ -105,18 +106,7 @@
 	[fileContentsOutline registerForDraggedTypes:[NSArray arrayWithObject:LDrawDirectivePboardType]];
 	[fileContentsOutline reloadData];
 	
-	//Display our model.
-	[fileGraphicView setLDrawDirective:[self documentContents]];
 	
-	//Set up the window state based on what is found in preferences.
-	drawerState = [userDefaults integerForKey:PART_BROWSER_DRAWER_STATE];
-	if(drawerState == NSDrawerOpenState)
-		[partBrowserDrawer open];
-	
-	drawerState = [userDefaults integerForKey:FILE_CONTENTS_DRAWER_STATE];
-	if(drawerState == NSDrawerOpenState)
-		[fileContentsDrawer open];
-		
 	//Set our size to whatever it was last time. (We don't do the whole frame 
 	// because we want the origin to be nicely staggered as documents open; that 
 	// normally happens automatically.)
@@ -126,6 +116,20 @@
 		frame.size = NSSizeFromString(savedSize);
 		[window setFrame:frame display:YES];
 	}
+	
+	
+	//Set up the window state based on what is found in preferences.
+	drawerState = [userDefaults integerForKey:PART_BROWSER_DRAWER_STATE];
+	if(drawerState == NSDrawerOpenState)
+		[partBrowserDrawer open];
+	
+	drawerState = [userDefaults integerForKey:FILE_CONTENTS_DRAWER_STATE];
+	if(drawerState == NSDrawerOpenState)
+		[fileContentsDrawer open];
+	
+	
+	//Display our model.
+	[fileGraphicView setLDrawDirective:[self documentContents]];
 	
 	
 	//Notifications we want.
@@ -771,7 +775,7 @@
 
 	DimensionsPanel *dimensions = nil;
 	
-	dimensions = [DimensionsPanel dimensionPanelForContainer:[self documentContents]];
+	dimensions = [DimensionsPanel dimensionPanelForFile:[self documentContents]];
 	
 	[NSApp beginSheet:dimensions
 	   modalForWindow:[self windowForSheet]
@@ -915,10 +919,7 @@
 //==============================================================================
 - (IBAction) addPartClicked:(id)sender {
 	
-	LDrawPart		*newPart		= [[[LDrawPart alloc] init] autorelease];
-	NSUndoManager	*undoManager	= [self undoManager];
 	NSString		*partName		= nil;
-	LDrawColorT		 selectedColor	= [[LDrawColorPanel sharedColorPanel] LDrawColor];
 	
 	//Find out what part should be inserted.
 	// If the parts browser drawer is open, we will read the selection out 
@@ -937,23 +938,29 @@
 
 	//We got a part; let's add it!
 	if(partName != nil){
-		//Set up the part attributes
-		[newPart setLDrawColor:selectedColor];
-		[newPart setDisplayName:partName];
-		if(lastSelectedPart != nil){
-			//Collect the transformation from the previous part and apply it to the 
-			// new one.
-			TransformationComponents transformation = [lastSelectedPart transformationComponents];
-			[newPart setTransformationComponents:transformation];
-
-		}
-		
-		[self addStepComponent:newPart];
-		
-		[undoManager setActionName:NSLocalizedString(@"UndoAddPart", nil)];
-		[[self documentContents] setNeedsDisplay];
+		[self addPartNamed:partName];
 	}
 }//end addPartClicked:
+
+
+//========== addSubmodelReferenceClicked: ======================================
+//
+// Purpose:		Add a reference in the current model to the MPD submodel 
+//				selected.
+//
+// Parameters:	sender: the NSMenuItem representing the submodel to add.
+//
+//==============================================================================
+- (void) addSubmodelReferenceClicked:(id)sender {
+	NSString		*partName		= nil;
+	
+	partName = [[sender representedObject] modelName];
+	
+	//We got a part; let's add it!
+	if(partName != nil){
+		[self addPartNamed:partName];
+	}
+}
 
 
 //========== addLineClicked: ===================================================
@@ -1058,6 +1065,8 @@
 //
 // Purpose:		A new model from the Models menu was chosen to be the active 
 //				model.
+//
+// Parameters:	sender: an NSMenuItem representing the model to make active.
 //
 //==============================================================================
 - (void) modelSelected:(id)sender {
@@ -1763,8 +1772,14 @@
 		//Now we can safely select the directive. It is guaranteed to be visible, 
 		// since we expanded all its ancestors.
 		indexToSelect = [fileContentsOutline rowForItem:directiveToSelect];
-		[fileContentsOutline selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
-						 byExtendingSelection:shouldExtend];
+		//If we are doing multiple selection (shift-click), we want to deselect 
+		// already-selected parts.
+		if(		[[fileContentsOutline selectedRowIndexes] containsIndex:indexToSelect]
+			&&	shouldExtend == YES )
+			[fileContentsOutline deselectRow:indexToSelect];
+		else
+			[fileContentsOutline selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
+							 byExtendingSelection:shouldExtend];
 		[fileContentsOutline scrollRowToVisible:indexToSelect];
 	}
 	
@@ -1854,7 +1869,7 @@
 	//Un-inspect everything
 	[[LDrawApplication sharedInspector] inspectObjects:nil];
 
-	[self clearModelsMenu];
+	[self clearModelMenus];
 }
 
 #pragma mark -
@@ -1943,7 +1958,26 @@
 		case previousStepMenuTag:
 			enable = ([activeModel stepDisplay] == YES);
 			break;
-			
+		
+		////////////////////////////////////////
+		//
+		// Model Menu
+		//
+		////////////////////////////////////////
+		
+		case submodelReferenceMenuTag:
+			//we can't insert a reference to the active model into itself.
+			// That would be an inifinite loop.
+			enable = (activeModel != [menuItem representedObject]);
+			break;
+		
+		
+		////////////////////////////////////////
+		//
+		// Something else.
+		//
+		////////////////////////////////////////
+		
 		default:
 			//We are an NSDocument; it has its own validator to track certain 
 			// items.
@@ -2056,6 +2090,40 @@
 	
 }
 
+
+//========== addPartNamed: =====================================================
+//
+// Purpose:		Adds a part with the given name to the current step in the 
+//				currently-displayed model.
+//
+//==============================================================================
+- (void) addPartNamed:(NSString *)partName {
+	
+	LDrawPart		*newPart		= [[[LDrawPart alloc] init] autorelease];
+	NSUndoManager	*undoManager	= [self undoManager];
+	LDrawColorT		 selectedColor	= [[LDrawColorPanel sharedColorPanel] LDrawColor];
+	
+	//We got a part; let's add it!
+	if(partName != nil){
+		//Set up the part attributes
+		[newPart setLDrawColor:selectedColor];
+		[newPart setDisplayName:partName];
+		if(lastSelectedPart != nil){
+			//Collect the transformation from the previous part and apply it to the 
+			// new one.
+			TransformationComponents transformation = [lastSelectedPart transformationComponents];
+			[newPart setTransformationComponents:transformation];
+			
+		}
+		
+		[self addStepComponent:newPart];
+		
+		[undoManager setActionName:NSLocalizedString(@"UndoAddPart", nil)];
+		[[self documentContents] setNeedsDisplay];
+	}
+}//end addPartNamed:
+
+
 //========== addStepComponent: =================================================
 //
 // Purpose:		Adds newDirective to the bottom of the current step, or after 
@@ -2115,24 +2183,33 @@
 //				the application's menu bar; the active model gets a check next 
 //				to it.
 //
+//				We also regenerate the Insert Reference submenu (for inserting 
+//				MPD submodels as parts in a different model). They require 
+//				additional validation which occurs in validateMenuItem.
+//
 //==============================================================================
 - (void) addModelsToMenu {
 	
 	NSMenu			*mainMenu		= [NSApp mainMenu];
 	NSMenu			*modelMenu		= [[mainMenu itemWithTag:modelsMenuTag] submenu];
+	NSMenu			*referenceMenu	= [[modelMenu itemWithTag:insertReferenceMenuTag] submenu];
 	int				 separatorIndex	= [modelMenu indexOfItemWithTag:modelsSeparatorMenuTag];
 	NSMenuItem		*modelItem		= nil;
+	NSMenuItem		*referenceItem	= nil;
 	NSArray			*models			= [[self documentContents] submodels];
 	LDrawMPDModel	*currentModel	= nil;
 	int				 counter		= 0;
 	
-	[self clearModelsMenu];
+	[self clearModelMenus];
 	
 	//Create menu items for each model.
 	for(counter = 0; counter < [models count]; counter++){
 		
 		currentModel = [models objectAtIndex:counter];
 		
+		//
+		// Active Model menu items
+		//
 		modelItem = [[[NSMenuItem alloc] init] autorelease];
 		[modelItem setTitle:[currentModel modelName]];
 		[modelItem setRepresentedObject:currentModel];
@@ -2141,8 +2218,23 @@
 		if([[self documentContents] activeModel] == currentModel)
 			[modelItem setState:NSOnState];
 		
-		//Insert the new item at the end.
+		//
+		// MPD reference menu items
+		//
+		referenceItem = [[[NSMenuItem alloc] init] autorelease];
+		[referenceItem setTitle:[currentModel modelName]];
+		[referenceItem setRepresentedObject:currentModel];
+		//We set the same tag for all items in the reference menu.
+		// Validation will distinguish them with their represented objects.
+		[referenceItem setTag:submodelReferenceMenuTag];
+		[referenceItem setTarget:self];
+		[referenceItem setAction:@selector(addSubmodelReferenceClicked:)];
+		
+		//
+		// Insert the new item at the end.
+		//
 		[modelMenu insertItem:modelItem atIndex:separatorIndex+counter+1];
+		[referenceMenu addItem:referenceItem];
 	}
 	
 }//end addModelsToMenu
@@ -2198,25 +2290,30 @@
 }//end canDeleteDirective:displayErrors:
 
 
-//========== clearModelsMenu ===================================================
+//========== clearModelMenus ===================================================
 //
-// Purpose:		Removes all models from the menu.
+// Purpose:		Removes all submodels from the menus. There are two places we 
+//				track the submodels: in the Model menu (for selecting the active 
+//				model, and in the references submenu (for inserting submodels as 
+//				parts).
 //
 //==============================================================================
-- (void) clearModelsMenu {
+- (void) clearModelMenus {
 	NSMenu			*mainMenu		= [NSApp mainMenu];
 	NSMenu			*modelMenu		= [[mainMenu itemWithTag:modelsMenuTag] submenu];
+	NSMenu			*referenceMenu	= [[modelMenu itemWithTag:insertReferenceMenuTag] submenu];
 	int				 separatorIndex	= [modelMenu indexOfItemWithTag:modelsSeparatorMenuTag];
 	NSMenuItem		*modelItem		= nil;
 	NSArray			*models			= [[self documentContents] submodels];
 	LDrawMPDModel	*currentModel	= nil;
 	int				 counter		= 0;
 	
-	//Create menu items for each model.
-	for(counter = [modelMenu numberOfItems]-1; counter > separatorIndex; counter--){
-		
+	//Kill all model menu items.
+	for(counter = [modelMenu numberOfItems]-1; counter > separatorIndex; counter--)
 		[modelMenu removeItemAtIndex: counter];
-	}
+	
+	for(counter = [referenceMenu numberOfItems]-1; counter >= 0; counter--)
+		[referenceMenu removeItemAtIndex:counter];
 	
 }
 

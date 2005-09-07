@@ -9,7 +9,8 @@
 //==============================================================================
 #import "DimensionsPanel.h"
 
-#import "LDrawContainer.h"
+#import "LDrawFile.h"
+#import "LDrawMPDModel.h"
 #import <math.h>
 
 @implementation DimensionsPanel
@@ -31,23 +32,23 @@
 #pragma mark -
 
 
-//========== dimensionPanelForContainer ========================================
+//========== dimensionPanelForFile: ============================================
 //
 // Purpose:		Creates a panel which displays the dimensions for the specified 
-//				container. 
+//				file. 
 //
 //==============================================================================
-+ (DimensionsPanel *) dimensionPanelForContainer:(LDrawContainer *)containerIn
++ (DimensionsPanel *) dimensionPanelForFile:(LDrawFile *)fileIn
 {
 	DimensionsPanel *dimensions = nil;
 	
-	dimensions = [[DimensionsPanel alloc] initWithContainer:containerIn];
+	dimensions = [[DimensionsPanel alloc] initWithFile:fileIn];
 	
 	return [dimensions autorelease];
 }
 
 
-//========== init ==============================================================
+//========== initWithFile: =====================================================
 //
 // Purpose:		Make us an object. Load us our window.
 //
@@ -57,11 +58,11 @@
 //				in the Nib. Tricky, huh?
 //
 //==============================================================================
-- (id) initWithContainer:(LDrawContainer *)containerIn {
+- (id) initWithFile:(LDrawFile *)fileIn {
 
 	[NSBundle loadNibNamed:@"Dimensions" owner:self];
 	
-	[dimensionsPanel setContainer:containerIn];
+	[dimensionsPanel setFile:fileIn];
 	
 	//this don't look good, but it works.
 	//this takes the place of calling [super init]
@@ -77,13 +78,38 @@
 #pragma mark ACCESSORS
 #pragma mark -
 
+//========== activeModelName ===================================================
+//
+// Purpose:		Returns the name of the submodel in the file whose dimensions we 
+//				are currently analyzing.
+//
+//==============================================================================
+- (NSString *) activeModelName {
+	return self->activeModelName;
+}
+
+
 //========== container =========================================================
 //
 // Purpose:		Returns the container whose dimensions we are analyzing.
 //
 //==============================================================================
-- (LDrawContainer *) container {
-	return self->container;
+- (LDrawFile *) file {
+	return self->file;
+}
+
+//========== setActiveModelName: ===============================================
+//
+// Purpose:		Sets the name of the submodel in the file whose dimensions we 
+//				are currently analyzing and updates the data view.
+//
+//==============================================================================
+- (void) setActiveModelName:(NSString *)newName {
+	[newName retain];
+	[self->activeModelName release];
+	activeModelName = newName;
+	
+	[dimensionsTable reloadData];
 }
 
 //========== setContainer: =====================================================
@@ -91,11 +117,12 @@
 // Purpose:		Returns the container whose dimensions we are analyzing.
 //
 //==============================================================================
-- (void) setContainer:(LDrawContainer *)newContainer {
-	[newContainer retain];
-	[self->container release];
+- (void) setFile:(LDrawFile *)newFile {
+	[newFile retain];
+	[self->file release];
 	
-	container = newContainer;
+	file = newFile;
+	[self setActiveModelName:[[newFile activeModel] modelName]];
 }
 
 #pragma mark -
@@ -110,6 +137,10 @@
 - (IBAction) okButtonClicked:(id)sender {
 	[NSApp endSheet:self];
 	[self close];
+	
+	//The object controller apparently retains its content. We must break that 
+	// cycle in order to fully deallocate.
+	[objectController setContent:nil];
 }
 
 
@@ -143,7 +174,7 @@
 						  row:(int)rowIndex
 {
 	id		object	= nil;
-	Box3	bounds	= [self->container boundingBox3];
+	Box3	bounds	= [[self->file modelWithName:self->activeModelName] boundingBox3];
 	float	width	= 0;
 	float	height	= 0;
 	float	length	= 0;
@@ -228,5 +259,24 @@
 	return object;
 	
 }//end tableView:objectValueForTableColumn:row:
+
+
+#pragma mark -
+#pragma mark DESTRUCTOR
+#pragma mark -
+
+//========== dealloc ===========================================================
+//
+// Purpose:		The end is nigh.
+//
+//==============================================================================
+- (void) dealloc {
+	
+	[objectController	release];
+	[file				release];
+	[activeModelName	release];
+	
+	[super dealloc];
+}
 
 @end

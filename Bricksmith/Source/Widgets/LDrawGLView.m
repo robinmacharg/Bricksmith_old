@@ -2,7 +2,10 @@
 //
 // File:		LDrawGLView.m
 //
-// Purpose:		Draws an LDrawFile with OpenGL.
+// Purpose:		Draws an LDrawFile with OpenGL. Also handles processing of mouse 
+//				events related to the document. Certain user interactions must 
+//				be handed off to an LDrawDocument in order to make them have 
+//				effect on the object being drawn.
 //
 //  Created by Allen Smith on 4/17/05.
 //  Copyright 2005. All rights reserved.
@@ -32,9 +35,8 @@
 	NSRect	visibleRect	= [self visibleRect];
 	NSRect	frame		= [self frame];
 	if([superview isKindOfClass:[NSClipView class]]){
-		//Center the view inside its scollers.
-		[superview scrollToPoint:NSMakePoint( (NSWidth(frame) - NSWidth(visibleRect))/2, 
-											  (NSHeight(frame) - NSHeight(visibleRect))/2 )];
+		//Center the view inside its scrollers.
+		[self scrollCenterToPoint:NSMakePoint( NSWidth(frame)/2, NSHeight(frame)/2 )];
 		[superview setCopiesOnScroll:NO];
 	}
 		
@@ -109,16 +111,15 @@
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	glEnable(GL_LINE_SMOOTH);
-	glEnableClientState(GL_VERTEX_ARRAY);
+//	glEnable(GL_LINE_SMOOTH); //makes lines transparent! Bad!
+//	glEnableClientState(GL_VERTEX_ARRAY);
+//	glEnableClientState(GL_NORMAL_ARRAY);
 	
 	//orient us correctly for an LDraw coordinate system, which is 
 	// inexplicably upside-down.
 	glMatrixMode(GL_MODELVIEW);
 	glRotatef(180,1,0,0);
 	
-	//float position0[] = {1, -1, -1, 0};
-	//float position0[] = {0, 0, 1, 0};
 	float position0[] = {0, 0, -1, 0};
 	
 	glShadeModel(GL_SMOOTH);
@@ -128,19 +129,29 @@
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_LIGHT0);
 	
-	glLineWidth(2);
-	
 	glLightfv(GL_LIGHT0, GL_POSITION, position0);
+	glLineWidth(1);
 	
-//	GLfloat ambient[4] = { 1, 1, 1, 1.0 };
-//	GLfloat diffuse[4] = { 0, 0, 0, 1.0 };
+	//Attempts to make lighting look a little nicer. None of them quite looked 
+	// right.
+//	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+//	//GL_DIFFUSE + Ambient (1,1,1) makes everything look muddy.
+//	// Ambient (0,0,0) is vibrant, but generally too dark.
+//	GLfloat ambient[4] = { 0.562, 0.562, 0.562, 1.0 };
+//
+//	//GL_AMBIENT + Diffuse (1,1,1) makes things look frozen in ice.
+//	// Diffuse (0.5, 0.5, 0.5) makes colors pastel
+//	// Diffuse (0,0,0) make the model look dark.
+//	//GLfloat diffuse[4] = { 0.25, 0.25, 0.25, 1.0 };
+//	//GLfloat specular[4]= { 0.08, 0.08, 0.08, 1.0 };
 //	GLfloat specular[4]= { 0, 0, 0, 1.0 };
-//	GLfloat shininess  = 30;
+//	GLfloat shininess  = 24;
 //	
 //	glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, ambient );
-//	glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );
+//	//glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );
 //	glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, specular );
 //	glMaterialfv( GL_FRONT_AND_BACK, GL_SHININESS, &shininess );
+
 }
 
 #pragma mark -
@@ -166,7 +177,7 @@
 	glMatrixMode(GL_MODELVIEW);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glLineWidth(1.0);
+	glLineWidth(1.1);
 	glColor4fv(glColor);
 	
 	[self->fileBeingDrawn draw:options parentColor:glColor];
@@ -177,12 +188,12 @@
 	//If we just did a full draw, let's see if rotating needs to be done simply.
 	drawTime = -[startTime timeIntervalSinceNow];
 	if(self->isRotating == NO) {
-		if( drawTime > 0.4 )
+		if( drawTime > SIMPLIFICATION_THRESHOLD )
 			rotationDrawMode = LDrawGLDrawExtremelyFast;
 		else
 			rotationDrawMode = LDrawGLDrawNormal;
 	}
-	NSLog(@"draw time: %f", drawTime);
+	//NSLog(@"draw time: %f", drawTime);
 	
 
 //	NSRect visibleRect = [self visibleRect];
@@ -198,6 +209,16 @@
 //	return NO;
 //}
 
+//========== isFlipped =========================================================
+//
+// Purpose:		This lets us appear in the upper-left of scroll views rather 
+//				than the bottom. The view should draw just fine whether or not 
+//				it is flipped, though.
+//
+//==============================================================================
+- (BOOL) isFlipped {
+	return YES;
+}
 
 #pragma mark -
 #pragma mark ACCESSORS
@@ -215,7 +236,9 @@
 
 //========== centerPoint =======================================================
 //
-// Purpose:		Returns the LDraw color code of the receiver.
+// Purpose:		Returns the point (in frame coordinates) which is currently 
+//				at the center of the visible rectangle. This is useful for 
+//				determining the point being viewed in the scroll view.
 //
 //==============================================================================
 - (NSPoint) centerPoint {
@@ -303,15 +326,24 @@
 //
 // Purpose:		Sets the file being drawn in this view.
 //
+//				We also do other housekeeping here associated with tracking the 
+//				model. We also automatically center the model in the view.
+//
 //==============================================================================
 - (void) setLDrawDirective:(LDrawDirective *) newFile {
+	NSRect frame = NSZeroRect;
+	
+	//Update our variable.
 	[newFile retain];
 	[self->fileBeingDrawn release];
-	
 	fileBeingDrawn = newFile;
+	
 	[[NSNotificationCenter defaultCenter] //force redisplay with glOrtho too.
 			postNotificationName:NSViewFrameDidChangeNotification
 						  object:self ];
+	[self resetFrameSize];
+	frame = [self frame]; //now that it's been changed above.
+	[self scrollCenterToPoint:NSMakePoint(NSWidth(frame)/2, NSHeight(frame)/2 )];
 	[self setNeedsDisplay:YES];
 
 	//Register for important notifications.
@@ -330,6 +362,7 @@
 				   name:LDrawFileActiveModelDidChangeNotification
 				 object:self->fileBeingDrawn ];
 	
+
 }//end setLDrawDirective:
 
 
@@ -354,13 +387,43 @@
 		// of zooming us in and out.
 		clipBounds.size.width	= NSWidth(clipFrame)  / newPercentage;
 		clipBounds.size.height	= NSHeight(clipFrame) / newPercentage;
-		[clipView setBounds:clipBounds];
+		[clipView setBounds:clipBounds]; //BREAKS AUTORESIZING. What to do?
 		
 		//Preserve the original view centerpoint. Note that the visible 
 		// area has changed because we changed our zoom level.
 		[self scrollCenterToPoint:originalCenter];
+		[self resetFrameSize]; //ensures the canvas fills the whole scroll view
 	}
+
 }//end setZoomPercentage
+
+
+#pragma mark -
+#pragma mark ACTIONS
+#pragma mark -
+
+//========== zoomIn: ===========================================================
+//
+// Purpose:		Enlarge the scale of the current LDraw view.
+//
+//==============================================================================
+- (IBAction) zoomIn:(id)sender {
+	float currentZoom = [self zoomPercentage];
+	float newZoom = currentZoom * 2;
+	[self setZoomPercentage:newZoom];
+}
+
+
+//========== zoomOut: ==========================================================
+//
+// Purpose:		Shrink the scale of the current LDraw view.
+//
+//==============================================================================
+- (IBAction) zoomOut:(id)sender {
+	float currentZoom = [self zoomPercentage];
+	float newZoom = currentZoom / 2;
+	[self setZoomPercentage:newZoom];
+}
 
 
 #pragma mark -
@@ -523,7 +586,7 @@
 //				we just convert both the click point and the LDraw visible rect 
 //				to Window Coordinates.
 //
-//				Actually, I bet this is fundamentally wrong too. But it won't 
+//				Actually, I bet that is fundamentally wrong too. But it won't 
 //				show up unless the window coordinate system is being modified. 
 //				The ultimate solution is probably to convert to screen 
 //				coordinates, because that's what OpenGL is using anyway.
@@ -826,12 +889,25 @@
 //
 //==============================================================================
 - (void) displayNeedsUpdating:(NSNotification *)notification {
+	[self resetFrameSize]; //calls setNeedsDisplay
+}//end displayNeedsUpdating
 
+
+//========== resetFrameSize: ===================================================
+//
+// Purpose:		We resize the canvas to accomodate the model. It automatically 
+//				shrinks for small models and expands for large ones. Neat-o!
+//
+//==============================================================================
+- (void) resetFrameSize {
+	
 	if([self->fileBeingDrawn respondsToSelector:@selector(boundingBox3)] ) {
-		//Only if we are drawing an actual document! Part Browsers will not want 
-		// to do this!
-		if(document != nil)
-		{
+		
+		//We do not want to apply this resizing to a raw GL view.
+		// It only makes sense for those in a scroll view. (The Part Browsers 
+		// have been moved to scrollviews now too in order to allow zooming.)
+		if([self enclosingScrollView] != nil){
+			
 			//Determine whether the canvas size needs to change.
 			Point3	origin			= {0,0,0};
 			NSPoint	centerPoint		= [self centerPoint];
@@ -841,14 +917,21 @@
 				float	distance1		= V3DistanceBetween2Points(&origin, &(newBounds.min) );
 				float	distance2		= V3DistanceBetween2Points(&origin, &(newBounds.max) );
 				float	newSize			= MAX(distance1, distance2) + 40; //40 is just to provide a margin.
+				NSSize	contentSize		= [[self enclosingScrollView] contentSize];
+				
+				contentSize = [self convertSize:contentSize fromView:[self enclosingScrollView]];
 				
 				//We have the canvas resizing set to a fairly large granularity, so 
 				// doesn't constantly change on people.
 				newSize = ceil(newSize / 384) * 384;
 				
 				NSSize	oldFrameSize	= [self frame].size;
-				NSSize	newFrameSize	= NSMakeSize(newSize*2, newSize*2);
-
+//				NSSize	newFrameSize	= NSMakeSize( newSize*2, newSize*2 );
+				//Make the frame either just a little bit bigger than the size 
+				// of the model, or the same as the scroll view, whichever is larger.
+				NSSize	newFrameSize	= NSMakeSize( MAX(newSize*2, contentSize.width),
+													  MAX(newSize*2, contentSize.height) );
+													  
 				//The canvas size changes will effectively be distributed equally on 
 				// all sides, because the model is always drawn in the center of the 
 				// canvas. So, our effective viewing center will only change by half 
@@ -865,7 +948,7 @@
 	}
 
 	[self setNeedsDisplay:YES];
-}//end displayNeedsUpdating
+}
 
 
 //========== reshape ===========================================================
@@ -884,10 +967,7 @@
 	NSRect	frame		= [self frame];
 	float	scaleFactor	= [self zoomPercentage] / 100;
 	
-//	[self setFrameOrigin:NSMakePoint(100,100)];
-
-//	NSLog(@"GL view(%d) reshaping; frame %@", [self hasInfiniteDepth], NSStringFromRect(frame));
-	
+//	NSLog(@"GL view(%X) reshaping; frame %@", [self autoresizingMask], NSStringFromRect(frame));
 	
 	//Clear current view
 	glLoadIdentity();
@@ -919,7 +999,14 @@
 	float	fieldDepth	= 0;
 	
 	if(self->hasInfiniteDepth == NO)
-		fieldDepth = NSWidth(visibleRect);
+	{
+		//This is effectively equivalent to infinite field depth
+		fieldDepth = MAX(NSHeight(frame), NSWidth(frame));
+		
+		//Trouble with this one is, we can't zoom on on things that are far 
+		// from the center of the model.
+		//fieldDepth = NSWidth(visibleRect);
+	}
 	else
 	{	//Uh, well, so much for "infinite". When I enter values much bigger than 
 		// one million, the viewing goes haywire.
@@ -928,11 +1015,15 @@
 		//fieldDepth = INFINITY;
 	}
 	
+	float y = NSMinY(visibleRect);
+	if([self isFlipped] == YES)
+		y = NSHeight(frame) - y - NSHeight(visibleRect);
+	
 	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
-	glOrtho(NSMinX(visibleRect) - NSWidth(frame)/2,	//left
+	glOrtho(NSMinX(visibleRect) - NSWidth(frame)/2,							//left
 			NSMinX(visibleRect) - NSWidth(frame)/2 + NSWidth(visibleRect),	//right
-			NSMinY(visibleRect) - NSHeight(frame)/2,	//bottom
-			NSMinY(visibleRect) - NSHeight(frame)/2 + NSHeight(visibleRect),	//top
+			y - NSHeight(frame)/2,						//bottom
+			y - NSHeight(frame)/2 + NSHeight(visibleRect),//top
 			-fieldDepth,	//near (points beyond these are clipped)
 			fieldDepth );	//far
 	
@@ -955,10 +1046,8 @@
 	id		clipView		= [self superview];
 	NSRect	visibleRect		= [self visibleRect];
 	
-	if([clipView isKindOfClass:[NSClipView class]] == YES) {
-		[clipView scrollPoint: NSMakePoint( newCenter.x - NSWidth(visibleRect)/2,
-											newCenter.y - NSHeight(visibleRect)/2) ];
-	}
+	[self scrollPoint: NSMakePoint( newCenter.x - NSWidth(visibleRect)/2,
+									newCenter.y - NSHeight(visibleRect)/2) ];
 }
 
 

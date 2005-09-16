@@ -60,17 +60,11 @@
 //==============================================================================
 - (id) initWithFile:(LDrawFile *)fileIn {
 
-	[NSBundle loadNibNamed:@"Dimensions" owner:self];
+	self = [super init];
 	
-	[dimensionsPanel setFile:fileIn];
+	[self setFile:fileIn];
 	
-	//this don't look good, but it works.
-	//this takes the place of calling [super init]
-	// Note that connections in the Nib file must be made 
-	// to the dimensionsPanel, not to the File's Owner!
-	[self autorelease];
-	
-	return dimensionsPanel;
+	return self;
 }
 
 
@@ -112,6 +106,18 @@
 	[dimensionsTable reloadData];
 }
 
+
+//========== panelNibName ======================================================
+//
+// Purpose:		For the benefit of our superclass, we need to identify the name 
+//				of the Nib where my dialog comes from.
+//
+//==============================================================================
+- (NSString *) panelNibName {
+	return @"Dimensions";
+}
+
+
 //========== setContainer: =====================================================
 //
 // Purpose:		Returns the container whose dimensions we are analyzing.
@@ -124,25 +130,6 @@
 	file = newFile;
 	[self setActiveModelName:[[newFile activeModel] modelName]];
 }
-
-#pragma mark -
-#pragma mark ACTIONS
-#pragma mark -
-
-//========== okButtonClicked: ==================================================
-//
-// Purpose:		End the sheet (we are the sheet!)
-//
-//==============================================================================
-- (IBAction) okButtonClicked:(id)sender {
-	[NSApp endSheet:self];
-	[self close];
-	
-	//The object controller apparently retains its content. We must break that 
-	// cycle in order to fully deallocate.
-	[objectController setContent:nil];
-}
-
 
 #pragma mark -
 #pragma mark TABLE VIEW
@@ -272,7 +259,6 @@
 //==============================================================================
 - (void) dealloc {
 	
-	[objectController	release];
 	[file				release];
 	[activeModelName	release];
 	

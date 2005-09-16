@@ -14,6 +14,7 @@
 #import "LDrawColor.h"
 #import "LDrawColorBar.h"
 #import "LDrawColorCell.h"
+#import "MacLDraw.h"
 #import "StringCategory.h"
 
 @implementation LDrawColorPanel

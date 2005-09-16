@@ -16,7 +16,9 @@
 #import <OpenGL/gl.h>
 #import "MatrixMath.h"
 
+@class LDrawModel;
 @class LDrawStep;
+@class PartReport;
 
 @interface LDrawPart : LDrawDrawableElement <NSCoding> {
 	
@@ -38,6 +40,7 @@
 - (LDrawStep *) enclosingStep;
 - (NSString *) displayName;
 - (NSString *) referenceName;
+- (LDrawModel *) referencedMPDSubmodel;
 - (TransformationComponents) transformationComponents;
 - (Matrix4) transformationMatrix;
 - (void) setDisplayName:(NSString *)newPartName;
@@ -45,6 +48,7 @@
 - (void) setTransformationMatrix:(Matrix4 *)newMatrix;
 
 //Actions
+- (void) collectPartReport:(PartReport *)report;
 - (TransformationComponents) componentsSnappedToGrid:(float) gridSpacing
 										minimumAngle:(float)degrees;
 - (void) rotateByDegrees:(Tuple3)degreesToRotate;

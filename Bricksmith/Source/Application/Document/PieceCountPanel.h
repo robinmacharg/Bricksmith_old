@@ -1,6 +1,6 @@
 //==============================================================================
 //
-// File:		DimensionsPanel.h
+// File:		PieceCountPanel.h
 //
 // Purpose:		Dialog to display the dimensions for a model.
 //
@@ -12,22 +12,28 @@
 #import "DialogPanel.h"
 
 @class LDrawFile;
+@class PartReport;
 
-@interface DimensionsPanel : DialogPanel{
-	LDrawFile	*file;
-	NSString	*activeModelName;
+@interface PieceCountPanel : DialogPanel{
+	LDrawFile		*file;
+	NSString		*activeModelName;
+	PartReport		*partReport;
+	NSMutableArray	*flattenedReport;
 	
-	IBOutlet NSTableView		*dimensionsTable;
+	IBOutlet NSTableView		*pieceCountTable;
 }
 
 //Initialization
-+ (DimensionsPanel *) dimensionPanelForFile:(LDrawFile *)fileIn;
++ (PieceCountPanel *) pieceCountPanelForFile:(LDrawFile *)fileIn;
 - (id) initWithFile:(LDrawFile *)file;
 
 //Accessors
 - (NSString *) activeModelName;
 - (LDrawFile *) file;
+- (PartReport *) partReport;
 - (void) setActiveModelName:(NSString *)newName;
 - (void) setFile:(LDrawFile *)newFile;
+- (void) setPartReport:(PartReport *)newPartReport;
+- (void) setTableDataSource:(NSMutableArray *) newReport;
 
 @end

@@ -4,16 +4,16 @@
             ACTIONS = {okButtonClicked = id; }; 
             CLASS = DialogPanel; 
             LANGUAGE = ObjC; 
-            OUTLETS = {dialogPanel = DialogPanel; objectController = NSObjectController; }; 
+            OUTLETS = {dialogPanel = NSPanel; objectController = NSObjectController; }; 
             SUPERCLASS = NSPanel; 
         }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
         {
-            CLASS = DimensionsPanel; 
+            CLASS = PieceCountPanel; 
             LANGUAGE = ObjC; 
-            OUTLETS = {dimensionsTable = NSTableView; }; 
+            OUTLETS = {pieceCountTable = NSTableView; }; 
             SUPERCLASS = DialogPanel; 
-        }, 
-        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+        }
     ); 
     IBVersion = 1; 
 }

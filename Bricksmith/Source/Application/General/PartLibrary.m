@@ -21,7 +21,6 @@
 #import "LDrawFile.h"
 #import "LDrawModel.h"
 #import "LDrawPart.h"
-#import "LDrawStep.h"
 #import "MacLDraw.h"
 
 @implementation PartLibrary
@@ -95,6 +94,22 @@
 //
 // Purpose:		Returns the local instance of the part catalog, which should be 
 //				the only copy of it in the program.
+//
+//				The Part Catalog is structured as follows:
+//
+//				partCatalog
+//				|
+//				|--> PARTS_CATALOG_KEY <NSArray>
+//				|		|
+//				|		|--> Category Name is Key (e.g., "Brick") <NSArray>
+//				|				|
+//				|				|--> PART_NUMBER_KEY <NSString> (e.g., "3001.dat")
+//				|				|--> PART_NAME_KEY <NSString> (e.g., "Brick 2 x 4")
+//				|
+//				|--> PARTS_LIST_KEY
+//						|
+//						|--> PART_NUMBER_KEY
+//						|--> PART_NAME_KEY
 //
 //==============================================================================
 - (NSDictionary *) partCatalog
@@ -397,6 +412,31 @@
 }
 
 
+//========== descriptionForPartName: ===========================================
+//
+// Purpose:		Returns the description associated with the given part name. 
+//				For example, passing "3001.dat" returns "Brick 2 x 4".
+//				If the name isn't known to the Part Library, we just return name.
+//
+// Note:		If you have a reference to the LDrawPart itself, you should pass 
+//				it to -descriptionForPart instead.
+//
+//==============================================================================
+- (NSString *)descriptionForPartName:(NSString *)name
+{
+	//Look up the verbose part description in the scanned part catalog.
+	NSDictionary	*catalog			= [self partCatalog];
+	NSDictionary	*partList			= [catalog		objectForKey:PARTS_LIST_KEY];
+	NSDictionary	*partRecord			= [partList		objectForKey:name];
+	NSString		*partDescription	= [partRecord objectForKey:PART_NAME_KEY];
+	//If the part isn't known, all we can really do is just display the number.
+	if(partDescription == nil)
+		partDescription = name;
+	
+	return partDescription;
+}
+
+
 //========== modelForName: =====================================================
 //
 // Purpose:		Attempts to find the part based only on the given name.
@@ -460,14 +500,7 @@
 	if(model == nil) {
 		//We didn't find it in the LDraw folder. Our last hope is for 
 		// this to be a reference to another model in an MPD file.
-		LDrawFile *enclosingFile = [[[part enclosingStep] enclosingModel] enclosingFile];
-		if(enclosingFile != nil)
-			model = (LDrawModel *)[enclosingFile modelWithName:partName];
-		
-		//No can do if we get a reference back to ourselves. That would be 
-		// an infinitely-recursing reference, which is bad!
-		if(model == [[part enclosingStep] enclosingModel])
-			model = nil;
+		model = [part referencedMPDSubmodel];
 	}
 	
 	return model;
@@ -528,6 +561,7 @@
 //				LDraw/p				(primitives)
 //				LDraw/parts			(parts)
 //				LDraw/parts/s		(subparts)
+//				LDraw/unofficial	(unofficial parts root -- Allen's addition)
 //
 //				For regular parts and primitives, the partName is simply the 
 //				filename as found in LDraw/parts or LDraw/p. But for subparts, 
@@ -557,8 +591,9 @@
 	
 	NSString		*ldrawPath			= [userDefaults stringForKey:LDRAW_PATH_KEY];
 	
-	NSString		*primitivesPath		= [NSString stringWithFormat:@"%@/%@/%@", ldrawPath, PRIMITIVES_DIRECTORY_NAME, fixedPartName];
-	NSString		*partsPath			= [NSString stringWithFormat:@"%@/%@/%@", ldrawPath, PARTS_DIRECTORY_NAME, fixedPartName];
+	NSString		*primitivesPath		= [NSString stringWithFormat:@"%@/%@/%@", ldrawPath, PRIMITIVES_DIRECTORY_NAME,	fixedPartName];
+	NSString		*partsPath			= [NSString stringWithFormat:@"%@/%@/%@", ldrawPath, PARTS_DIRECTORY_NAME,		fixedPartName];
+	NSString		*unofficialPath		= [NSString stringWithFormat:@"%@/%@/%@", ldrawPath, UNOFFICIAL_DIRECTORY_NAME,	fixedPartName];
 	//searching in the subparts folder will be accomplished by fixedPartName --
 	// remember, parts in subfolders of LDraw/parts and LDraw/p are referenced by 
 	// their relative pathnames in DOS (e.g., "s\765s01.dat", which we converted 
@@ -571,6 +606,8 @@
 		partPath = partsPath;
 	else if([fileManager fileExistsAtPath:primitivesPath])
 		partPath = primitivesPath;
+	else if([fileManager fileExistsAtPath:unofficialPath])
+		partPath = unofficialPath;
 	
 	return partPath;
 }

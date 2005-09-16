@@ -32,15 +32,16 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-#pragma mark		Parts List Keys
+#pragma mark		Dictionary Keys
 //
+////////////////////////////////////////////////////////////////////////////////
+
+
 // The parts list file is stored at LDraw/PARTS_LIST_NAME.
 // It contains a dictionary of parts. Each element in the dictionary 
 // is an array of parts for a category; the key under which the array 
 // is stored is the category name.
 //
-////////////////////////////////////////////////////////////////////////////////
-
 //The part catalog is a dictionary of parts filed by Category name.
 #define PARTS_CATALOG_KEY						@"Part Catalog"
 	//subdictionary keys.
@@ -53,6 +54,14 @@
 	//subdictionary keys.
 	//PART_NUMBER_KEY							(defined above)
 	//PART_NAME_KEY								(defined above)
+
+
+//Color Keys
+#define LDRAW_COLOR_CODE						@"LDraw Color Code"		// NSNumber 0-512
+#define COLOR_NAME								@"Color Name"			// NSString representing localized name
+
+//Part Report keys
+#define PART_QUANTITY							@"QuantityKey"			// NSNumber of how many of this part there are
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -68,6 +77,8 @@
 
 #define PARTS_DIRECTORY_NAME					@"parts"
 	#define SUBPARTS_DIRECTORY_NAME				@"s"
+
+#define UNOFFICIAL_DIRECTORY_NAME				@"Unofficial"
 
 #define PART_CATALOG_NAME						@"Bricksmith Parts.plist"
 

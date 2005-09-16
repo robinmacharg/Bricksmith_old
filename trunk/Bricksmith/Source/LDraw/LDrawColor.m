@@ -20,6 +20,8 @@
 //==============================================================================
 #import "LDrawColor.h"
 
+#import "MacLDraw.h"
+
 @implementation LDrawColor
 
 
@@ -117,7 +119,6 @@
 	int				 numberColors		= [colorCodes count];
 	NSMutableArray	*colorNamePairs		= [NSMutableArray arrayWithCapacity:numberColors];
 	NSNumber		*currentColorCode	= nil;
-	NSString		*nameKey			= nil; //key used in .strings file for color name.
 	NSString		*colorName			= nil;
 	NSDictionary	*currentRecord		= nil;
 	int				 counter			= 0;
@@ -128,8 +129,7 @@
 		
 		//Find the color's name in the localized string file.
 		// Color names are conveniently keyed.
-		nameKey = [NSString stringWithFormat:@"LDraw: %d", [currentColorCode intValue]];
-		colorName = NSLocalizedString(nameKey , nil);
+		colorName = [LDrawColor nameForLDrawColor:[currentColorCode intValue]];
 		
 		currentRecord = [NSDictionary dictionaryWithObjectsAndKeys:
 							currentColorCode,			LDRAW_COLOR_CODE,
@@ -163,6 +163,23 @@
 	return color;
 }
 
+
+//========== nameForLDrawColor: ================================================
+//
+// Purpose:		Returns the name for the specified color code.
+//
+//==============================================================================
++ (NSString *) nameForLDrawColor:(LDrawColorT) colorCode{
+	NSString *nameKey	= nil;
+	NSString *colorName	= nil;
+	
+	//Find the color's name in the localized string file.
+	// Color names are conveniently keyed.
+	nameKey = [NSString stringWithFormat:@"LDraw: %d", colorCode];
+	colorName = NSLocalizedString(nameKey , nil);
+	
+	return colorName;
+}
 
 //========== rgbafForCode() =====================================================
 //

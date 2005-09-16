@@ -17,6 +17,7 @@
                 gridGranularityMenuChanged = id; 
                 showColors = id; 
                 showDimensions = id; 
+                showPieceCount = id; 
                 snapSelectionToGrid = id; 
                 toggleFileContentsDrawer = id; 
                 togglePartBrowserDrawer = id; 

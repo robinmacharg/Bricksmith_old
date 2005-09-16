@@ -91,9 +91,6 @@ typedef enum {
 	
 } LDrawColorT;
 
-//Dictionary Keys
-#define LDRAW_COLOR_CODE			@"LDraw Color Code"		// NSNumber 0-512
-#define COLOR_NAME					@"Color Name"			// NSString representing localized name
 
 
 //Protocol for classes that accept colors.
@@ -114,6 +111,7 @@ typedef enum {
 + (NSArray *) LDrawColors;
 + (NSArray *) LDrawColorNamePairs;
 + (NSColor *) colorForCode:(LDrawColorT)colorCode;
++ (NSString *) nameForLDrawColor:(LDrawColorT) colorCode;
 void rgbaForCode(LDrawColorT colorCode, UInt8 *colorArray);
 void rgbafForCode(LDrawColorT colorCode, GLfloat *colorArray);
 

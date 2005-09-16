@@ -36,6 +36,7 @@
 #import "MacLDraw.h"
 #import "PartBrowserDataSource.h"
 #import "PartChooserPanel.h"
+#import "PieceCountPanel.h"
 #import "UserDefaultsCategory.h"
 
 @implementation LDrawDocument
@@ -238,6 +239,8 @@
 	[documentContents release];
 	
 	documentContents = newContents;
+	
+	[self addModelsToMenu];
 }
 
 
@@ -784,6 +787,26 @@
 		  contextInfo:NULL ];
 		  
 }//end showDimensions
+
+
+//========== showPieceCount: ===================================================
+//
+// Purpose:		Shows the dimensions window for this model.
+//
+//==============================================================================
+- (IBAction) showPieceCount:(id)sender {
+	
+	PieceCountPanel *pieceCount = nil;
+	
+	pieceCount = [PieceCountPanel pieceCountPanelForFile:[self documentContents]];
+	
+	[NSApp beginSheet:pieceCount
+	   modalForWindow:[self windowForSheet]
+		modalDelegate:self
+	   didEndSelector:NULL
+		  contextInfo:NULL ];
+		  
+}//end showPieceCount:
 
 
 #pragma mark -
@@ -1869,6 +1892,7 @@
 	//Un-inspect everything
 	[[LDrawApplication sharedInspector] inspectObjects:nil];
 
+	//Bug: if this document isn't the foremost window, this will botch up the menu!
 	[self clearModelMenus];
 }
 

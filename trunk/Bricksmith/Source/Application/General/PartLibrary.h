@@ -37,6 +37,7 @@
 			progressPanel:(AMSProgressPanel	*)progressPanel;
 - (NSString *)categoryForDescription:(NSString *)modelDescription;
 - (NSString *)descriptionForPart:(LDrawPart *)part;
+- (NSString *)descriptionForPartName:(NSString *)name;
 - (LDrawModel *) modelForName:(NSString *) partName;
 - (LDrawModel *) modelForPart:(LDrawPart *) part;
 - (NSString *) partDescriptionForFile:(NSString *)filepath;

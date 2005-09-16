@@ -126,6 +126,116 @@
 			settings = {
 			};
 		};
+		0B356A9508D371EE00695EEB = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = PartReport.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356A9608D371EE00695EEB = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.objc;
+			path = PartReport.m;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356A9708D371EE00695EEB = {
+			fileRef = 0B356A9508D371EE00695EEB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B356A9808D371EE00695EEB = {
+			fileRef = 0B356A9608D371EE00695EEB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B356AEE08D385B900695EEB = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.objc;
+			path = PieceCountPanel.m;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356AEF08D385B900695EEB = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = PieceCountPanel.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356AF008D385B900695EEB = {
+			fileRef = 0B356AEE08D385B900695EEB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B356AF108D385B900695EEB = {
+			fileRef = 0B356AEF08D385B900695EEB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B356B0608D386AC00695EEB = {
+			children = (
+				0B356B0708D386AC00695EEB,
+			);
+			isa = PBXVariantGroup;
+			name = PieceCountPanel.nib;
+			path = "";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356B0708D386AC00695EEB = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.nib;
+			name = English;
+			path = Resources/English.lproj/PieceCountPanel.nib;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356B0808D386AC00695EEB = {
+			fileRef = 0B356B0608D386AC00695EEB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B356B1808D3895100695EEB = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = DialogPanel.h;
+			path = Source/Widgets/DialogPanel.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356B1908D3895100695EEB = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.objc;
+			name = DialogPanel.m;
+			path = Source/Widgets/DialogPanel.m;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B356B1A08D3895100695EEB = {
+			fileRef = 0B356B1808D3895100695EEB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B356B1B08D3895100695EEB = {
+			fileRef = 0B356B1908D3895100695EEB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		0B491DA207F5555B00AC0C10 = {
 			fileEncoding = 4;
 			isa = PBXFileReference;
@@ -776,6 +886,8 @@
 		};
 		0B6F498C07D19440007B1075 = {
 			children = (
+				0B356B1808D3895100695EEB,
+				0B356B1908D3895100695EEB,
 				0B6F499207D19476007B1075,
 				0B6F499307D19476007B1075,
 				0B6F4BD807D2E912007B1075,
@@ -932,6 +1044,7 @@
 				0B7D379808AD96E500B12D4F,
 				0B7D379A08AD96E500B12D4F,
 				0B7D379C08AD96E500B12D4F,
+				0B356B0608D386AC00695EEB,
 				0B7D379E08AD96E500B12D4F,
 			);
 			isa = PBXGroup;
@@ -2311,6 +2424,9 @@
 				0BC6993708B571A000DAF996,
 				0BC6993808B571A000DAF996,
 				0BC699CD08B93A0500DAF996,
+				0B356A9708D371EE00695EEB,
+				0B356AF108D385B900695EEB,
+				0B356B1A08D3895100695EEB,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2485,6 +2601,8 @@
 				0BF729A808AD849300E3DA53,
 				0BF729A908AD849300E3DA53,
 				0BF729AA08AD849300E3DA53,
+				0B356AEF08D385B900695EEB,
+				0B356AEE08D385B900695EEB,
 			);
 			isa = PBXGroup;
 			name = Document;
@@ -2892,6 +3010,8 @@
 				0B491DA207F5555B00AC0C10,
 				0B491DA307F5555B00AC0C10,
 				32DBCF750370BD2300C91783,
+				0B356A9508D371EE00695EEB,
+				0B356A9608D371EE00695EEB,
 				2A37F4B0FDCFA73011CA2CEA,
 			);
 			isa = PBXGroup;
@@ -3102,6 +3222,7 @@
 				0B9FE5D308AD97990046511D,
 				0B34306708B2E93D00A06A40,
 				0BC699C608B9399C00DAF996,
+				0B356B0808D386AC00695EEB,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3156,6 +3277,9 @@
 				0BF729C508AD849300E3DA53,
 				0BF729C708AD849300E3DA53,
 				0BC699CE08B93A0500DAF996,
+				0B356A9808D371EE00695EEB,
+				0B356AF008D385B900695EEB,
+				0B356B1B08D3895100695EEB,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

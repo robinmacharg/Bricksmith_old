@@ -23,9 +23,11 @@
 #import <math.h>
 
 #import "LDrawApplication.h"
+#import "LDrawFile.h"
 #import "LDrawModel.h"
 #import "LDrawStep.h"
 #import "MacLDraw.h"
+#import "PartReport.h"
 
 @implementation LDrawPart
 
@@ -494,6 +496,34 @@
 }
 
 
+//========== referencedMPDSubmodel =============================================
+//
+// Purpose:		Returns the MPD model to which this part refers, or nil if there 
+//				is no submodel in this part's file which has the name this part 
+//				specifies.
+//
+// Note:		This method is ONLY intended to be used for resolving MPD 
+//				references. If you want to resolve the general reference, you 
+//				should call -modelForPart: in the PartLibrary!
+//
+//==============================================================================
+- (LDrawModel *) referencedMPDSubmodel {
+	
+	LDrawModel	*model			= nil;
+	LDrawFile	*enclosingFile	= [[[self enclosingStep] enclosingModel] enclosingFile];
+	
+	if(enclosingFile != nil)
+		model = (LDrawModel *)[enclosingFile modelWithName:self->referenceName];
+	
+	//No can do if we get a reference back to ourselves. That would be 
+	// an infinitely-recursing reference, which is bad!
+	if(model == [[self enclosingStep] enclosingModel])
+		model = nil;
+	
+	return model;
+}//end referencedMPDSubmodel
+
+
 //========== setTransformationComponents: ======================================
 //
 // Purpose:		Converts the given componets (rotation, scaling, etc.) into an 
@@ -621,6 +651,29 @@
 #pragma mark -
 #pragma mark ACTIONS
 #pragma mark -
+
+//========== collectPartReport: ================================================
+//
+// Purpose:		Collects a report on this part. If this is really an MPD 
+//				reference, we want to get a report on the submodel and not this 
+//				actual part.
+//
+//==============================================================================
+- (void) collectPartReport:(PartReport *)report {
+	LDrawModel *referencedSubmodel = [self referencedMPDSubmodel];
+	//There's a bug here: -referencedMPDSubmodel doesn't necessarily tell you if 
+	// this actually *is* a submodel reference. It may actually resolve to 
+	// something in the part library. In this case, we would draw the library 
+	// part, but report the submodel! I'm going to let this ride, because the 
+	// specification explicitly says the behavior in such a case is undefined.
+	
+	if(referencedSubmodel == nil)
+		[report registerPart:self];
+	else {
+		[referencedSubmodel collectPartReport:report];
+	}
+}//end collectPartReport:
+
 
 //========== nudge: ============================================================
 //

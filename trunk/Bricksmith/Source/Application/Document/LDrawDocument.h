@@ -81,6 +81,8 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (IBAction) toggleFileContentsDrawer:(id)sender;
 - (void) snapSelectionToGrid:(id)sender;
 - (IBAction) gridGranularityMenuChanged:(id)sender;
+- (IBAction) showDimensions:(id)sender;
+- (IBAction) showPieceCount:(id)sender;
 
 // - View menu
 - (IBAction) zoomActual:(id)sender;

@@ -13,6 +13,7 @@
 #import "LDrawContainer.h"
 
 #import "MacLDraw.h"
+#import "PartReport.h"
 
 @implementation LDrawContainer
 
@@ -132,6 +133,29 @@
 }
 
 
+//========== indexOfDirective: =================================================
+//
+// Purpose:		Adds directive into the collection at position index.
+//
+//==============================================================================
+- (int) indexOfDirective:(LDrawDirective *)directive {
+	return [containedObjects indexOfObjectIdenticalTo:directive];
+}
+
+
+//========== subdirectives =====================================================
+//
+// Purpose:		Returns the LDraw directives stored in this collection.
+//
+//==============================================================================
+- (NSArray *) subdirectives{
+	return containedObjects;
+}
+
+#pragma mark -
+#pragma mark ACTIONS
+#pragma mark -
+
 //========== addDirective: =====================================================
 //
 // Purpose:		Adds directive into the collection at the end of the list.
@@ -144,30 +168,21 @@
 }
 
 
-//========== indexOfDirective: =================================================
+//========== collectPartReport: ================================================
 //
-// Purpose:		Adds directive into the collection at position index.
-//
-//==============================================================================
-- (int) indexOfDirective:(LDrawDirective *)directive {
-	return [containedObjects indexOfObjectIdenticalTo:directive];
-}
-
-
-//========== insertDirective:atIndex: ==========================================
-//
-// Purpose:		Adds directive into the collection at position index.
+// Purpose:		Collects a report on all the parts in this container, no matter 
+//				how deeply they may be contained.
 //
 //==============================================================================
-- (void) insertDirective:(LDrawDirective *)directive atIndex:(int)index{
+- (void) collectPartReport:(PartReport *)report {
+	id		currentDirective	= nil;
+	int		counter				= 0;
 	
-	[containedObjects insertObject:directive atIndex:index];
-	[directive setEnclosingDirective:self];
-	
-	[[NSNotificationCenter defaultCenter]
-			postNotificationName:LDrawDirectiveDidChangeNotification
-						  object:self];
-	
+	for(counter = 0; counter < [containedObjects count]; counter++){
+		currentDirective = [containedObjects objectAtIndex:counter];
+		if([currentDirective respondsToSelector:@selector(collectPartReport:)])
+			[currentDirective collectPartReport:report];
+	}
 }
 
 
@@ -189,6 +204,23 @@
 }
 
 
+//========== insertDirective:atIndex: ==========================================
+//
+// Purpose:		Adds directive into the collection at position index.
+//
+//==============================================================================
+- (void) insertDirective:(LDrawDirective *)directive atIndex:(int)index{
+	
+	[containedObjects insertObject:directive atIndex:index];
+	[directive setEnclosingDirective:self];
+	
+	[[NSNotificationCenter defaultCenter]
+			postNotificationName:LDrawDirectiveDidChangeNotification
+						  object:self];
+	
+}
+
+
 //========== removeDirectiveAtIndex: ===========================================
 //
 // Purpose:		Removes the LDraw directive stored at index in this collection.
@@ -204,15 +236,6 @@
 	[[NSNotificationCenter defaultCenter]
 			postNotificationName:LDrawDirectiveDidChangeNotification
 						  object:self];
-}
-
-//========== subdirectives =====================================================
-//
-// Purpose:		Returns the LDraw directives stored in this collection.
-//
-//==============================================================================
-- (NSArray *) subdirectives{
-	return containedObjects;
 }
 
 #pragma mark -

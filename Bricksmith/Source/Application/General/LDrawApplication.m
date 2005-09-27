@@ -182,7 +182,8 @@
 //========== findLDrawPath =====================================================
 //
 // Purpose:		Figure out whether we have an LDraw folder, whether we can use 
-//				it, stuff like that.
+//				it, stuff like that. This ever-so-clever method will try to find 
+//				a folder for us if the one we have defined doesn't pan out.
 //
 //==============================================================================
 - (NSString *) findLDrawPath {
@@ -198,38 +199,43 @@
 	NSString		*userLibrary		= [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask,  YES) objectAtIndex:0];
 	
 	//Try User Defaults first; maybe we've already saved one.
-	NSString		*ldrawPath			= [userDefaults stringForKey:LDRAW_PATH_KEY];
+	NSString		*preferencePath		= [userDefaults stringForKey:LDRAW_PATH_KEY];
+	NSString		*ldrawPath			= preferencePath;
+	BOOL			 prefsPathValid		= NO;
 	
-	if(ldrawPath != nil) {
-		[self->partLibrary validateLDrawFolderWithMessage:ldrawPath];
+	applicationFolder	= [applicationFolder	stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
+	siblingFolder		= [siblingFolder		stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
+	library				= [library				stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
+	userLibrary			= [userLibrary			stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
+	
+	//Tries user defaults first, then others
+	NSArray *potentialPaths = [NSArray arrayWithObjects:preferencePath,
+														applicationFolder,
+														siblingFolder,
+														library,
+														userLibrary,
+														nil ];
+	for(counter = 0; counter < [potentialPaths count] && foundAPath == NO; counter++){
+		ldrawPath = [potentialPaths objectAtIndex:counter];
+		foundAPath = [partLibrary validateLDrawFolder:ldrawPath];
 	}
-	//We haven't defined an LDraw folder yet. Try to find one first.
-	else {
-		applicationFolder	= [applicationFolder	stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
-		siblingFolder		= [siblingFolder		stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
-		library				= [library				stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
-		userLibrary			= [userLibrary			stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
-		
-		NSArray *potentialPaths = [NSArray arrayWithObjects:applicationFolder,
-															siblingFolder,
-															library,
-															userLibrary,
-															nil ];
-		for(counter = 0; counter < [potentialPaths count] && foundAPath == NO; counter++){
-			ldrawPath = [potentialPaths objectAtIndex:counter];
-			foundAPath = [partLibrary validateLDrawFolder:ldrawPath];
-		}
-		
-		//We found one.
-		if(foundAPath == YES){
-			[userDefaults setObject:ldrawPath forKey:LDRAW_PATH_KEY];
-		}
-		else //never mind.
-			ldrawPath = nil;
+
+	//We found one.
+	if(foundAPath == YES){
+		[userDefaults setObject:ldrawPath forKey:LDRAW_PATH_KEY];
+	}
+	else{ //never mind.
+		//If they *thought* they had a selection then display a message 
+		// telling them their selection is no good.
+		if(preferencePath != nil)
+			[self->partLibrary validateLDrawFolderWithMessage:preferencePath];
+		ldrawPath = nil;
 	}
 	
 	return ldrawPath;
-}
+	
+}//end findLDrawPath
+
 
 #pragma mark -
 #pragma mark DESTRUCTOR

@@ -524,12 +524,13 @@ PreferencesDialogController *preferencesDialog = nil;
 	PartLibrary		*partLibrary	= [LDrawApplication sharedPartLibrary];
 	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
 	
-	if([partLibrary validateLDrawFolder:folderPath] == YES){
-			//Record this new folder in preferences.
-		[userDefaults setObject:folderPath
-						 forKey:LDRAW_PATH_KEY];
-		[LDrawPathTextField setStringValue:folderPath];
-		
+	//Record this new folder in preferences whether it's right or not. We'll let 
+	// them sink their own ship here.
+	[userDefaults setObject:folderPath
+					 forKey:LDRAW_PATH_KEY];
+	[LDrawPathTextField setStringValue:folderPath];
+	
+	if([partLibrary validateLDrawFolderWithMessage:folderPath] == YES){
 		[self reloadParts:self];
 	}
 	//else we displayed an error message already.

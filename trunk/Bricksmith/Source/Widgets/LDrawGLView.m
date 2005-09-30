@@ -120,13 +120,28 @@
 	glMatrixMode(GL_MODELVIEW);
 	glRotatef(180,1,0,0);
 	
-	float position0[] = {0, 0, -1, 0};
+	float position0[] = {0, -0.5, -1, 0};
+	
+	float lightModelAmbient[4]    = {0.1, 0.1, 0.1, 0.0};
+//	float lightModelAmbient[4]    = {0.0, 0.0, 0.0, 0.0};
+	
+	float light0Ambient[4]     = { 0.1, 0.1, 0.1, 0.0 };
+	float light0Diffuse[4]     = { 1.0, 1.0, 1.0, 1.0 };
+	float light0Specular[4]    = { 0.0, 0.0, 0.0, 1.0 };
 	
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_NORMALIZE);
-	glEnable(GL_LIGHTING);
-	glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE );
 	glEnable(GL_COLOR_MATERIAL);
+	
+	glLightModeli( GL_LIGHT_MODEL_LOCAL_VIEWER,	GL_FALSE);
+	glLightModeli( GL_LIGHT_MODEL_TWO_SIDE,		GL_TRUE );
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,		lightModelAmbient);
+	
+	glLightfv(GL_LIGHT0, GL_AMBIENT,  light0Ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE,  light0Diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light0Specular);
+	
+	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	
 	glLightfv(GL_LIGHT0, GL_POSITION, position0);

@@ -279,73 +279,78 @@
 	// it mangles them based on rotation. In this case, we want to do a raw 
 	// draw and let the model matrix transform our drawing appropriately.
 	LDrawModel	*modelToDraw	= [[LDrawApplication sharedPartLibrary] modelForPart:self];
-	Box3		bounds			= [modelToDraw boundingBox3];
 	
-	GLfloat		vertices[8][3]	= {	
-									{bounds.min.x, bounds.min.y, bounds.min.z},
-									{bounds.min.x, bounds.min.y, bounds.max.z},
-									{bounds.min.x, bounds.max.y, bounds.max.z},
-									{bounds.min.x, bounds.max.y, bounds.min.z},
-									
-									{bounds.max.x, bounds.min.y, bounds.min.z},
-									{bounds.max.x, bounds.min.y, bounds.max.z},
-									{bounds.max.x, bounds.max.y, bounds.max.z},
-									{bounds.max.x, bounds.max.y, bounds.min.z},
-								  };
-								  
-	GLfloat		normals[6][3]	= {
-									{ 1,  0,  0}, //0: +x
-									{ 0,  1,  0}, //1: +y
-									{ 0,  0,  1}, //2: +z
-									{-1,  0,  0}, //3: -x
-									{ 1, -1,  0}, //4: -y
-									{ 0,  0, -1}, //5: -z
-								  };
-								  
-	//Well, this hardly looks like the most efficient block of code in the world.
-	// I tried using vertex arrays, but it was a stunning failue.
-	glBegin(GL_QUADS);
+	//If the model can't be found, we can't draw good bounds for it!
+	if(modelToDraw != nil) {
 		
-		//The normal vectors all are backwards from what I expected them to be. 
-		//  Why?
-		glNormal3fv(normals[0]);//expected 3
-		glVertex3fv(vertices[0]);
-		glVertex3fv(vertices[3]);
-		glVertex3fv(vertices[2]);
-		glVertex3fv(vertices[1]);
+		Box3		bounds			= [modelToDraw boundingBox3];
 		
-		glNormal3fv(normals[2]);//expected 5, etc.
-		glVertex3fv(vertices[0]);
-		glVertex3fv(vertices[4]);
-		glVertex3fv(vertices[7]);
-		glVertex3fv(vertices[3]);
+		GLfloat		vertices[8][3]	= {	
+										{bounds.min.x, bounds.min.y, bounds.min.z},
+										{bounds.min.x, bounds.min.y, bounds.max.z},
+										{bounds.min.x, bounds.max.y, bounds.max.z},
+										{bounds.min.x, bounds.max.y, bounds.min.z},
+										
+										{bounds.max.x, bounds.min.y, bounds.min.z},
+										{bounds.max.x, bounds.min.y, bounds.max.z},
+										{bounds.max.x, bounds.max.y, bounds.max.z},
+										{bounds.max.x, bounds.max.y, bounds.min.z},
+									  };
+									  
+		GLfloat		normals[6][3]	= {
+										{ 1,  0,  0}, //0: +x
+										{ 0,  1,  0}, //1: +y
+										{ 0,  0,  1}, //2: +z
+										{-1,  0,  0}, //3: -x
+										{ 1, -1,  0}, //4: -y
+										{ 0,  0, -1}, //5: -z
+									  };
+									  
+		//Well, this hardly looks like the most efficient block of code in the world.
+		// I tried using vertex arrays, but it was a stunning failue.
+		glBegin(GL_QUADS);
+			
+			//The normal vectors all are backwards from what I expected them to be. 
+			//  Why?
+			glNormal3fv(normals[0]);//expected 3
+			glVertex3fv(vertices[0]);
+			glVertex3fv(vertices[3]);
+			glVertex3fv(vertices[2]);
+			glVertex3fv(vertices[1]);
+			
+			glNormal3fv(normals[2]);//expected 5, etc.
+			glVertex3fv(vertices[0]);
+			glVertex3fv(vertices[4]);
+			glVertex3fv(vertices[7]);
+			glVertex3fv(vertices[3]);
+			
+			glNormal3fv(normals[4]);
+			glVertex3fv(vertices[3]);
+			glVertex3fv(vertices[7]);
+			glVertex3fv(vertices[6]);
+			glVertex3fv(vertices[2]);
+			
+			glNormal3fv(normals[5]);
+			glVertex3fv(vertices[2]);
+			glVertex3fv(vertices[6]);
+			glVertex3fv(vertices[5]);
+			glVertex3fv(vertices[1]);
+			
+			glNormal3fv(normals[1]);
+			glVertex3fv(vertices[1]);
+			glVertex3fv(vertices[5]);
+			glVertex3fv(vertices[4]);
+			glVertex3fv(vertices[0]);
+			
+			glNormal3fv(normals[3]);
+			glVertex3fv(vertices[4]);
+			glVertex3fv(vertices[5]);
+			glVertex3fv(vertices[6]);
+			glVertex3fv(vertices[7]);
+			
+		glEnd();
 		
-		glNormal3fv(normals[4]);
-		glVertex3fv(vertices[3]);
-		glVertex3fv(vertices[7]);
-		glVertex3fv(vertices[6]);
-		glVertex3fv(vertices[2]);
-		
-		glNormal3fv(normals[5]);
-		glVertex3fv(vertices[2]);
-		glVertex3fv(vertices[6]);
-		glVertex3fv(vertices[5]);
-		glVertex3fv(vertices[1]);
-		
-		glNormal3fv(normals[1]);
-		glVertex3fv(vertices[1]);
-		glVertex3fv(vertices[5]);
-		glVertex3fv(vertices[4]);
-		glVertex3fv(vertices[0]);
-		
-		glNormal3fv(normals[3]);
-		glVertex3fv(vertices[4]);
-		glVertex3fv(vertices[5]);
-		glVertex3fv(vertices[6]);
-		glVertex3fv(vertices[7]);
-		
-	glEnd();
-	
+	}
 }//end drawBounds
 
 
@@ -439,25 +444,34 @@
 //========== boundingBox3 ======================================================
 //
 // Purpose:		Returns the minimum and maximum points of the box which 
-//				perfectly contains this object.
+//				perfectly contains this object. Returns InvalidBox if the part 
+//				cannot be found.
 //
 //==============================================================================
 - (Box3) boundingBox3 {
 	LDrawModel *modelToDraw = [[LDrawApplication sharedPartLibrary] modelForPart:self];
 
-	Box3	bounds			= [modelToDraw boundingBox3];
+	Box3	bounds			= InvalidBox;
 	Box3	partBounds		= {0};
 	Matrix4	transformation	= [self transformationMatrix];
 	
-	Point4	originalMin		= V4FromV3( &(bounds.min) );
-	Point4	originalMax		= V4FromV3( &(bounds.max) );
+	Point4	originalMin		= {0};
+	Point4	originalMax		= {0};
 	Point4	rotatedMin		= {0};
 	Point4	rotatedMax		= {0};
 	
-	V4MulPointByMatrix(&originalMin, &transformation, &rotatedMin);
-	V4MulPointByMatrix(&originalMax, &transformation, &rotatedMax);
-	
-	V3BoundsFromPoints(&rotatedMin, &rotatedMax, &bounds);
+	//We need to have an actual model here. Blithely calling boundingBox3 will 
+	// result in most of our Box3 structure being garbage data!
+	if(modelToDraw != nil) {
+		bounds		= [modelToDraw boundingBox3];
+		originalMin	= V4FromV3( &(bounds.min) );
+		originalMax	= V4FromV3( &(bounds.max) );
+		
+		V4MulPointByMatrix(&originalMin, &transformation, &rotatedMin);
+		V4MulPointByMatrix(&originalMax, &transformation, &rotatedMax);
+		
+		V3BoundsFromPoints(&rotatedMin, &rotatedMax, &bounds);
+	}
 	
 	return bounds;
 }

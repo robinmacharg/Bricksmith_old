@@ -203,6 +203,9 @@
 	NSString		*ldrawPath			= preferencePath;
 	BOOL			 prefsPathValid		= NO;
 	
+	if(preferencePath == nil)
+		preferencePath = @""; //we're going to add this to an array. Can't have a nil object.
+	
 	applicationFolder	= [applicationFolder	stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
 	siblingFolder		= [siblingFolder		stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
 	library				= [library				stringByAppendingPathComponent:LDRAW_DIRECTORY_NAME];
@@ -227,7 +230,7 @@
 	else{ //never mind.
 		//If they *thought* they had a selection then display a message 
 		// telling them their selection is no good.
-		if(preferencePath != nil)
+		if([preferencePath length] >= 0)
 			[self->partLibrary validateLDrawFolderWithMessage:preferencePath];
 		ldrawPath = nil;
 	}

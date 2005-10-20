@@ -74,6 +74,7 @@
 	
 	self = [super initWithCoder: coder];
 	
+	[self setAcceptsFirstResponder:YES];
 	[self setHasInfiniteDepth:NO];
 	[self setLDrawColor:LDrawCurrentColor];
 	rotationDrawMode = LDrawGLDrawNormal;
@@ -122,12 +123,12 @@
 	
 	float position0[] = {0, -0.5, -1, 0};
 	
-	float lightModelAmbient[4]    = {0.1, 0.1, 0.1, 0.0};
-//	float lightModelAmbient[4]    = {0.0, 0.0, 0.0, 0.0};
+//	float lightModelAmbient[4]    = {0.1, 0.1, 0.1, 0.0};
+	float lightModelAmbient[4]    = {0.2, 0.2, 0.2, 0.0};
 	
-	float light0Ambient[4]     = { 0.1, 0.1, 0.1, 0.0 };
+	float light0Ambient[4]     = { 0.0, 0.0, 0.0, 0.0 }; //don't set this. I think it highlights BFC-culling issues.
 	float light0Diffuse[4]     = { 1.0, 1.0, 1.0, 1.0 };
-	float light0Specular[4]    = { 0.0, 0.0, 0.0, 1.0 };
+	float light0Specular[4]    = { 0.6, 0.6, 0.6, 1.0 };
 	
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_NORMALIZE);
@@ -185,8 +186,8 @@
 	NSTimeInterval	 drawTime	= 0;
 	
 	//If we're rotating, we may need to simplify large models.
-	if(self->isRotating && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
-		options |= DRAW_BOUNDS_ONLY;
+//	if(self->isRotating && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
+//		options |= DRAW_BOUNDS_ONLY;
 	
 	//Load the model matrix to make sure we are applying the right stuff.
 	glMatrixMode(GL_MODELVIEW);
@@ -208,7 +209,7 @@
 		else
 			rotationDrawMode = LDrawGLDrawNormal;
 	}
-	//NSLog(@"draw time: %f", drawTime);
+	NSLog(@"draw time: %f", drawTime);
 	
 
 //	NSRect visibleRect = [self visibleRect];
@@ -245,7 +246,7 @@
 //
 //==============================================================================
 - (BOOL)acceptsFirstResponder {
-	return YES;
+	return self->acceptsFirstResponder;
 }
 
 
@@ -306,6 +307,16 @@
 		zoomPercentage = 100;
 	
 	return zoomPercentage;
+}
+
+
+//========== setAcceptsFirstResponder: ==========================================
+//
+// Purpose:		Do we want to pick up key events?
+//
+//==============================================================================
+- (void)setAcceptsFirstResponder:(BOOL)flag {
+	self->acceptsFirstResponder = flag;
 }
 
 

@@ -35,22 +35,46 @@
 
 	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
 	NSString		*startingCategory	= [userDefaults stringForKey:PART_BROWSER_PREVIOUS_CATEGORY];
+	NSMenu			*searchMenuTemplate	= [[NSMenu alloc] initWithTitle:@"Search template"];
+	NSMenuItem		*recentsItem		= nil;
+	NSMenuItem		*noRecentsItem		= nil;
 	
 	if(startingCategory == nil)
 		startingCategory = NSLocalizedString(@"All Categories", nil);
 
+	[partPreview setAcceptsFirstResponder:NO];
 	[self setPartCatalog:[[LDrawApplication sharedPartLibrary] partCatalog]];
 	[self setCategory:startingCategory];
 	[partPreview setHasInfiniteDepth:YES]; //we don't want any clipping on our previews.
 	[self syncSelectionAndPartDisplayed];
 	
+	
+	//Configure the search field's menu
+	recentsItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"NoRecentSearches", nil)
+											 action:NULL
+									  keyEquivalent:@"" ];
+	[recentsItem setTag:NSSearchFieldNoRecentsMenuItemTag];
+	[searchMenuTemplate insertItem:recentsItem atIndex:0];
+	
+	recentsItem = [[NSMenuItem alloc] initWithTitle:@"recent items placeholder"
+											 action:NULL
+									  keyEquivalent:@"" ];
+	[recentsItem setTag:NSSearchFieldRecentsMenuItemTag];
+	[searchMenuTemplate insertItem:recentsItem atIndex:1];
+	
+	[[self->searchField cell] setSearchMenuTemplate:searchMenuTemplate];
+		
 	//We also want to know if the part catalog changes while the program is running.
 	[[NSNotificationCenter defaultCenter]
 			addObserver: self
 			   selector: @selector(sharedPartCatalogDidChange:)
 				   name: LDrawPartCatalogDidChangeNotification
 				 object: nil ];
-				 
+	
+	//Free Memory.
+	[searchMenuTemplate	release];
+	[recentsItem		release];
+	[noRecentsItem		release];
 }
 
 
@@ -158,6 +182,10 @@
 		
 	}
 	
+	//Apply the search.
+	partsInCategory = [self filterParts:partsInCategory
+						 bySearchString:[self->searchField stringValue]];
+	
 	if(success == YES){
 		[self setTableDataSource:partsInCategory];
 		[categoryComboBox setStringValue:newCategory];		
@@ -171,7 +199,8 @@
 
 //========== setCategoryList: ==================================================
 //
-// Purpose:		Brings the window on screen.
+// Purpose:		Sets the complete list of all the categories avaibaled; used as 
+//				the category combo box's data source.
 //
 //==============================================================================
 - (void) setCategoryList:(NSArray *)newCategoryList{
@@ -227,12 +256,34 @@
 	NSString		*newCategory	= [sender stringValue];
 	BOOL			 success		= NO;
 	
+	//Clear the search field
+	[self->searchField setStringValue:@""];
+	
+	//Proceed to set our category
 	success = [self setCategory:newCategory];
 	[self syncSelectionAndPartDisplayed];
 	
 	if(success == YES)
 		[userDefaults setObject:newCategory forKey:PART_BROWSER_PREVIOUS_CATEGORY];
 }
+
+
+//========== searchFieldChanged: ===============================================
+//
+// Purpose:		The search string has been changed. We do a search on the entire 
+//				part library.
+//
+//==============================================================================
+- (IBAction) searchFieldChanged:(id)sender;
+{
+	NSString *searchString = [searchField stringValue];
+	
+	[self setCategory:NSLocalizedString(@"All Categories", nil)];
+	[self syncSelectionAndPartDisplayed];
+
+	NSLog(@"searched %@", searchString);
+}
+
 
 #pragma mark -
 #pragma mark DATA SOURCES
@@ -333,10 +384,10 @@
 	objectValueForTableColumn:(NSTableColumn *)tableColumn
 						  row:(int)rowIndex
 {
-	NSDictionary	*partRecord = [tableDataSource objectAtIndex:rowIndex];
-	NSString		*columnIdentifier = [tableColumn identifier];
+	NSDictionary	*partRecord			= [tableDataSource objectAtIndex:rowIndex];
+	NSString		*columnIdentifier	= [tableColumn identifier];
 	
-	NSString		*cellValue = [partRecord objectForKey:columnIdentifier];
+	NSString		*cellValue			= [partRecord objectForKey:columnIdentifier];
 	
 	//If it's a part, get rid of the file extension on its name.
 	if([columnIdentifier isEqualToString:PART_NUMBER_KEY])
@@ -393,6 +444,52 @@
 #pragma mark -
 #pragma mark UTILITIES
 #pragma mark -
+
+//========== filterParts:bySearchString: =======================================
+//
+// Purpose:		Searches partRecords for all records containing searchString; 
+//				returns the matching records. The search will be conducted on 
+//				both the part numbers and descriptions.
+//
+// Returns:		An array with all matching parts, or an empty array if no parts 
+//				match.
+//
+//==============================================================================
+- (NSMutableArray *) filterParts:(NSArray *)partRecords
+				  bySearchString:(NSString *)searchString
+{
+	NSDictionary	*record				= nil;
+	int				 counter			= 0;
+	NSString		*partNumber			= nil;
+	NSString		*partDescription	= nil;
+	NSMutableArray	*matchingParts		= [NSMutableArray array];
+	
+	if([searchString length] == 0){
+		//Everybody's a winner here.
+		matchingParts = [NSMutableArray arrayWithArray:partRecords];
+	}
+	else {
+		matchingParts = [NSMutableArray array];
+		
+		//Search through all the given records and try to find matches on the search 
+		// string.
+		for(counter = 0; counter < [partRecords count]; counter++){
+			record			= [partRecords objectAtIndex:counter];
+			partNumber		= [record objectForKey:PART_NUMBER_KEY];
+			partDescription	= [record objectForKey:PART_NAME_KEY];
+			
+			if(		[partNumber			containsString:searchString options:NSCaseInsensitiveSearch]
+				||	[partDescription	containsString:searchString options:NSCaseInsensitiveSearch] )
+			{
+				[matchingParts addObject:record];
+			}
+		}
+	}//end else we have to search
+	
+	
+	return matchingParts;
+	
+}//end filterParts:bySearchString:
 
 //========== syncSelectionAndPartDisplayed =====================================
 //

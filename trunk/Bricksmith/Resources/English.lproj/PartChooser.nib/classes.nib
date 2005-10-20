@@ -10,13 +10,14 @@
         }, 
         {CLASS = NSObject; LANGUAGE = ObjC; }, 
         {
-            ACTIONS = {categoryComboBoxChanged = id; }; 
+            ACTIONS = {categoryComboBoxChanged = id; searchFieldChanged = id; }; 
             CLASS = PartBrowserDataSource; 
             LANGUAGE = ObjC; 
             OUTLETS = {
                 categoryComboBox = NSComboBox; 
                 partPreview = LDrawGLView; 
                 partsTable = NSTableView; 
+                searchField = NSSearchField; 
             }; 
             SUPERCLASS = NSObject; 
         }, 

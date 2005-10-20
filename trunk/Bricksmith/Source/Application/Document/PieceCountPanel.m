@@ -9,10 +9,14 @@
 //==============================================================================
 #import "PieceCountPanel.h"
 
+#import "LDrawApplication.h"
+#import "LDrawColor.h"
 #import "LDrawColorCell.h"
 #import "LDrawFile.h"
+#import "LDrawGLView.h"
 #import "LDrawMPDModel.h"
 #import "MacLDraw.h"
+#import "PartLibrary.h"
 #import "PartReport.h"
 
 @implementation PieceCountPanel
@@ -26,6 +30,8 @@
 	LDrawColorCell *colorCell = [[LDrawColorCell alloc] init];
 	NSTableColumn *colorColumn = [pieceCountTable tableColumnWithIdentifier:LDRAW_COLOR_CODE];
 	[colorColumn setDataCell:colorCell];
+	
+	[partPreview setAcceptsFirstResponder:NO];
 	
 	//Remember, this method is called twice for an LDrawColorPanel; the first time 
 	// is for the File's Owner, which is promptly overwritten.
@@ -203,6 +209,7 @@
 	
 	//Update the table
 	[pieceCountTable reloadData];
+	[self syncSelectionAndPartDisplayed];
 	
 }//end setTableDataSource
 
@@ -273,6 +280,51 @@
 	[flattenedReport sortUsingDescriptors:newDescriptors];
 	[tableView reloadData];
 }
+
+
+//**** NSTableDataSource ****
+//========== tableViewSelectionDidChange: ======================================
+//
+// Purpose:		A new selection! Update the part preview accordingly.
+//
+//==============================================================================
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
+{
+	[self syncSelectionAndPartDisplayed];
+}
+
+
+#pragma mark -
+#pragma mark UTILITIES
+#pragma mark -
+
+//========== syncSelectionAndPartDisplayed =====================================
+//
+// Purpose:		Makes the current part displayed match the part selected in the 
+//				table.
+//
+//==============================================================================
+- (void) syncSelectionAndPartDisplayed
+{
+	NSDictionary	*partRecord			= nil;
+	NSString		*partName			= nil;
+	LDrawColorT		 partColor			= LDrawColorBogus;
+	PartLibrary		*partLibrary		= [LDrawApplication sharedPartLibrary];
+	id				 modelToView		= nil;
+	int				 rowIndex			= [pieceCountTable selectedRow];
+	
+	if(rowIndex >= 0) {
+		partRecord	= [flattenedReport objectAtIndex:rowIndex];
+		partName	= [partRecord objectForKey:PART_NUMBER_KEY];
+		partColor	= [[partRecord objectForKey:LDRAW_COLOR_CODE] intValue];
+		
+		modelToView = [partLibrary modelForName:partName];
+		[partPreview setLDrawDirective:modelToView];
+		[partPreview setLDrawColor:partColor];
+	}
+	
+}//end syncSelectionAndPartDisplayed
+
 
 #pragma mark -
 #pragma mark DESTRUCTOR

@@ -12,6 +12,7 @@
 #import "DialogPanel.h"
 
 @class LDrawFile;
+@class LDrawGLView;
 @class PartReport;
 
 @interface PieceCountPanel : DialogPanel{
@@ -21,6 +22,7 @@
 	NSMutableArray	*flattenedReport;
 	
 	IBOutlet NSTableView		*pieceCountTable;
+	IBOutlet LDrawGLView		*partPreview;
 }
 
 //Initialization
@@ -35,5 +37,8 @@
 - (void) setFile:(LDrawFile *)newFile;
 - (void) setPartReport:(PartReport *)newPartReport;
 - (void) setTableDataSource:(NSMutableArray *) newReport;
+
+//Utilities
+- (void) syncSelectionAndPartDisplayed;
 
 @end

@@ -34,6 +34,7 @@ typedef enum {
 	
 	LDrawColorT			color; //default color to draw parts if none is specified
 	GLfloat				glColor[4]; //OpenGL equivalent of the LDrawColor.
+	BOOL				acceptsFirstResponder; //YES if we can become key
 	BOOL				hasInfiniteDepth;
 	
 	IBOutlet LDrawDocument	*document;
@@ -46,6 +47,7 @@ typedef enum {
 - (NSPoint) centerPoint;
 - (BOOL) hasInfiniteDepth;
 - (float) zoomPercentage;
+- (void)setAcceptsFirstResponder:(BOOL)flag;
 - (void) setHasInfiniteDepth:(BOOL)flag;
 - (void) setLDrawColor:(LDrawColorT)newColor;
 - (void) setLDrawDirective:(LDrawDirective *) newFile;

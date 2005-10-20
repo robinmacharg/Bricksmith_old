@@ -30,7 +30,8 @@ typedef enum {
 	LDrawStepFlavorT	stepFlavor; //defaults to LDrawStepAnyDirectives
 	LDrawColorT			colorOfAllDirectives;
 	BOOL				hasDisplayList;
-	GLuint				displayListTag;
+	GLuint				displayListTag;	//list ID for normals in non-inverted matrix
+	GLuint				displayListInvertedNormalsTag; //list ID for normals in an inverted matrix
 
 	//Inherited from the superclasses:
 	//NSMutableArray	*containedObjects; //the commands that make up the step.

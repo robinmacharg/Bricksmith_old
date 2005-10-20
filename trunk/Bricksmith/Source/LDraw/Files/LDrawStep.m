@@ -135,7 +135,10 @@
 - (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
 
 	if(hasDisplayList == YES){
-		glCallList(self->displayListTag);
+		if((optionsMask & DRAW_REVERSE_NORMALS) != 0)
+			glCallList(self->displayListInvertedNormalsTag);
+		else
+			glCallList(self->displayListTag);
 		glColor4fv(parentColor);
 	}
 	else {
@@ -319,63 +322,80 @@
 //==============================================================================
 - (void) optimize {
 
-	if(stepFlavor == LDrawStepLines) {
+	NSArray			*commandsInStep		= [self subdirectives];
+	int				 numberCommands		= [commandsInStep count];
+	id				 currentDirective	= nil;
+	LDrawColorT		 currentColor		= LDrawColorBogus;
+	LDrawColorT		 stepColor			= LDrawColorBogus;
+	BOOL			 isColorOptimizable	= YES; //assume YES at first.
+	int				 counter			= 0;
 	
-		NSArray			*commandsInStep		= [self subdirectives];
-		int				 numberCommands		= [commandsInStep count];
-		id				 currentDirective	= nil;
-		LDrawColorT		 currentColor		= LDrawColorBogus;
-		LDrawColorT		 stepColor			= LDrawColorBogus;
-		BOOL			 isColorOptimizable	= YES; //assume YES at first.
-		int				 counter			= 0;
+	//See if everything is the same color.
+	//Draw each element in the step.
+	for(counter = 0; counter < numberCommands; counter++){
+		currentDirective = [commandsInStep objectAtIndex:counter];
 		
-		//See if everything is the same color.
-		//Draw each element in the step.
-		for(counter = 0; counter < numberCommands; counter++){
-			currentDirective = [commandsInStep objectAtIndex:counter];
-			
-			if([currentDirective conformsToProtocol:@protocol(LDrawColorable)])
-			{
-				currentColor = [currentDirective LDrawColor];
-				if(stepColor == LDrawColorBogus)
-					stepColor = currentColor;
-			}
-			
-			if(currentColor != stepColor) {
-				isColorOptimizable = NO;
-				break;
-			}
-			
+		if([currentDirective conformsToProtocol:@protocol(LDrawColorable)])
+		{
+			currentColor = [currentDirective LDrawColor];
+			if(stepColor == LDrawColorBogus)
+				stepColor = currentColor;
 		}
 		
-		//Put what we can in a display list. I haven't figured out how to overcome 
-		// the hierarchical nature of LDraw with display lists yet, so our options 
-		// are really very limited here.
-		//
-		//Another note: Display list IDs are by default unique to their context. 
-		// We want them to be global to the application! Solution: we set up a 
-		// shared context in LDrawApplication.
-		if(		stepColor == LDrawEdgeColor
-			&&	numberCommands >= 4 )
-		{
-			//create 1 new, empty display list.
-			self->displayListTag = glGenLists(1);
+		if(currentColor != stepColor) {
+			isColorOptimizable = NO;
+			break;
+		}
+		
+	}
+	
+	//Put what we can in a display list. I haven't figured out how to overcome 
+	// the hierarchical nature of LDraw with display lists yet, so our options 
+	// are really very limited here.
+	//
+	//Another note: Display list IDs are by default unique to their context. 
+	// We want them to be global to the application! Solution: we set up a 
+	// shared context in LDrawApplication.
+	if(		isColorOptimizable == YES
+		&&	numberCommands >= 4 )
+	{
+		if(stepColor == LDrawEdgeColor)
+		{	//create 1 new, empty display list. These are almost certainly 
+			// lines, and they don't care about normals.
+			self->displayListTag				= glGenLists(1);
+			self->displayListInvertedNormalsTag	= displayListTag;
 			
 			GLfloat glColor[4];
 			rgbafForCode(LDrawEdgeColor, glColor);
 
 			glNewList(displayListTag, GL_COMPILE);
-				
 				[self draw:DRAW_NO_OPTIONS parentColor:glColor];
-				
+			glEndList();
+		}
+		else
+		{
+			//Generate two sets of lists: non-inverted and inverted.
+			// This way, we can use display lists even with the state-dependent
+			// transformation matrix.
+			self->displayListTag				= glGenLists(2);
+			self->displayListInvertedNormalsTag	= displayListTag + 1;
+			GLfloat glColor[4];
+			rgbafForCode(stepColor, glColor);
+
+			glNewList(displayListTag, GL_COMPILE);
+				[self draw:DRAW_NO_OPTIONS parentColor:glColor];
 			glEndList();
 			
-			//We have generated the list; we can now safely flag this step to be 
-			// henceforth drawn via the list.
-			self->hasDisplayList = YES;
+			glNewList(displayListInvertedNormalsTag, GL_COMPILE);
+				[self draw:DRAW_REVERSE_NORMALS parentColor:glColor];
+			glEndList();
 		}
 		
-	}
+		//We have generated the list; we can now safely flag this step to be 
+		// henceforth drawn via the list.
+		self->hasDisplayList = YES;
+		
+	}//end if is optimizable
 }
 
 #pragma mark -

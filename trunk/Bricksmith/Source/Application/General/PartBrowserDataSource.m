@@ -281,7 +281,6 @@
 	[self setCategory:NSLocalizedString(@"All Categories", nil)];
 	[self syncSelectionAndPartDisplayed];
 
-	NSLog(@"searched %@", searchString);
 }
 
 

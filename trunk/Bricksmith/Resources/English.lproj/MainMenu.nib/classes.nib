@@ -15,8 +15,10 @@
                 duplicate = id; 
                 exportSteps = id; 
                 gridGranularityMenuChanged = id; 
+                hideParts = id; 
                 showColors = id; 
                 showDimensions = id; 
+                showParts = id; 
                 showPieceCount = id; 
                 snapSelectionToGrid = id; 
                 toggleFileContentsDrawer = id; 

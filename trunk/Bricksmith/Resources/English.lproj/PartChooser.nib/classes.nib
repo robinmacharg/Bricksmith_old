@@ -25,7 +25,12 @@
             ACTIONS = {cancelClicked = id; insertPartClicked = id; }; 
             CLASS = PartChooserPanel; 
             LANGUAGE = ObjC; 
-            OUTLETS = {partChooserPanel = PartChooserPanel; partsBrowser = PartBrowserDataSource; }; 
+            OUTLETS = {
+                oldSelf = id; 
+                partChooserPanel = PartChooserPanel; 
+                partsBrowser = PartBrowserDataSource; 
+                searchField = NSSearchField; 
+            }; 
             SUPERCLASS = NSPanel; 
         }, 
         {CLASS = "java.lang.Object"; LANGUAGE = Java; }

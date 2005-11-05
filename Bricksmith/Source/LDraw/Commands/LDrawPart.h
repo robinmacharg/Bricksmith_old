@@ -39,6 +39,7 @@
 //Accessors
 - (LDrawStep *) enclosingStep;
 - (NSString *) displayName;
+- (Point3) position;
 - (NSString *) referenceName;
 - (LDrawModel *) referencedMPDSubmodel;
 - (TransformationComponents) transformationComponents;
@@ -52,5 +53,8 @@
 - (TransformationComponents) componentsSnappedToGrid:(float) gridSpacing
 										minimumAngle:(float)degrees;
 - (void) rotateByDegrees:(Tuple3)degreesToRotate;
+- (void) rotateByDegrees:(Tuple3)degreesToRotate centerPoint:(Point3)center;
+
+//Utilities
 
 @end

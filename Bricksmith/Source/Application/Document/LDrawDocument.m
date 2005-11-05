@@ -358,8 +358,10 @@
 //==============================================================================
 - (void) rotateSelectionAround:(Vector3)rotationAxis {
 
-	NSArray			*selectedObjects	= [self selectedObjects];
-	LDrawDirective	*currentObject		= nil;
+	NSArray			*selectedObjects	= [self selectedObjects]; //array of LDrawDirectives.
+	id				 currentObject		= nil;
+	Box3			 selectionBounds	= [LDrawDirective boundingBox3ForDirectives:selectedObjects];
+	Point3			 rotationCenter		= {0};
 	float			 degreesToRotate	= 0;
 	int				 counter			= 0;
 	
@@ -378,16 +380,50 @@
 	
 	V3Normalize(&rotationAxis); //normalize just in case someone didn't get the message!
 	
-	//nudge everything that can be rotated. That would be parts and only parts.
+	
+	//Just one part selected; rotate around that part's origin. That is 
+	// presumably what the part's author intended to be the rotation point.
+	if([selectedObjects count] == 1){
+		currentObject = [selectedObjects objectAtIndex:0];
+		if([currentObject isKindOfClass:[LDrawPart class]])
+			rotationCenter = [currentObject position];
+	}
+	//More than one part selected. We now must make a "best guess" about 
+	// what to rotate around. So we will go with the center of the bounding 
+	// box of the selection.
+	else
+		rotationCenter = V3Midpoint(&selectionBounds.min, &selectionBounds.max);
+	
+	
+	//rotate everything that can be rotated. That would be parts and only parts.
 	for(counter = 0; counter < [selectedObjects count]; counter++){
 		currentObject = [selectedObjects objectAtIndex:counter];
 		
 		if([currentObject isKindOfClass:[LDrawPart class]])
-			[self rotatePart:(LDrawPart*)currentObject
+			[self rotatePart:currentObject
+				 aroundPoint:rotationCenter
 					  onAxis:rotationAxis
 				   byDegrees:degreesToRotate];
 	}
-}
+}//end rotateSelectionAround
+
+
+//========== setSelectionToHidden: =============================================
+//
+// Purpose:		Hides or shows all the hideable selected elements.
+//
+//==============================================================================
+- (void) setSelectionToHidden:(BOOL)hideFlag {
+	NSArray			*selectedObjects	= [self selectedObjects];
+	id				 currentObject		= nil;
+	int				 counter			= 0;
+	
+	for(counter = 0; counter < [selectedObjects count]; counter++){
+		currentObject = [selectedObjects objectAtIndex:counter];
+		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
+			[self setElement:currentObject toHidden:hideFlag]; //undoable hook.
+	}
+}//end setSelectionToHidden:
 
 
 //========== setZoomPercentage: ================================================
@@ -687,56 +723,6 @@
 }
 
 
-//========== snapSelectionToGrid: ==============================================
-//
-// Purpose:		Aligns all selected parts to the current grid setting.
-//
-//==============================================================================
-- (void) snapSelectionToGrid:(id)sender {
-	
-	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
-	NSArray			*selectedObjects	= [self selectedObjects];
-	id				 currentObject		= nil;
-	float			 gridSpacing		= 0;
-	float			 degreesToRotate	= 0;
-	int				 counter			= 0;
-	
-	TransformationComponents snappedComponents;
-	
-	//Determine granularity of grid.
-	switch([self gridSpacingMode]) {
-		case gridModeFine:
-			gridSpacing = [userDefaults floatForKey:GRID_SPACING_FINE];
-			degreesToRotate = GRID_ROTATION_FINE;	//15 degrees
-			break;
-		case gridModeMedium:
-			gridSpacing = [userDefaults floatForKey:GRID_SPACING_MEDIUM];
-			degreesToRotate = GRID_ROTATION_MEDIUM;	//45 degrees
-			break;
-		case gridModeCoarse:
-			gridSpacing = [userDefaults floatForKey:GRID_SPACING_COARSE];
-			degreesToRotate = GRID_ROTATION_COARSE;	//90 degrees
-			break;
-	}
-	
-	//nudge everything that can be rotated. That would be parts and only parts.
-	for(counter = 0; counter < [selectedObjects count]; counter++){
-		currentObject = [selectedObjects objectAtIndex:counter];
-		
-		if([currentObject isKindOfClass:[LDrawPart class]]){
-			snappedComponents = [currentObject 
-										componentsSnappedToGrid:gridSpacing
-												   minimumAngle:degreesToRotate];
-			[self setTransformation:snappedComponents
-							forPart:currentObject];
-		}
-		
-	}//end update loop
-	
-	[[self documentContents] setNeedsDisplay];
-}//end snapSelectionToGrid
-
-
 //========== gridGranularityMenuChanged: =======================================
 //
 // Purpose:		We just used the menubar to change the granularity of the grid. 
@@ -899,6 +885,79 @@
 	[activeModel setMaximumStepDisplayed: (currentStep-1) % numberSteps ];
 	[[self documentContents] setNeedsDisplay];
 }
+
+
+#pragma mark -
+#pragma mark Piece Menu
+
+//========== showParts: ========================================================
+//
+// Purpose:		Un-hides all selected parts.
+//
+//==============================================================================
+- (IBAction) showParts:(id)sender {
+	[self setSelectionToHidden:NO];	//unhide 'em
+}
+
+
+//========== hideParts: ========================================================
+//
+// Purpose:		Hides all selected parts so that they are not drawn.
+//
+//==============================================================================
+- (IBAction) hideParts:(id)sender {
+	[self setSelectionToHidden:YES]; //hide 'em
+}
+
+
+//========== snapSelectionToGrid: ==============================================
+//
+// Purpose:		Aligns all selected parts to the current grid setting.
+//
+//==============================================================================
+- (void) snapSelectionToGrid:(id)sender {
+	
+	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
+	NSArray			*selectedObjects	= [self selectedObjects];
+	id				 currentObject		= nil;
+	float			 gridSpacing		= 0;
+	float			 degreesToRotate	= 0;
+	int				 counter			= 0;
+	
+	TransformationComponents snappedComponents;
+	
+	//Determine granularity of grid.
+	switch([self gridSpacingMode]) {
+		case gridModeFine:
+			gridSpacing = [userDefaults floatForKey:GRID_SPACING_FINE];
+			degreesToRotate = GRID_ROTATION_FINE;	//15 degrees
+			break;
+		case gridModeMedium:
+			gridSpacing = [userDefaults floatForKey:GRID_SPACING_MEDIUM];
+			degreesToRotate = GRID_ROTATION_MEDIUM;	//45 degrees
+			break;
+		case gridModeCoarse:
+			gridSpacing = [userDefaults floatForKey:GRID_SPACING_COARSE];
+			degreesToRotate = GRID_ROTATION_COARSE;	//90 degrees
+			break;
+	}
+	
+	//nudge everything that can be rotated. That would be parts and only parts.
+	for(counter = 0; counter < [selectedObjects count]; counter++){
+		currentObject = [selectedObjects objectAtIndex:counter];
+		
+		if([currentObject isKindOfClass:[LDrawPart class]]){
+			snappedComponents = [currentObject 
+										componentsSnappedToGrid:gridSpacing
+												   minimumAngle:degreesToRotate];
+			[self setTransformation:snappedComponents
+							forPart:currentObject];
+		}
+		
+	}//end update loop
+	
+	[[self documentContents] setNeedsDisplay];
+}//end snapSelectionToGrid
 
 
 #pragma mark -
@@ -1220,25 +1279,27 @@
 //
 //==============================================================================
 - (void) rotatePart:(LDrawPart *)part
+		aroundPoint:(Point3)rotationCenter
 			 onAxis:(Vector3)rotationAxis
 		  byDegrees:(float)degreesToRotate
 {
 
-	NSUndoManager				*undoManager	= [self undoManager];
+	NSUndoManager	*undoManager	= [self undoManager];
+	Tuple3			 rotation		= {0};
 	
 	[[undoManager prepareWithInvocationTarget:self]
 			rotatePart: part
+		   aroundPoint:rotationCenter
 				onAxis: rotationAxis
 			 byDegrees: -degreesToRotate ]; //undo: rotate backwards
 	[undoManager setActionName:NSLocalizedString(@"UndoRotate", nil)];
 	
-	Tuple3		rotation	= {0};
 	
 	rotation.x = rotationAxis.x * degreesToRotate;
 	rotation.y = rotationAxis.y * degreesToRotate;
 	rotation.z = rotationAxis.z * degreesToRotate;
 	
-	[part rotateByDegrees:rotation];
+	[part rotateByDegrees:rotation centerPoint:rotationCenter];
 
 	
 	[self updateInspector];
@@ -1246,57 +1307,34 @@
 					postNotificationName:LDrawDirectiveDidChangeNotification
 								  object:part];
 	
-
-
-//	NSUndoManager				*undoManager	= [self undoManager];
-//	
-//	[[undoManager prepareWithInvocationTarget:self]
-//			rotatePart: part
-//				onAxis: rotationAxis
-//			 byDegrees: -degreesToRotate ]; //undo: rotate backwards
-//	[undoManager setActionName:NSLocalizedString(@"UndoRotate", nil)];
-//	
-//	
-//	TransformationComponents	originalComponents	= [part transformationComponents];
-//	TransformationComponents	currentComponents	= originalComponents;
-//	TransformationComponents	rotateComponents	= {0};
-//	Matrix4						initialRotation		= {0}; //we'll remove the translation.
-//	Matrix4						addedRotation		= {0};
-//	Matrix4						newMatrix			= {0};
-//	TransformationComponents	newComponents		= {0};
-//	
-//	//Zero out the translation on the current matrix. This leaves us with 
-//	// only transformations at the origin, so we can rotate as we please.
-//	currentComponents.translate_X = 0;
-//	currentComponents.translate_Y = 0;
-//	currentComponents.translate_Z = 0;
-//	initialRotation = createTransformationMatrix(&currentComponents);
-//	
-//	//Create a new matrix that causes the rotation we want.
-//	rotateComponents.scale_X = 1; //
-//	rotateComponents.scale_Y = 1; // (start with identity matrix)
-//	rotateComponents.scale_Z = 1; //
-//	rotateComponents.rotate_X = rotationAxis.x * radians(degreesToRotate);
-//	rotateComponents.rotate_Y = rotationAxis.y * radians(degreesToRotate);
-//	rotateComponents.rotate_Z = rotationAxis.z * radians(degreesToRotate);
-//	addedRotation = createTransformationMatrix(&rotateComponents);
-//	
-//	//Concatenate this new rotation onto the old one. (Our part is now rotated!)
-//	// Then restore the original translation. Our part thereby has been rotated 
-//	// in place.
-//	V3MatMul(&initialRotation, &addedRotation, &newMatrix);
-//	newMatrix.element[3][0] = originalComponents.translate_X; //applied directly to 
-//	newMatrix.element[3][1] = originalComponents.translate_Y; //the matrix because 
-//	newMatrix.element[3][2] = originalComponents.translate_Z; //that's easier here.
-//
-//	
-//	[part setTransformationMatrix:&newMatrix];
-//	
-//	[self updateInspector];
-//	[[NSNotificationCenter defaultCenter]
-//					postNotificationName:LDrawDirectiveDidChangeNotification
-//								  object:part];
 } //rotatePart:onAxis:byDegrees:
+
+
+//========== setElement:toHidden: ==============================================
+//
+// Purpose:		Undo-aware call to change the hidden attribute of an element.
+//
+//==============================================================================
+- (void) setElement:(LDrawDrawableElement *)element toHidden:(BOOL)hideFlag
+{
+	NSUndoManager	*undoManager	= [self undoManager];
+	NSString		*actionName		= nil;
+	
+	if(hideFlag == YES)
+		actionName = NSLocalizedString(@"UndoHidePart", nil);
+	else
+		actionName = NSLocalizedString(@"UndoShowPart", nil);
+	
+	[[undoManager prepareWithInvocationTarget:self]
+		setElement:element
+		  toHidden:(!hideFlag) ];
+	[undoManager setActionName:actionName];
+	
+	[element setHidden:hideFlag];
+	[[NSNotificationCenter defaultCenter]
+					postNotificationName:LDrawDirectiveDidChangeNotification
+								  object:element];
+}//end setElement:toHidden:
 
 
 //========== setObject:toColor: ================================================
@@ -1317,7 +1355,7 @@
 	[[NSNotificationCenter defaultCenter]
 					postNotificationName:LDrawDirectiveDidChangeNotification
 								  object:object];
-}
+}//end setObject:toColor:
 
 
 //========== setTransformation:forPart: ========================================
@@ -1945,10 +1983,6 @@
 		//
 		////////////////////////////////////////
 		
-		case snapToGridMenuTag:
-			enable = (selectedPart != nil);
-			break;
-		
 		//The grid menus are always enabled, but this is a fine place to keep 
 		// track of their state.
 		case gridFineMenuTag:
@@ -1983,6 +2017,24 @@
 			enable = ([activeModel stepDisplay] == YES);
 			break;
 		
+		////////////////////////////////////////
+		//
+		// Piece Menu
+		//
+		////////////////////////////////////////
+			
+		case hidePieceMenuTag:
+			enable = [self elementsAreSelectedOfVisibility:YES]; //there are visible parts to hide.
+			break;
+			
+		case showPieceMenuTag:
+			enable = [self elementsAreSelectedOfVisibility:NO]; //there are invisible parts to show.
+			break;
+			
+		case snapToGridMenuTag:
+			enable = (selectedPart != nil);
+			break;
+			
 		////////////////////////////////////////
 		//
 		// Model Menu
@@ -2342,6 +2394,36 @@
 }
 
 
+//========== elementsAreSelectedOfVisibility: ==================================
+//
+// Purpose:		Returns YES if there are elements selected which have the 
+//				requested visibility. 
+//
+//==============================================================================
+- (BOOL) elementsAreSelectedOfVisibility:(BOOL)visibleFlag {
+	NSArray			*selectedObjects	= [self selectedObjects];
+	id				 currentObject		= nil;
+	BOOL			 currentVisibility	= NO;
+	int				 counter			= 0;
+	BOOL			 invisibleSelected	= NO;
+	BOOL			 visibleSelected	= NO;
+	
+	
+	for(counter = 0; counter < [selectedObjects count]; counter++){
+		currentObject = [selectedObjects objectAtIndex:counter];
+		if([currentObject isKindOfClass:[LDrawDrawableElement class]]){
+			invisibleSelected	= invisibleSelected || [currentObject isHidden];
+			visibleSelected		= visibleSelected   || ([currentObject isHidden] == NO);
+		}
+	}
+	
+	if(visibleFlag == YES)
+		return visibleSelected;
+	else
+		return invisibleSelected;
+}//end elementsAreSelectedOfVisibility:
+
+
 //========== formatDirective:withStringRepresentation: =========================
 //
 // Purpose:		Applies syntax coloring to the specified directive, which will 
@@ -2354,6 +2436,7 @@
 	NSUserDefaults			*userDefaults	= [NSUserDefaults standardUserDefaults];
 	NSString				*colorKey		= nil; //preference key for object's syntax color.
 	NSColor					*syntaxColor	= nil;
+	NSNumber				*obliqueness	= [NSNumber numberWithFloat:0.0]; //italicize?
 	NSAttributedString		*styledString	= nil;
 	NSMutableDictionary		*attributes		= [NSMutableDictionary dictionary];
 	NSMutableParagraphStyle	*paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
@@ -2389,10 +2472,15 @@
 	//We have the syntax coloring we want.
 	syntaxColor = [userDefaults colorForKey:colorKey];
 	
+	if([item respondsToSelector:@selector(isHidden)])
+		if([(id)item isHidden])
+			obliqueness = [NSNumber numberWithFloat:0.5];
+	
 	
 	//Assemble the attributes dictionary.
 	[attributes setObject:paragraphStyle	forKey:NSParagraphStyleAttributeName];
 	[attributes setObject:syntaxColor		forKey:NSForegroundColorAttributeName];
+	[attributes setObject:obliqueness		forKey:NSObliquenessAttributeName];
 	
 	//Create the attributed string.
 	styledString = [[NSAttributedString alloc]
@@ -2406,20 +2494,6 @@
 
 }//end formatDirective:withStringRepresentation:
 
-
-//========== updateInspector ===================================================
-//
-// Purpose:		Updates the Inspector to display the currently-selected objects.
-//				This should be called in response to any potentially state-
-//				changing actions on a directive.
-//
-//==============================================================================
-- (void) updateInspector{
-	NSArray *selectedObjects = [self selectedObjects];
-	
-	[[LDrawApplication sharedInspector] inspectObjects:selectedObjects];
-	[[LDrawColorPanel sharedColorPanel] updateSelectionWithObjects:selectedObjects];
-}
 
 //========== selectedObjects ===================================================
 //
@@ -2549,6 +2623,21 @@
 	
 	//Either we just found one, on we found nothing.
 	return currentObject;
+}
+
+
+//========== updateInspector ===================================================
+//
+// Purpose:		Updates the Inspector to display the currently-selected objects.
+//				This should be called in response to any potentially state-
+//				changing actions on a directive.
+//
+//==============================================================================
+- (void) updateInspector{
+	NSArray *selectedObjects = [self selectedObjects];
+	
+	[[LDrawApplication sharedInspector] inspectObjects:selectedObjects];
+	[[LDrawColorPanel sharedColorPanel] updateSelectionWithObjects:selectedObjects];
 }
 
 

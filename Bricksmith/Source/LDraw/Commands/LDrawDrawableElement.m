@@ -21,6 +21,21 @@
 #pragma mark INITIALIZATION
 #pragma mark -
 
+
+//========== init ==============================================================
+//
+// Purpose:		Create a fresh object. This is the default initializer.
+//
+//==============================================================================
+- (id) init {
+	self = [super init];
+	
+	self->hidden = NO;
+	
+	return self;
+}
+
+
 //========== initWithCoder: ====================================================
 //
 // Purpose:		Reads a representation of this object from the given coder,
@@ -33,6 +48,7 @@
 	self = [super initWithCoder:decoder];
 	
 	[self setLDrawColor:[decoder decodeIntForKey:@"color"]];
+	[self setHidden:[decoder decodeBoolForKey:@"hidden"]];
 	
 	return self;
 }
@@ -49,7 +65,8 @@
 {
 	[super encodeWithCoder:encoder];
 	
-	[encoder encodeInt:color forKey:@"color"];
+	[encoder encodeInt:color	forKey:@"color"];
+	[encoder encodeBool:hidden	forKey:@"hidden"];
 }
 
 
@@ -83,45 +100,48 @@
 - (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
 	//[super draw]; //does nothing anyway; don't call it.
 	
-	//If the part is selected, we need to give some indication. We do this by 
-	// drawing it as a wireframe instead of a filled color. This setting also 
-	// conveniently applies to all referenced parts herein. 
-	if(self->isSelected == YES)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	
-	//Load names for mouse-selection, if that's the mode we're in.
-	// Only elements contained within a step should ever wind up here.
-	// Any other nestings are invalid.
-	if((optionsMask & DRAW_HIT_TEST_MODE) != 0){
-		LDrawContainer *enclosingStep = [self enclosingDirective];
-		int partIndex = [enclosingStep indexOfDirective:self]; 
-		int stepIndex = [[enclosingStep enclosingDirective] indexOfDirective:enclosingStep];
-		glLoadName( stepIndex*STEP_NAME_MULTIPLIER + partIndex );
-		//SERIOUS FLAW!!! This object is not required to have a parent. But 
-		// currently, such an orphan would never be drawn. So life goes on.
+	if(self->hidden == NO) {
+		//If the part is selected, we need to give some indication. We do this by 
+		// drawing it as a wireframe instead of a filled color. This setting also 
+		// conveniently applies to all referenced parts herein. 
+		if(self->isSelected == YES)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		
-		//Now that we have set a name for this element, we do not want any 
-		// other subelements to override it. So we filter the selection 
-		// mode flag out of the options we pass down.
-		optionsMask = optionsMask ^ DRAW_HIT_TEST_MODE; //XOR
-	}
-	
-	//Draw, for goodness sake!
-	
-	if(color != LDrawCurrentColor){
-		glColor4fv(glColor); //set the color for this element.
-			[self drawElement:optionsMask parentColor:glColor];
-		glColor4fv(parentColor); //restore the parent color.
-	}
-	else{
-		//Just draw; don't fool with colors. A significant portion of our 
-		// drawing code probably falls into this category.
-		[self drawElement:optionsMask parentColor:parentColor];
-	}
+		//Load names for mouse-selection, if that's the mode we're in.
+		// Only elements contained within a step should ever wind up here.
+		// Any other nestings are invalid.
+		if((optionsMask & DRAW_HIT_TEST_MODE) != 0){
+			LDrawContainer *enclosingStep = [self enclosingDirective];
+			int partIndex = [enclosingStep indexOfDirective:self]; 
+			int stepIndex = [[enclosingStep enclosingDirective] indexOfDirective:enclosingStep];
+			glLoadName( stepIndex*STEP_NAME_MULTIPLIER + partIndex );
+			//SERIOUS FLAW!!! This object is not required to have a parent. But 
+			// currently, such an orphan would never be drawn. So life goes on.
+			
+			//Now that we have set a name for this element, we do not want any 
+			// other subelements to override it. So we filter the selection 
+			// mode flag out of the options we pass down.
+			optionsMask = optionsMask ^ DRAW_HIT_TEST_MODE; //XOR
+		}
 		
-	//Done drawing a selected part? Then switch back to normal filled drawing.
-	if(self->isSelected == YES)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//Draw, for goodness sake!
+		
+		if(color != LDrawCurrentColor){
+			glColor4fv(glColor); //set the color for this element.
+				[self drawElement:optionsMask parentColor:glColor];
+			glColor4fv(parentColor); //restore the parent color.
+		}
+		else{
+			//Just draw; don't fool with colors. A significant portion of our 
+			// drawing code probably falls into this category.
+			[self drawElement:optionsMask parentColor:parentColor];
+		}
+			
+		//Done drawing a selected part? Then switch back to normal filled drawing.
+		if(self->isSelected == YES)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		
+	}
 	
 }//end draw:optionsMask:
 
@@ -156,6 +176,16 @@
 	return bounds;
 }
 
+
+//========== isHidden ==========================================================
+//
+// Purpose:		Returns whether this element will be drawn or not.
+//
+//==============================================================================
+- (BOOL) isHidden {
+	return self->hidden;
+}
+
 //========== LDrawColor ========================================================
 //
 // Purpose:		Returns the LDraw color code of the receiver.
@@ -166,9 +196,22 @@
 }//end color
 
 
+//========== setHidden: ========================================================
+//
+// Purpose:		Sets whether this part will be drawn, or whether it will be 
+//				skipped during drawing. This setting only affects drawing; 
+//				hidden parts will always be written out. Also, note that 
+//				hiddenness is a temporary state; it is not saved and restored.
+//
+//==============================================================================
+- (void) setHidden:(BOOL) flag {
+	self->hidden = flag;
+}
+
+
 //========== setLDrawColor: ====================================================
 //
-// Purpose:		
+// Purpose:		Sets the color of this element.
 //
 //==============================================================================
 -(void) setLDrawColor:(LDrawColorT)newColor{

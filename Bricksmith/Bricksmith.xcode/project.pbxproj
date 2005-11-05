@@ -126,6 +126,20 @@
 			settings = {
 			};
 		};
+		0B34B52D090B07AE00F3A001 = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = Carbon.framework;
+			path = /System/Library/Frameworks/Carbon.framework;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		0B34B52E090B07AE00F3A001 = {
+			fileRef = 0B34B52D090B07AE00F3A001;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		0B356A9508D371EE00695EEB = {
 			fileEncoding = 4;
 			isa = PBXFileReference;
@@ -2902,6 +2916,7 @@
 				0B655439081367E800EA7F4F,
 				0B6F3AD307C99917007B1075,
 				1058C7A7FEA54F5311CA2CBB,
+				0B34B52D090B07AE00F3A001,
 			);
 			isa = PBXGroup;
 			name = "Linked Frameworks";
@@ -3300,6 +3315,7 @@
 				0B6F3AD407C99917007B1075,
 				0B491FF707F64B5800AC0C10,
 				0B65543A081367E800EA7F4F,
+				0B34B52E090B07AE00F3A001,
 			);
 			isa = PBXFrameworksBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

@@ -77,7 +77,8 @@ typedef struct {
 #define PI				3.141592654
 #define SMALL_NUMBER	1.e-8
 
-extern const Box3 InvalidBox;
+extern const Box3						InvalidBox;
+extern const TransformationComponents	IdentityComponents;
 
 #pragma mark -
 #pragma mark Macros
@@ -128,37 +129,41 @@ extern const Box3 InvalidBox;
 #pragma mark -
 #pragma mark Prototypes
 #pragma mark -
-extern float det2x2( float, float, float, float);
 
-extern Vector3 *V3New(float x, float y, float z);
-extern Vector3 *V3Duplicate(Vector3 *a);
-extern Vector3 V3FromV4(Vector4 *originalVector);
-extern float V3SquaredLength(Vector3 *);
-extern float V3Length(Vector3 *);
-extern float V3Dot(Vector3 *a, Vector3 *b);
-extern float V3DistanceBetween2Points(Point3 *a, Point3 *b);
-extern Vector3 *V3Normalize(Vector3 *);
-extern Vector3 *V3Scale(Vector3 *, float);
-extern Vector3 *V3Add(Vector3 *a, Vector3 *b, Vector3 *c);
-extern Vector3 *V3Sub(Vector3 *a, Vector3 *b, Vector3 *c);
-extern Vector3 *V3Lerp(Vector3 *lo, Vector3 *hi, float alpha, Vector3 *result);
-extern Vector3 *V3Combine(Vector3 *a, Vector3 *b, Vector3 *result, float ascl, float bscl);
-extern Vector3 *V3Mul(Vector3 *a, Vector3 *b, Vector3 *result);
-extern Vector3 *V3Cross(Vector3 *a, Vector3 *b, Vector3 *c);
-extern Box3 *V3BoundsFromPoints();
-extern int V3EqualsBoxes(Box3 *box1, Box3 *box2);
-extern Vector3 *V3IsolateGreatestComponent(Vector3 *vector);
-extern Point3 *V3MulPointByMatrix();
-extern Vector3 *V3MulPointByProjMatrix();
-extern Matrix4 *V3MatMul();
-extern float det3x3( float, float, float, float, float, float, float, float, float );
+extern float	det2x2( float, float, float, float);
 
-extern Vector4 V4FromV3(Vector3 *originalVector);
-extern Matrix4 matrix4FromGLMatrix4(const GLfloat *glMatrix);
-extern Matrix4 createTransformationMatrix(TransformationComponents *);
-extern int unmatrix( Matrix4 *, TransformationComponents *);
-extern Matrix4 *transposeMatrix4(Matrix4 *, Matrix4 *);
-extern Vector4 *V4MulPointByMatrix(Vector4 *, Matrix4 *, Vector4 *);
-extern void inverse( Matrix4 *, Matrix4 * );
-extern void adjoint( Matrix4 *, Matrix4 * );
-extern float det4x4( Matrix4 * );
+extern Vector3*	V3New(float x, float y, float z);
+extern Vector3*	V3Duplicate(Vector3 *a);
+extern Vector3	V3FromV4(Vector4 *originalVector);
+extern float	V3SquaredLength(Vector3 *);
+extern float	V3Length(Vector3 *);
+extern float	V3Dot(Vector3 *a, Vector3 *b);
+extern float	V3DistanceBetween2Points(Point3 *a, Point3 *b);
+extern Vector3*	V3Normalize(Vector3 *);
+extern Vector3*	V3Scale(Vector3 *, float);
+extern Vector3*	V3Add(Vector3 *a, Vector3 *b, Vector3 *c);
+extern Vector3*	V3Sub(Vector3 *a, Vector3 *b, Vector3 *c);
+extern Vector3*	V3Lerp(Vector3 *lo, Vector3 *hi, float alpha, Vector3 *result);
+extern Vector3*	V3Combine(Vector3 *a, Vector3 *b, Vector3 *result, float ascl, float bscl);
+extern Vector3*	V3Mul(Vector3 *a, Vector3 *b, Vector3 *result);
+extern Vector3*	V3Cross(Vector3 *a, Vector3 *b, Vector3 *c);
+extern Point3	V3Midpoint(Point3 *point1, Point3 *point2);
+extern Box3*	V3BoundsFromPoints();
+extern int		V3EqualsBoxes(Box3 *box1, Box3 *box2);
+extern Vector3*	V3IsolateGreatestComponent(Vector3 *vector);
+extern Point3*	V3MulPointByMatrix();
+extern Vector3*	V3MulPointByProjMatrix();
+extern Matrix4*	V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c);
+extern float	det3x3( float, float, float, float, float, float, float, float, float );
+
+extern Vector4	V4FromV3(Vector3 *originalVector);
+extern Matrix4	matrix4FromGLMatrix4(const GLfloat *glMatrix);
+extern Matrix4	createTransformationMatrix(TransformationComponents *);
+extern int		unmatrix( Matrix4 *, TransformationComponents *);
+extern Matrix4*	rotateMatrix4(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result);
+extern Matrix4*	translateMatrix4(Matrix4 *original, Vector3 *displacement, Matrix4 *result);
+extern Matrix4*	transposeMatrix4(Matrix4 *, Matrix4 *);
+extern Vector4*	V4MulPointByMatrix(Vector4 *, Matrix4 *, Vector4 *);
+extern void		inverse( Matrix4 *, Matrix4 * );
+extern void		adjoint( Matrix4 *, Matrix4 * );
+extern float	det4x4( Matrix4 * );

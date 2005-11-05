@@ -498,6 +498,30 @@
 	return displayName;
 }
 
+
+//========== position ==========================================================
+//
+// Purpose:		Returns the coordinates at which the part is drawn.
+//
+// Notes:		This is purely a convenience method. The actual position is 
+//				encoded in the transformation matrix. If you wish to set the 
+//				position, you should set either the matrix or the Transformation 
+//				Components.
+//
+//==============================================================================
+- (Point3) position {
+	TransformationComponents	components	= [self transformationComponents];
+	Point3						position	= {0};
+	
+	//Position must be extracted from transformation components.
+	position.x = components.translate_X;
+	position.y = components.translate_Y;
+	position.z = components.translate_Z;
+	
+	return position;
+}//end position
+
+
 //========== referenceName =====================================================
 //
 // Purpose:		Returns the name of the part. This is the filename where the 
@@ -756,10 +780,10 @@
 	
 	//round-off errors here? Potential for trouble.
 	[self setTransformationComponents:transformation];
-}
+}//end nudge:
 
 
-//========== snapToGrid: =======================================================
+//========== componentsSnappedToGrid:minimumAngle: =============================
 //
 // Purpose:		Aligns the receiver to an imaginary grid along lines separated 
 //				by a distance of gridSpacing. This is done intelligently:
@@ -775,12 +799,11 @@
 										minimumAngle:(float)degrees
 {
 	
-	TransformationComponents components = [self transformationComponents];
-	float rotationRadians = radians(degrees);
+	TransformationComponents	components		= [self transformationComponents];
+	float						rotationRadians	= radians(degrees);
 	
 	Matrix4 transformationMatrix	= {0};
 	Matrix4 inverseMatrix			= {0};
-	Vector4 brickNudge				= {0};
 	
 	Vector4 yAxisOfPart				= {0, 1, 0, 1};
 	Vector4 worldY					= {0, 0, 0, 1}; //yAxisOfPart converted to world coordinates
@@ -788,7 +811,10 @@
 	
 	//Figure out which direction the y-axis is facing in world coordinates:
 	transformationMatrix = [self transformationMatrix];
-	V4MulPointByMatrix(&yAxisOfPart, &transformationMatrix, &brickNudge);
+	transformationMatrix.element[3][0] = 0; //zero out the translation part, leaving only rotation etc.
+	transformationMatrix.element[3][1] = 0;
+	transformationMatrix.element[3][2] = 0;
+	V4MulPointByMatrix(&yAxisOfPart, &transformationMatrix, &worldY);
 	
 	worldY3 = V3FromV4(&worldY);
 	V3IsolateGreatestComponent(&worldY3);
@@ -822,65 +848,48 @@
 	
 	// Snap to the Grid!
 	// Figure the closest grid line and bump the part to it.
+	// Logically, this is a rounding operation with a granularity of the 
+	// grid size. So all we need to do is normalize, round, then expand 
+	// back to the original size.
 	
-	float devianceX = fmod(components.translate_X, gridSpacing);
-	float devianceY = fmod(components.translate_Y, gridSpacing);
-	float devianceZ = fmod(components.translate_Z, gridSpacing);
-	
-	// correct x-axis
-	if(devianceX > gridX/2)
-		components.translate_X += (gridX - devianceX);
-	else	
-		components.translate_X -= devianceX;
-		
-	// correct y-axis
-	if(devianceY > gridY/2)
-		components.translate_Y += (gridY - devianceY);
-	else	
-		components.translate_Y -= devianceY;
-	
-	// correct z-axis
-	if(devianceZ > gridZ/2)
-		components.translate_Z += (gridZ - devianceZ);
-	else	
-		components.translate_Z -= devianceZ;
+	components.translate_X = roundf(components.translate_X/gridX) * gridX;
+	components.translate_Y = roundf(components.translate_Y/gridY) * gridY;
+	components.translate_Z = roundf(components.translate_Z/gridZ) * gridZ;
 	
 	//
 	// Snap angles.
 	//
-	devianceX = fmod(components.rotate_X, rotationRadians);
-	devianceY = fmod(components.rotate_Y, rotationRadians);
-	devianceZ = fmod(components.rotate_Z, rotationRadians);
 	
-	// correct x-rotation
-	if(devianceX > rotationRadians/2)
-		components.rotate_X += (rotationRadians - devianceX);
-	else	
-		components.rotate_X -= devianceX;
-		
-	// correct x-rotation
-	if(devianceY > rotationRadians/2)
-		components.rotate_Y += (rotationRadians - devianceY);
-	else	
-		components.rotate_Y -= devianceY;
-	
-	// correct x-rotation
-	if(devianceZ > rotationRadians/2)
-		components.rotate_Z += (rotationRadians - devianceZ);
-	else	
-		components.rotate_Z -= devianceZ;
-	
-	
+	components.rotate_X = roundf(components.rotate_X/rotationRadians) * rotationRadians;
+	components.rotate_Y = roundf(components.rotate_Y/rotationRadians) * rotationRadians;
+	components.rotate_Z = roundf(components.rotate_Z/rotationRadians) * rotationRadians;
 	
 	//round-off errors here? Potential for trouble.
 	return components;
-}
+	
+}//end componentsSnappedToGrid:minimumAngle:
 
 
 //========== rotateByDegrees: ==================================================
 //
+// Purpose:		Rotates the part by the specified angles around its centerpoint.
+//
+//==============================================================================
+- (void) rotateByDegrees:(Tuple3)degreesToRotate
+{
+	Point3	partCenter	= [self position];
+	
+	//Rotate!
+	[self rotateByDegrees:degreesToRotate centerPoint:partCenter];
+	
+}//end rotateByDegrees
+
+
+//========== rotateByDegrees:centerPoint: ======================================
+//
 // Purpose:		Performs an additive rotation on the part, rotating by the 
-//				specified number of degress around each axis.
+//				specified number of degress around each axis. The part will be 
+//				rotated around the specified centerpoint.
 //
 // Notes:		This gets a little tricky because there is more than one way 
 //				to represent a single rotation when using three rotation angles. 
@@ -894,48 +903,27 @@
 //				direction the user intended, no matter what goofy representation
 //				the components came up with.
 //
-//				Caveat: We have to zero out the translation components of the 
-//				part's transformation before we append our new rotation. Thus 
-//				the part will be rotated in place.
+//				Caveat: We have to do some translations to take into account the  
+//				centerpoint.
 //
 //==============================================================================
 - (void) rotateByDegrees:(Tuple3)degreesToRotate
+			 centerPoint:(Point3)rotationCenter
 {
-	TransformationComponents	originalComponents	= [self transformationComponents];
-	TransformationComponents	currentComponents	= originalComponents;
-	TransformationComponents	rotateComponents	= {0};
-	Matrix4						initialRotation		= {0}; //we'll remove the translation.
-	Matrix4						addedRotation		= {0};
-	Matrix4						newMatrix			= {0};
-	TransformationComponents	newComponents		= {0};
+	Matrix4						transform			= [self transformationMatrix];
+	Vector3						displacement		= rotationCenter;
+	Vector3						negativeDisplacement= rotationCenter; //to be negated...
 	
-	//Zero out the translation on the current matrix. This leaves us with 
-	// only transformations at the origin, so we can rotate as we please.
-	currentComponents.translate_X = 0;
-	currentComponents.translate_Y = 0;
-	currentComponents.translate_Z = 0;
-	initialRotation = createTransformationMatrix(&currentComponents);
+	V3Negate(&negativeDisplacement);
 	
-	//Create a new matrix that causes the rotation we want.
-	rotateComponents.scale_X = 1; //
-	rotateComponents.scale_Y = 1; // (start with identity matrix)
-	rotateComponents.scale_Z = 1; //
-	rotateComponents.rotate_X = radians(degreesToRotate.x);
-	rotateComponents.rotate_Y = radians(degreesToRotate.y);
-	rotateComponents.rotate_Z = radians(degreesToRotate.z);
-	addedRotation = createTransformationMatrix(&rotateComponents);
-	
-	//Concatenate this new rotation onto the old one. (Our part is now rotated!)
-	// Then restore the original translation. Our part thereby has been rotated 
-	// in place.
-	V3MatMul(&initialRotation, &addedRotation, &newMatrix);
-	newMatrix.element[3][0] = originalComponents.translate_X; //applied directly to 
-	newMatrix.element[3][1] = originalComponents.translate_Y; //the matrix because 
-	newMatrix.element[3][2] = originalComponents.translate_Z; //that's easier here.
+	//Do the rotation around the specified centerpoint.
+	translateMatrix4(&transform, &negativeDisplacement, &transform); //translate to rotationCenter
+	rotateMatrix4(&transform, &degreesToRotate, &transform); //rotate at rotationCenter
+	translateMatrix4(&transform, &displacement, &transform); //translate back to original position
 	
 	
-	[self setTransformationMatrix:&newMatrix];
-}
+	[self setTransformationMatrix:&transform];
+}//end rotateByDegrees:centerPoint:
 
 
 #pragma mark -

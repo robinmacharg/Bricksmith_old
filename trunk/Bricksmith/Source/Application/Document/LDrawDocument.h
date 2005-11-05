@@ -67,6 +67,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) changeLDrawColor:(id)sender;
 - (void) nudgeSelectionBy:(Vector3) nudgeVector;
 - (void) rotateSelectionAround:(Vector3)rotationAxis;
+- (void) setSelectionToHidden:(BOOL)hideFlag;
 - (void) setZoomPercentage:(float)newPercentage;
 
 // - Edit menu
@@ -79,7 +80,6 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (IBAction) showInspector:(id)sender;
 - (IBAction) togglePartBrowserDrawer:(id)sender;
 - (IBAction) toggleFileContentsDrawer:(id)sender;
-- (void) snapSelectionToGrid:(id)sender;
 - (IBAction) gridGranularityMenuChanged:(id)sender;
 - (IBAction) showDimensions:(id)sender;
 - (IBAction) showPieceCount:(id)sender;
@@ -91,6 +91,11 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (IBAction) toggleStepDisplay:(id)sender;
 - (IBAction) advanceOneStep:(id)sender;
 - (IBAction) backOneStep:(id)sender;
+
+// - Piece menu
+- (IBAction) showParts:(id)sender;
+- (IBAction) hideParts:(id)sender;
+- (void) snapSelectionToGrid:(id)sender;
 
 // - Models menu
 - (IBAction) addModelClicked:(id)sender;
@@ -109,7 +114,8 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) addDirective:(LDrawDirective *)newDirective toParent:(LDrawContainer * )parent atIndex:(int)index;
 - (void) deleteDirective:(LDrawDirective *)doomedDirective;
 - (void) nudgeDirective:(LDrawDrawableElement *)object inDirection:(Vector3)nudgeVector;
-- (void) rotatePart:(LDrawPart *)object onAxis:(Vector3)nudgeVector byDegrees:(float)degrees;
+- (void) rotatePart:(LDrawPart *)part aroundPoint:(Point3)rotationCenter onAxis:(Vector3)rotationAxis byDegrees:(float)degreesToRotate;
+- (void) setElement:(LDrawDrawableElement *)element toHidden:(BOOL)hideFlag;
 - (void) setObject:(id <LDrawColorable> )object toColor:(LDrawColorT)newColor;
 - (void) setTransformation:(TransformationComponents) newComponents forPart:(LDrawPart *)part;
 
@@ -126,6 +132,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) addModelsToMenu;
 - (BOOL) canDeleteDirective:(LDrawDirective *)directive displayErrors:(BOOL)errorFlag;
 - (void) clearModelMenus;
+- (BOOL) elementsAreSelectedOfVisibility:(BOOL)visibleFlag;
 - (NSAttributedString *) formatDirective:(LDrawDirective *)item withStringRepresentation:(NSString *)representation;
 - (NSArray *) selectedObjects;
 - (LDrawMPDModel *) selectedModel;

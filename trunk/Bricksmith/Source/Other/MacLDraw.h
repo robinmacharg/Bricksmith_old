@@ -9,6 +9,15 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+#pragma mark		Build Flags
+//					Special options to configure the program behavior.
+//
+////////////////////////////////////////////////////////////////////////////////
+#define DEBUG_DRAWING							0
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
 #pragma mark		Preferences Keys
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +186,6 @@ typedef enum MenuTags {
 	
 	//Tools Menu
 	toolsMenuTag				= 3,
-	snapToGridMenuTag			= 304,
 	gridFineMenuTag				= 305,
 	gridMediumMenuTag			= 306,
 	gridCoarseMenuTag			= 307,
@@ -188,15 +196,21 @@ typedef enum MenuTags {
 	nextStepMenuTag				= 405,
 	previousStepMenuTag			= 406,
 	
+	//Piece Menu
+	pieceMenuTag				= 5,
+	hidePieceMenuTag			= 501,
+	showPieceMenuTag			= 502,
+	snapToGridMenuTag			= 503,
+	
 	//Models Menu
-	modelsMenuTag				= 5,
-	addModelMenuTag				= 501,
-	modelsSeparatorMenuTag		= 502,
-	insertReferenceMenuTag		= 503,
-	submodelReferenceMenuTag	= 504, //used for all items in the Insert Reference menu.
+	modelsMenuTag				= 6,
+	addModelMenuTag				= 601,
+	modelsSeparatorMenuTag		= 602,
+	insertReferenceMenuTag		= 603,
+	submodelReferenceMenuTag	= 604, //used for all items in the Insert Reference menu.
 	
 	//Window Menu
-	windowMenuTag				= 6
+	windowMenuTag				= 7
 	
 } menuTagsT;
 

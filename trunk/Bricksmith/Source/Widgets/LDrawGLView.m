@@ -95,7 +95,7 @@
 					   forParameter: NSOpenGLCPSwapInterval ];
 			
 	[pixelFormat release];
-
+	
 	return self;
 }
 
@@ -186,8 +186,10 @@
 	NSTimeInterval	 drawTime	= 0;
 	
 	//If we're rotating, we may need to simplify large models.
-//	if(self->isRotating && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
-//		options |= DRAW_BOUNDS_ONLY;
+#if DEBUG_DRAWING == 0
+	if(self->isRotating && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
+		options |= DRAW_BOUNDS_ONLY;
+#endif //DEBUG_DRAWING
 	
 	//Load the model matrix to make sure we are applying the right stuff.
 	glMatrixMode(GL_MODELVIEW);
@@ -209,7 +211,10 @@
 		else
 			rotationDrawMode = LDrawGLDrawNormal;
 	}
+
+#if DEBUG_DRAWING
 	NSLog(@"draw time: %f", drawTime);
+#endif //DEBUG_DRAWING
 	
 
 //	NSRect visibleRect = [self visibleRect];

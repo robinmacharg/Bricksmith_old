@@ -19,6 +19,26 @@ const Box3 InvalidBox = {	INFINITY,
 							-INFINITY,
 							-INFINITY,
 							-INFINITY   };
+							
+const TransformationComponents IdentityComponents = {
+							1, //scale_X;
+							1, //scale_Y;
+							1, //scale_Z;
+							0, //shear_XY;
+							0, //shear_XZ;
+							0, //shear_YZ;
+							0, //rotate_X; //in radians
+							0, //rotate_Y; //in radians
+							0, //rotate_Z; //in radians
+							0, //translate_X;
+							0, //translate_Y;
+							0, //translate_Z;
+							0, //perspective_X;
+							0, //perspective_Y;
+							0, //perspective_Z;
+							0, //perspective_W;
+						};
+
 
 #pragma mark 2-D LIBRARY
 #pragma mark -
@@ -192,6 +212,22 @@ Vector3 *V3Cross(Vector3 *a, Vector3 *b, Vector3 *c)
 }
 
 
+//========== V3Midpoint ========================================================
+//
+// Purpose:		Returns the midpoint of the line segment between point1 and 
+//				point2.
+//
+//==============================================================================
+Point3 V3Midpoint(Point3 *point1, Point3 *point2) {
+	Point3 midpoint;
+	midpoint.x = (point1->x + point2->x)/2;
+	midpoint.y = (point1->y + point2->y)/2;
+	midpoint.z = (point1->z + point2->z)/2;
+	
+	return midpoint;
+}//end V3Midpoint
+
+
 //========== V3BoundsFromPoints ================================================
 //
 // Purpose:		Sorts the points into their minimum and maximum.
@@ -216,13 +252,13 @@ Box3 *V3BoundsFromPoints(Point3 *point1, Point3 *point2, Box3 *bounds) {
 //
 //==============================================================================
 extern int V3EqualsBoxes(Box3 *box1, Box3 *box2){
-	return (	box1->min.x == InvalidBox.min.x,
-				box1->min.y == InvalidBox.min.y,
-				box1->min.z == InvalidBox.min.z,
+	return (	box1->min.x == box2->min.x,
+				box1->min.y == box2->min.y,
+				box1->min.z == box2->min.z,
 				
-				box1->max.x == InvalidBox.max.x,
-				box1->max.y == InvalidBox.max.y,
-				box1->max.z == InvalidBox.max.z  );
+				box1->max.x == box2->max.x,
+				box1->max.y == box2->max.y,
+				box1->max.z == box2->max.z  );
 }
 
 
@@ -289,8 +325,7 @@ Matrix4 *m;
 
 /* multiply together matrices c = ab */
 /* note that c must not point to either of the input matrices */
-Matrix4 *V3MatMul(a, b, c)
-Matrix4 *a, *b, *c;
+Matrix4 *V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c)
 {
 	int i, j, k;
 	for (i=0; i<4; i++) {
@@ -437,6 +472,8 @@ Matrix4 createTransformationMatrix(TransformationComponents *components) {
 	
 	return transformation;
 }
+
+#pragma mark -
 
 //========== unmatrix() ========================================================
 //
@@ -594,6 +631,60 @@ int unmatrix( Matrix4 *originalMatrix, TransformationComponents *decomposed )
  	// All done!
  	return 1;
 }
+
+
+//========== rotateMatrix4() ===================================================
+//
+// Purpose:		Rotates the given matrix by the given number of degrees around 
+//				each axis, placing the rotated matrix into the Matrix specified 
+//				by the result parameter. Also returns result.
+//
+// Note:		You may safely pass the same matrix for original and result.
+//
+//==============================================================================
+Matrix4* rotateMatrix4(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result)
+{
+	TransformationComponents	rotateComponents	= IdentityComponents;
+	Matrix4						addedRotation		= {0};
+	Matrix4						newMatrix			= {0};
+
+	//Create a new matrix that causes the rotation we want.
+	//  (start with identity matrix)
+	rotateComponents.rotate_X = radians(degreesToRotate->x);
+	rotateComponents.rotate_Y = radians(degreesToRotate->y);
+	rotateComponents.rotate_Z = radians(degreesToRotate->z);
+	addedRotation = createTransformationMatrix(&rotateComponents);
+	
+	V3MatMul(original, &addedRotation, &newMatrix); //rotate at rotationCenter
+	
+	//Copy in the answer. Doing it via the temporary newMatrix variable means we
+	// can pass the same parameter for original and result.
+	*result = newMatrix;
+	
+	return result;
+
+}//end rotateMatrix4
+
+//========== translateMatrix4() ================================================
+//
+// Purpose:		Translates the given matrix by the given displacement, placing 
+//				the translated matrix into the Matrix specified by the result 
+//				parameter. Also returns result.
+//
+// Note:		You may safely pass the same matrix for original and result.
+//
+//==============================================================================
+Matrix4* translateMatrix4(Matrix4 *original, Vector3 *displacement, Matrix4 *result){
+	//Copy original to result
+	if(original != result) //pointer compare
+		*result = *original;
+	
+	result->element[3][0] += displacement->x; //applied directly to 
+	result->element[3][1] += displacement->y; //the matrix because 
+	result->element[3][2] += displacement->z; //that's easier here.
+	
+	return result;
+}//end translateMatrix4
 
 
 //========== transposeMatrix4() ================================================
@@ -765,6 +856,4 @@ float det4x4( Matrix4 *m )
         - d1 * det3x3( a2, a3, a4, b2, b3, b4, c2, c3, c4);
     return ans;
 }
-
-
 

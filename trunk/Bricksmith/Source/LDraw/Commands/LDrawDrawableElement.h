@@ -17,6 +17,7 @@
 	
 	LDrawColorT		color;
 	GLfloat			glColor[4]; //OpenGL equivalent of the LDrawColor.
+	BOOL			hidden;		//YES if we don't draw this.
 }
 
 //Directives
@@ -24,8 +25,10 @@
 
 //Accessors
 - (Box3) boundingBox3;
--(LDrawColorT) LDrawColor;
--(void) setLDrawColor:(LDrawColorT)newColor;
+- (BOOL) isHidden;
+- (LDrawColorT) LDrawColor;
+- (void) setHidden:(BOOL)flag;
+- (void) setLDrawColor:(LDrawColorT)newColor;
 
 //Actions
 - (void) nudge:(Vector3)nudgeVector;

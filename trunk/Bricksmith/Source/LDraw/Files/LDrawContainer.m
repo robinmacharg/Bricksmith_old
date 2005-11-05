@@ -109,27 +109,7 @@
 //
 //==============================================================================
 - (Box3) boundingBox3 {
-	Box3	bounds				= InvalidBox;
-	Box3	partBounds			= {0};
-	id		currentDirective	= nil;
-	int		counter				= 0;
-	
-	for(counter = 0; counter < [containedObjects count]; counter++){
-		currentDirective = [containedObjects objectAtIndex:counter];
-		if([currentDirective respondsToSelector:@selector(boundingBox3)]) {
-			partBounds = [currentDirective boundingBox3];
-			
-			bounds.min.x = MIN(bounds.min.x, partBounds.min.x);
-			bounds.min.y = MIN(bounds.min.y, partBounds.min.y);
-			bounds.min.z = MIN(bounds.min.z, partBounds.min.z);
-			
-			bounds.max.x = MAX(bounds.max.x, partBounds.max.x);
-			bounds.max.y = MAX(bounds.max.y, partBounds.max.y);
-			bounds.max.z = MAX(bounds.max.z, partBounds.max.z);
-		}
-	}
-	
-	return bounds;
+	return [LDrawDirective boundingBox3ForDirectives:self->containedObjects];
 }
 
 

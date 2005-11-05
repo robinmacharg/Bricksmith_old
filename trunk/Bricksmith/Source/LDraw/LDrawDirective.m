@@ -354,6 +354,43 @@
 }
 
 
+//========== boundingBox3 ======================================================
+//
+// Purpose:		Returns the minimum and maximum points of the box which 
+//				perfectly contains all the given objects. (Only objects which 
+//				respond to -boundingBox3 will be tested.)
+//
+// Notes:		This method used to live in LDrawContainer, which was a very 
+//				nice place. But I moved it here so that other interested parties 
+//				could do bounds testing on ad-hoc collections of directives.
+//
+//==============================================================================
++ (Box3) boundingBox3ForDirectives:(NSArray *)directives {
+	Box3	bounds				= InvalidBox;
+	Box3	partBounds			= {0};
+	id		currentDirective	= nil;
+	int		numberOfDirectives	= [directives count];
+	int		counter				= 0;
+	
+	for(counter = 0; counter < numberOfDirectives; counter++){
+		currentDirective = [directives objectAtIndex:counter];
+		if([currentDirective respondsToSelector:@selector(boundingBox3)]) {
+			partBounds = [currentDirective boundingBox3];
+			
+			bounds.min.x = MIN(bounds.min.x, partBounds.min.x);
+			bounds.min.y = MIN(bounds.min.y, partBounds.min.y);
+			bounds.min.z = MIN(bounds.min.z, partBounds.min.z);
+			
+			bounds.max.x = MAX(bounds.max.x, partBounds.max.x);
+			bounds.max.y = MAX(bounds.max.y, partBounds.max.y);
+			bounds.max.z = MAX(bounds.max.z, partBounds.max.z);
+		}
+	}
+	
+	return bounds;
+}//end boundingBox3ForDirectives
+
+
 //========== classForLineType ==================================================
 //
 // Purpose:		Allows initializing the right kind of class based on the code 

@@ -4,7 +4,8 @@
 //
 // Purpose:		Document controller for an LDraw document.
 //
-//				Opens the document and manages its editor and viewer.
+//				Opens the document and manages its editor and viewer. This is 
+//				the central class of the application's user interface.
 //
 //  Created by Allen Smith on 2/14/05.
 //  Copyright (c) 2005. All rights reserved.
@@ -105,7 +106,6 @@
 	[fileContentsOutline setDoubleAction:@selector(showInspector:)];
 	[fileContentsOutline setVerticalMotionCanBeginDrag:YES];
 	[fileContentsOutline registerForDraggedTypes:[NSArray arrayWithObject:LDrawDirectivePboardType]];
-	[fileContentsOutline reloadData];
 	
 	
 	//Set our size to whatever it was last time. (We don't do the whole frame 
@@ -130,7 +130,7 @@
 	
 	
 	//Display our model.
-	[fileGraphicView setLDrawDirective:[self documentContents]];
+	[self loadDataIntoDocumentUI];
 	
 	
 	//Notifications we want.
@@ -185,10 +185,27 @@
 	LDrawFile *newFile = [LDrawFile parseFromFileContents:fileContents];
 	
 	[self setDocumentContents:newFile];
-	[fileContentsOutline reloadData];
 	
     return YES;
 }//end loadDataRepresentation:ofType:
+
+
+//========== revertToSavedFromFile:ofType: =====================================
+//
+// Purpose:		Called by NSDocument when it reverts the document to its most 
+//				recently saved state.
+//
+//==============================================================================
+- (BOOL)revertToSavedFromFile:(NSString *)fileName ofType:(NSString *)type
+{
+	//Causes loadDataRepresentation:ofType: to be invoked.
+	[super revertToSavedFromFile:fileName ofType:type];
+	
+	//Display the new document contents. 
+	//		(Alas. This doesn't happen automatically.)
+	[self loadDataIntoDocumentUI];
+	
+}//end revertToSavedFromFile:ofType:
 
 
 #pragma mark -
@@ -233,15 +250,20 @@
 //				document represents to newContents. This method should be called 
 //				when the document is first created.
 //
+// Notes:		This method intentionally avoids making the user interface aware 
+//				of the new contents. This is because this method is generally 
+//				called prior to loading the Nib file. (It also gets called when 
+//				reverting.) There is a separate method, -loadDataIntoDocumentUI,
+//				to sync the UI.
+//
 //==============================================================================
 - (void) setDocumentContents:(LDrawFile *)newContents{
 	[newContents retain];
 	[documentContents release];
 	
 	documentContents = newContents;
-	
-	[self addModelsToMenu];
-}
+		
+}//end setDocumentContents:
 
 
 //========== setGridSpacingMode: ===============================================
@@ -1931,7 +1953,9 @@
 	[[LDrawApplication sharedInspector] inspectObjects:nil];
 
 	//Bug: if this document isn't the foremost window, this will botch up the menu!
-	[self clearModelMenus];
+	// remember, we can close windows in the background.
+	if([window isMainWindow] == YES)
+		[self clearModelMenus];
 }
 
 #pragma mark -
@@ -2493,6 +2517,28 @@
 	return [styledString autorelease];
 
 }//end formatDirective:withStringRepresentation:
+
+
+//========== loadDataIntoDocumentUI ============================================
+//
+// Purpose:		Informs the document's user interface widgets about the contents 
+//				of the document they are supposed to be representing.
+//
+//				There are two occasions when this method must be called:
+//					1) immediately after the document UI has first been loaded
+//						(in windowControllerDidLoadNib:)
+//					2) when reverting the document.
+//						(in revertToSavedFromFile:ofType:)
+//
+//==============================================================================
+- (void) loadDataIntoDocumentUI {
+	
+	[self->fileGraphicView		setLDrawDirective:[self documentContents]];
+	[self->fileContentsOutline	reloadData];
+	
+	[self addModelsToMenu];
+
+}//end loadDataIntoDocumentUI
 
 
 //========== selectedObjects ===================================================

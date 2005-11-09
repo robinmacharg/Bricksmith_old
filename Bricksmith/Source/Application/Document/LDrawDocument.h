@@ -134,6 +134,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) clearModelMenus;
 - (BOOL) elementsAreSelectedOfVisibility:(BOOL)visibleFlag;
 - (NSAttributedString *) formatDirective:(LDrawDirective *)item withStringRepresentation:(NSString *)representation;
+- (void) loadDataIntoDocumentUI;
 - (NSArray *) selectedObjects;
 - (LDrawMPDModel *) selectedModel;
 - (LDrawStep *) selectedStep;

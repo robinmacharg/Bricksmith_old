@@ -27,6 +27,9 @@
 	
 	GLfloat			glTransformation[16];
 	BOOL			matrixIsReversed;
+
+	BOOL			hasDisplayList;
+	GLuint			displayListTag;	//list ID for normals in non-inverted matrix
 }
 
 //Initialization
@@ -56,5 +59,6 @@
 - (void) rotateByDegrees:(Tuple3)degreesToRotate centerPoint:(Point3)center;
 
 //Utilities
+- (void) optimize;
 
 @end

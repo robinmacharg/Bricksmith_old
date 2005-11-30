@@ -15,12 +15,14 @@
 //				* a - i are orientation & scaling parameters
 //				* part.dat is the filename of the included file 
 //
+//
 //  Created by Allen Smith on 2/19/05.
 //  Copyright (c) 2005. All rights reserved.
 //==============================================================================
 #import "LDrawPart.h"
 
 #import <math.h>
+#import <string.h>
 
 #import "LDrawApplication.h"
 #import "LDrawFile.h"
@@ -67,13 +69,13 @@
 //
 //==============================================================================
 + (id) directiveWithString:(NSString *)lineFromFile{
-	LDrawPart		*parsedPart = nil;
-	NSString		*workingLine = lineFromFile;
-	NSString		*parsedField;
+	LDrawPart		*parsedPart		= nil;
+	NSString		*workingLine	= lineFromFile;
+	NSString		*parsedField	= nil;
 	
 	Matrix4			 transformation = {0};
-	Point3		 workingPosition;
-	Vector3		 transformationVector;
+	Point3			 workingPosition;
+	Vector3			 transformationVector;
 	
 	//A malformed part could easily cause a string indexing error, which would 
 	// raise an exception. We don't want this to happen here.
@@ -260,12 +262,22 @@
 	//glMatrixMode(GL_MODELVIEW); //unnecessary, we set the matrix mode at the beginning of drawing.
 	glPushMatrix();
 		glMultMatrixf(glTransformation);
-		if((optionsMask & DRAW_BOUNDS_ONLY) == 0)
-			[modelToDraw draw:optionsMask parentColor:parentColor];
+		if((optionsMask & DRAW_BOUNDS_ONLY) == 0){
+			
+			//Display lists only valid when not reversing normals.
+			if(		hasDisplayList == YES
+				&&	(optionsMask & DRAW_REVERSE_NORMALS) == 0)
+			{
+				glCallList(self->displayListTag);
+			}
+			else
+				[modelToDraw draw:optionsMask parentColor:parentColor];
+		}
 		else
 			[self drawBounds];
 	glPopMatrix();
-}
+
+}//end drawElement:parentColor:
 
 
 //========== drawBounds ========================================================
@@ -601,6 +613,19 @@
 }
 
 
+//========== setLDrawColor: ====================================================
+//
+// Purpose:		Sets the color of this element.
+//
+//==============================================================================
+-(void) setLDrawColor:(LDrawColorT)newColor{
+	
+	[super setLDrawColor:newColor];
+	[self optimize];
+	
+}//end setColor
+
+
 //========== setDisplayName: ===================================================
 //
 // Purpose:		Updates the name of the part. This is the filename where the 
@@ -623,6 +648,8 @@
 	[newReferenceName retain];
 	[referenceName release];
 	referenceName = newReferenceName;
+	
+	[self optimize];
 }//end setPartName
 
 
@@ -683,7 +710,8 @@
 	for(row = 0; row < 4; row++)
 		for(column = 0; column < 4; column++)
 			glTransformation[row * 4 + column] = newMatrix->element[row][column];
-}
+	
+}//end setTransformationMatrix
 
 
 #pragma mark -
@@ -931,6 +959,54 @@
 #pragma mark -
 
 
+//========== optimize ==========================================================
+//
+// Purpose:		Makes this part run faster by compiling its contents into a 
+//				display list if possible.
+//
+// Note:		We only provide optimization for non-inverted parts. The 
+//				expectation is that inverted parts are very rare in the user 
+//				space, and if someone is dumb enough to make one, he deserves 
+//				punishment.
+//
+//==============================================================================
+- (void) optimize {
+
+	//Only optimize explicitly colored parts.
+	// Obviously it would be better to optimize uncolored parts inside the 
+	// library, but alas, uncolored parts need to know about the current color 
+	// as they are drawn, which is anathema to optimization. Rats.
+	if(self->referenceName != nil && self->color != LDrawCurrentColor){
+		LDrawModel *referencedSubmodel	= [self referencedMPDSubmodel];
+		LDrawModel *modelToDraw			= [[LDrawApplication sharedPartLibrary] modelForPart:self];
+		
+		//Don't optimize MPD references. The user can change their referenced
+		// contents, and I don't want to have to keep track of invalidating 
+		// display lists when he does.
+		if(referencedSubmodel == nil && modelToDraw != nil){
+			
+			if(self->hasDisplayList == NO)
+				self->displayListTag = glGenLists(1); //create new list name
+			//else
+				//recycle old list name.
+			
+			//Don't ask the part to draw itself, either. Parts modify the 
+			// transformation matrix, and we want our display list to be 
+			// independent of the transformation. So we shortcut part 
+			// drawing and do the model itself.
+			glNewList(displayListTag, GL_COMPILE);
+				[modelToDraw draw:DRAW_NO_OPTIONS parentColor:self->glColor];
+			glEndList();
+			
+			self->hasDisplayList = YES;
+		}
+	}
+	else
+		self->hasDisplayList = NO;
+
+}//end optimize
+
+
 //========== registerUndoActions ===============================================
 //
 // Purpose:		Registers the undo actions that are unique to this subclass, 
@@ -947,5 +1023,29 @@
 	[undoManager setActionName:NSLocalizedString(@"UndoAttributesPart", nil)];
 }
 
+
+#pragma mark -
+#pragma mark DESTRUCTOR
+#pragma mark -
+
+//========== dealloc ===========================================================
+//
+// Purpose:		It's time to go home to that great Lego room in the sky--where 
+//				all teeth marks on secondhand bricks are healed, where the gold 
+//				print never rubs off the classic spacemen, and where the white 
+//				bricks never discolor.
+//
+//==============================================================================
+- (void) dealloc {
+	//release instance variables.
+	[displayName	release];
+	[referenceName	release];
+	
+	//give our display list back
+	if(self->hasDisplayList)
+		glDeleteLists(displayListTag, 1);
+	
+	[super dealloc];
+}
 
 @end

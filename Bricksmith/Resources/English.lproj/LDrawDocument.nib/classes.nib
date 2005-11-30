@@ -24,6 +24,7 @@
             }; 
             SUPERCLASS = NSObject; 
         }, 
+        {CLASS = ExtendedSplitView; LANGUAGE = ObjC; SUPERCLASS = NSSplitView; }, 
         {CLASS = IconTextCell; LANGUAGE = ObjC; SUPERCLASS = NSTextFieldCell; }, 
         {
             ACTIONS = {
@@ -34,6 +35,7 @@
                 addPartClicked = id; 
                 addQuadrilateralClicked = id; 
                 addStepClicked = id; 
+                addSubmodelReferenceClicked = id; 
                 addTriangleClicked = id; 
                 advanceOneStep = id; 
                 backOneStep = id; 
@@ -42,9 +44,13 @@
                 delete = id; 
                 duplicate = id; 
                 gridGranularityMenuChanged = id; 
+                hideParts = id; 
                 modelSelected = id; 
                 paste = id; 
+                showDimensions = id; 
                 showInspector = id; 
+                showParts = id; 
+                showPieceCount = id; 
                 snapSelectionToGrid = id; 
                 toggleFileContentsDrawer = id; 
                 togglePartBrowserDrawer = id; 
@@ -58,10 +64,15 @@
             OUTLETS = {
                 fileContentsDrawer = NSDrawer; 
                 fileContentsOutline = LDrawFileOutlineView; 
+                fileDetailView1 = LDrawGLView; 
+                fileDetailView2 = LDrawGLView; 
+                fileDetailView3 = LDrawGLView; 
                 fileGraphicView = LDrawGLView; 
+                horizontalSplitView = ExtendedSplitView; 
                 partBrowserDrawer = NSDrawer; 
                 partsBrowser = PartBrowserDataSource; 
                 toolbarController = DocumentToolbarController; 
+                verticalDetailSplitView = ExtendedSplitView; 
             }; 
             SUPERCLASS = NSDocument; 
         }, 

@@ -28,6 +28,7 @@
 
 #import "DimensionsPanel.h"
 #import "DocumentToolbarController.h"
+#import "ExtendedSplitView.h"
 #import "IconTextCell.h"
 #import "Inspector.h"
 #import "LDrawApplication.h"
@@ -128,7 +129,27 @@
 	if(drawerState == NSDrawerOpenState)
 		[fileContentsDrawer open];
 	
+	//We have to do the splitview saving manually. C'mon Apple, get with it!
+	[horizontalSplitView		setAutosaveName:@"Horizontal LDraw Splitview"];
+	[verticalDetailSplitView	setAutosaveName:@"Vertical LDraw Splitview"];
 	
+	[horizontalSplitView		restoreConfiguration];
+	[verticalDetailSplitView	restoreConfiguration];
+	
+	[fileGraphicView	setAutosaveName:@"fileGraphicView"];
+	[fileDetailView1	setAutosaveName:@"fileDetailView1"];
+	[fileDetailView2	setAutosaveName:@"fileDetailView2"];
+	[fileDetailView3	setAutosaveName:@"fileDetailView3"];
+	
+	[fileGraphicView	restoreConfiguration];
+	[fileDetailView1	restoreConfiguration];
+	[fileDetailView2	restoreConfiguration];
+	[fileDetailView3	restoreConfiguration];
+	
+	[fileDetailView1	setZoomPercentage:75];
+	[fileDetailView2	setZoomPercentage:75];
+	[fileDetailView3	setZoomPercentage:75];
+
 	//Display our model.
 	[self loadDataIntoDocumentUI];
 	
@@ -1869,6 +1890,20 @@
 }//end LDrawGLView:wantsToSelectDirective:byExtendingSelection:
 
 #pragma mark -
+#pragma mark SPLIT VIEW
+#pragma mark -
+
+//========== splitView:canCollapseSubview: =====================================
+//
+// Purpose:		Collapsing is good if we don't like this thing.
+//
+//==============================================================================
+- (BOOL)splitView:(NSSplitView *)sender canCollapseSubview:(NSView *)subview
+{
+	return YES;
+}
+
+#pragma mark -
 #pragma mark NOTIFICATIONS
 #pragma mark -
 
@@ -1948,6 +1983,7 @@
 	[userDefaults setInteger:[fileContentsDrawer state]	forKey:FILE_CONTENTS_DRAWER_STATE];
 	
 	[userDefaults setObject:NSStringFromSize([window frame].size) forKey:DOCUMENT_WINDOW_SIZE];
+	[userDefaults synchronize]; //because we may be quitting, we have to force this here.
 	
 	//Un-inspect everything
 	[[LDrawApplication sharedInspector] inspectObjects:nil];
@@ -2534,6 +2570,9 @@
 - (void) loadDataIntoDocumentUI {
 	
 	[self->fileGraphicView		setLDrawDirective:[self documentContents]];
+	[self->fileDetailView1		setLDrawDirective:[self documentContents]];
+	[self->fileDetailView2		setLDrawDirective:[self documentContents]];
+	[self->fileDetailView3		setLDrawDirective:[self documentContents]];
 	[self->fileContentsOutline	reloadData];
 	
 	[self addModelsToMenu];

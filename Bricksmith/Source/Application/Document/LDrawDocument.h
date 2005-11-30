@@ -14,6 +14,7 @@
 #import "LDrawFile.h"
 #import "MatrixMath.h"
 @class DocumentToolbarController;
+@class ExtendedSplitView;
 @class LDrawDrawableElement;
 @class LDrawFileOutlineView;
 @class LDrawGLView;
@@ -45,7 +46,12 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 	IBOutlet LDrawFileOutlineView		*fileContentsOutline;
 	IBOutlet PartBrowserDataSource		*partsBrowser;
 	
+	IBOutlet ExtendedSplitView			*horizontalSplitView;
+	IBOutlet ExtendedSplitView			*verticalDetailSplitView;
 	IBOutlet LDrawGLView				*fileGraphicView;
+	IBOutlet LDrawGLView				*fileDetailView1;
+	IBOutlet LDrawGLView				*fileDetailView2;
+	IBOutlet LDrawGLView				*fileDetailView3;
 	
 	@private
 		LDrawFile		*documentContents;

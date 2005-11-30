@@ -251,7 +251,7 @@ Box3 *V3BoundsFromPoints(Point3 *point1, Point3 *point2, Box3 *bounds) {
 // Purpose:		Returns 1 (YES) if the two boxes are equal; 0 otherwise.
 //
 //==============================================================================
-extern int V3EqualsBoxes(Box3 *box1, Box3 *box2){
+int V3EqualsBoxes(const Box3 *box1, const Box3 *box2){
 	return (	box1->min.x == box2->min.x,
 				box1->min.y == box2->min.y,
 				box1->min.z == box2->min.z,
@@ -386,12 +386,12 @@ Vector4 V4FromV3(Vector3 *originalVector) {
 // Purpose:		Returns a two-dimensional (row matrix) representation of the 
 //				given OpenGL transformation matrix.
 //
-//																+-       -+
-//				+-                           -+        +-     -+| a d g 0 |
-//				|a d g 0 b e h c f i 0 x y z 1|  -->   |x y z 1|| b e h 0 |
-//				+-                           -+        +-     -+| c f i 0 |
-//																| x y z 1 |
-//																+-       -+
+//																  +-       -+
+//				+-                             -+        +-     -+| a d g 0 |
+//				|a d g 0 b e h 0 c f i 0 x y z 1|  -->   |x y z 1|| b e h 0 |
+//				+-                             -+        +-     -+| c f i 0 |
+//													              | x y z 1 |
+//																  +-       -+
 //					  OpenGL Matrix Format                Matrix4 Format
 //				(flat column-major of transpose)   (shown multiplied by a point)  
 //

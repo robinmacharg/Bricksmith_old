@@ -21,13 +21,16 @@
 #import "LDrawModel.h"
 #import "LDrawStep.h"
 #import "MacLDraw.h"
-#import "MatrixMath.h"
 
 @implementation LDrawGLView
 
 //========== awakeFromNib ======================================================
 //
 // Purpose:		Set up our Cocoa viewing.
+//
+// Notes:		This method will get called twice: once because we load our 
+//				accessory view from a Nib file, and once when this object is 
+//				unpacked from the Nib in which it's stored.
 //
 //==============================================================================
 - (void) awakeFromNib {
@@ -39,7 +42,10 @@
 		[self scrollCenterToPoint:NSMakePoint( NSWidth(frame)/2, NSHeight(frame)/2 )];
 		[superview setCopiesOnScroll:NO];
 	}
-		
+	
+	//Machinery needed to draw Quartz overtop OpenGL. Sadly, it caused our view 
+	// to become transparent when minimizing to the dock. In the end, I didn't 
+	// need it anyway.
 //	long backgroundOrder = -1;
 //	[[self openGLContext] setValues:&backgroundOrder forParameter: NSOpenGLCPSurfaceOrder];
 //
@@ -74,10 +80,19 @@
 	
 	self = [super initWithCoder: coder];
 	
+	//Yes, we have a nib file. Don't laugh. This view has an accessory menu.
+	[NSBundle loadNibNamed:@"LDrawGLViewAccessories" owner:self];
+	
 	[self setAcceptsFirstResponder:YES];
-	[self setHasInfiniteDepth:NO];
 	[self setLDrawColor:LDrawCurrentColor];
-	rotationDrawMode = LDrawGLDrawNormal;
+	currentKeyCharacters	= @"";
+	currentKeyModifiers		= 0;
+	cameraDistance			= -10000;
+	isDragging				= NO;
+	projectionMode			= ProjectionModePerspective;
+	rotationDrawMode		= LDrawGLDrawNormal;
+	toolMode				= RotateSelectTool;
+	viewingAngle			= ViewingAngle3D;
 	
 	
 	//Set up our OpenGL context. We need to base it on a shared context so that 
@@ -113,14 +128,20 @@
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //	glEnable(GL_LINE_SMOOTH); //makes lines transparent! Bad!
-//	glEnableClientState(GL_VERTEX_ARRAY);
-//	glEnableClientState(GL_NORMAL_ARRAY);
 	
-	//orient us correctly for an LDraw coordinate system, which is 
-	// inexplicably upside-down.
+	//
+	// Define the lighting.
+	//
+	
+	//Our light position is transformed by the modelview matrix. That means 
+	// we need to have a standard model matrix loaded to get our light to 
+	// land in the right place! But our modelview might have already been 
+	// affected by someone calling -setViewingAngle:. So we restore the 
+	// default here.
 	glMatrixMode(GL_MODELVIEW);
-	glRotatef(180,1,0,0);
-	
+	glLoadIdentity();
+	glRotatef(180,1,0,0); //convert to standard, upside-down LDraw orientation.
+
 	float position0[] = {0, -0.5, -1, 0};
 	
 //	float lightModelAmbient[4]    = {0.1, 0.1, 0.1, 0.0};
@@ -147,6 +168,12 @@
 	
 	glLightfv(GL_LIGHT0, GL_POSITION, position0);
 	glLineWidth(1);
+	
+	//Now that the light is positioned where we want it, we can restore the 
+	// correct viewing angle.
+	[self setViewingAngle:self->viewingAngle];
+	
+	
 	
 	//Attempts to make lighting look a little nicer. None of them quite looked 
 	// right.
@@ -187,7 +214,7 @@
 	
 	//If we're rotating, we may need to simplify large models.
 #if DEBUG_DRAWING == 0
-	if(self->isRotating && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
+	if(self->isDragging && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
 		options |= DRAW_BOUNDS_ONLY;
 #endif //DEBUG_DRAWING
 	
@@ -205,7 +232,7 @@
 	
 	//If we just did a full draw, let's see if rotating needs to be done simply.
 	drawTime = -[startTime timeIntervalSinceNow];
-	if(self->isRotating == NO) {
+	if(self->isDragging == NO) {
 		if( drawTime > SIMPLIFICATION_THRESHOLD )
 			rotationDrawMode = LDrawGLDrawExtremelyFast;
 		else
@@ -222,7 +249,7 @@
 ////	[[NSColor clearColor] set];
 //	NSRectFill(visibleRect);
 
-}
+}//end drawRect:
 
 
 //- (BOOL) isOpaque
@@ -268,14 +295,38 @@
 }
 
 
-//========== hasInfiniteDepth ==================================================
+//========== getInverseMatrix ==================================================
 //
-// Purpose:		Returns whether the receiver has an inifinite field of depth.
+// Purpose:		Returns the inverse of the current modelview matrix. You can 
+//				multiply points by this matrix to convert screen locations (or 
+//				vectors) to model points.
+//
+// Note:		This function filters out the translation which is caused by 
+//				"moving" the camera with gluLookAt. That allows us to continue 
+//				working with the model as if it's positioned at the origin, 
+//				which means that points we generate with this matrix will 
+//				correspond to points in the LDraw model itself.
 //
 //==============================================================================
-- (BOOL) hasInfiniteDepth {
-	return self->hasInfiniteDepth;
-}
+- (Matrix4) getInverseMatrix {
+	GLfloat	currentMatrix[16];
+	Matrix4	transformation;
+	Matrix4	inversed;
+	
+	glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
+	transformation = matrix4FromGLMatrix4(currentMatrix); //convert to our utility library format
+	
+	//When using a perspective view, we must use gluLookAt to reposition the camera. 
+	// That basically means translating the model. But all we're concerned about 
+	// here is the *rotation*, so we'll zero out the translation components.
+	transformation.element[3][0] = 0;
+	transformation.element[3][1] = 0; //translation is in the bottom row of the matrix.
+	transformation.element[3][2] = 0;
+	
+	inverse( &transformation, &inversed);
+	
+	return inversed;
+}//end getInverseMatrix
 
 
 //========== LDrawColor ========================================================
@@ -286,6 +337,27 @@
 -(LDrawColorT) LDrawColor{
 	return color;
 }//end color
+
+
+//========== projectionMode ====================================================
+//
+// Purpose:		Returns the current projection mode (perspective or 
+//				orthographic) used in the view.
+//
+//==============================================================================
+- (ProjectionModeT) projectionMode {
+	return self->projectionMode;
+}
+
+
+//========== viewingAngle ======================================================
+//
+// Purpose:		Returns the current camera orientation for this view.
+//
+//==============================================================================
+- (ViewingAngleT) viewingAngle{
+	return viewingAngle;
+}		
 
 
 //========== zoomPercentage ====================================================
@@ -315,26 +387,26 @@
 }
 
 
-//========== setAcceptsFirstResponder: ==========================================
+//========== setAcceptsFirstResponder: =========================================
 //
 // Purpose:		Do we want to pick up key events?
 //
 //==============================================================================
-- (void)setAcceptsFirstResponder:(BOOL)flag {
+- (void) setAcceptsFirstResponder:(BOOL)flag {
 	self->acceptsFirstResponder = flag;
 }
 
 
-//========== hasInfiniteDepth ==================================================
+//========== setAutosaveName: ==================================================
 //
-// Purpose:		Sets whether the receiver has an inifinite field of depth.
-//				If YES, then the projection matrix will not clip any points near 
-//				or far from the viewer. If NO, the object being drawn will be 
-//				clipped, in such a way that one can zoom inside it.
+// Purpose:		Sets the name under which this view saves its viewing 
+//				configuration. Pass nil for no saving.
 //
 //==============================================================================
-- (void) setHasInfiniteDepth:(BOOL)newSetting {
-	self->hasInfiniteDepth = newSetting;
+- (void) setAutosaveName:(NSString *)newName {
+	[newName retain];
+	[self->autosaveName release];
+	autosaveName = newName;
 }
 
 
@@ -397,12 +469,84 @@
 }//end setLDrawDirective:
 
 
+//========== setProjectionMode: ================================================
+//
+// Purpose:		Sets the projection used when drawing the receiver:
+//					- orthographic is like a Mercator map; it distorts deeper 
+//									objects.
+//					- perspective draws deeper objects toward a vanishing point; 
+//									this is how humans see the world.
+//
+//==============================================================================
+- (void) setProjectionMode:(ProjectionModeT) newProjectionMode
+{
+	self->projectionMode = newProjectionMode;
+	
+	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
+	glLoadIdentity();
+	[self makeProjection];
+	
+	[self setNeedsDisplay:YES];
+	
+} //end setProjectionMode:
+
+
+//========== setViewingAngle: ==================================================
+//
+// Purpose:		Changes the camera position from which we view the model. 
+//				i.e., ViewingAngleFront means we see the model head-on.
+//
+//==============================================================================
+- (void) setViewingAngle:(ViewingAngleT) newAngle {
+
+	self->viewingAngle = newAngle;
+		
+	//This method can get called from -prepareOpenGL, which is itself called 
+	// from -makeCurrentContext. That's a recipe for infinite recursion. So, 
+	// we only makeCurrentContext if we *need* to.
+	if([NSOpenGLContext currentContext] != [self openGLContext])
+		[[self openGLContext] makeCurrentContext];
+	
+	
+	//Get the default angle.
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	
+	//The camera distance was set for us by -resetFrameSize, so as to be able 
+	// to see the entire model.
+	gluLookAt( 0, 0, cameraDistance, //camera location
+			   0,0,0, //look-at point
+			   0, -1, 0 ); //LDraw is upside down.
+	
+	//okay, now we are oriented looking at the front of the model.
+	switch(newAngle){
+		case ViewingAngle3D:
+			
+			glRotatef( 45, 0, 1, 0);
+			glRotatef( 45, 1, 0, 1);
+			
+			break;
+		case ViewingAngleFront:			glRotatef(  0, 0, 0, 0); break;
+		case ViewingAngleBack:			glRotatef(180, 0, 1, 0); break;
+		case ViewingAngleLeft:			glRotatef(-90, 0, 1, 0); break;
+		case ViewingAngleRight:			glRotatef( 90, 0, 1, 0); break;
+		case ViewingAngleTop:			glRotatef( 90, 1, 0, 0); break;
+		case ViewingAngleBottom:		glRotatef(-90, 1, 0, 0); break;
+	}
+	
+	[self setNeedsDisplay:YES];
+	
+}//end setViewingAngle:
+
+
 //========== setZoomPercentage: ================================================
 //
 // Purpose:		Enlarges (or reduces) the magnification on this view. The center 
 //				point of the original magnification remains the center point of 
 //				the new magnification. Does absolutely nothing if this view 
 //				isn't contained within a scroll view.
+//
+// Parameters:	newPercentage: new zoom; pass 100 for 100%, etc.
 //
 //==============================================================================
 - (void) setZoomPercentage:(float) newPercentage {
@@ -432,6 +576,28 @@
 #pragma mark -
 #pragma mark ACTIONS
 #pragma mark -
+
+//========== viewingAngleSelected: =============================================
+//
+// Purpose:		The user has chosen a new viewing angle from a menu.
+//				sender is the menu item, whose tag is the viewing angle.
+//
+//==============================================================================
+- (IBAction) viewingAngleSelected:(id)sender {
+	
+	ViewingAngleT newAngle = [sender tag];
+	
+	[self setViewingAngle:newAngle];
+	
+	//We treat 3D as a request for perspective, but any straight-on view can 
+	// logically be expected to be displayed orthographically.
+	if(newAngle == ViewingAngle3D)
+		[self setProjectionMode:ProjectionModePerspective];
+	else
+		[self setProjectionMode:ProjectionModeOrthographic];
+	
+}//end viewingAngleSelected:
+
 
 //========== zoomIn: ===========================================================
 //
@@ -467,7 +633,7 @@
 //				the rest of the file's views about this event.
 //
 //==============================================================================
-- (BOOL)becomeFirstResponder {
+- (BOOL) becomeFirstResponder {
 	BOOL success = [super becomeFirstResponder];
 	
 	if(self->document != nil) {
@@ -476,6 +642,116 @@
 	
 	return success;
 }
+
+
+//========== resetCursor =======================================================
+//
+// Purpose:		Force a mouse-cursor update. We call this whenever a significant 
+//				event occurs, such as a click or keypress.
+//
+//==============================================================================
+- (void) resetCursor {
+	
+	//It seems -invalidateCursorRectsForView: only causes -resetCursorRects to 
+	// get called if there is currently a cursor in force. So we oblige it.
+	[self addCursorRect:[self visibleRect] cursor:[NSCursor arrowCursor]];
+	
+	[[self window] invalidateCursorRectsForView:self];
+}
+
+
+//========== resetCursorRects ==================================================
+//
+// Purpose:		Update the document cursor to reflect the current state of 
+//				events.
+//
+//				To simplify, we set a single cursor for the entire view. 
+//				Whenever the mouse enters our frame, the AppKit automatically 
+//				takes care of adjusting the cursor. This method itself is called 
+//				by the AppKit when necessary. We also coax it into happening 
+//				more frequently by calling. See -resetCursor.
+//
+// Note:		Because this is the central command center for cursor updates, 
+//				it also became the place where keys are analyzed for tool 
+//				changes.
+//
+//==============================================================================
+- (void) resetCursorRects
+{
+//	NSLog(@"resetting cursors");
+	[super resetCursorRects];
+	
+	NSRect		 visibleRect	= [self visibleRect];
+	BOOL		 isClicked		= NO; /*[[NSApp currentEvent] type] == NSLeftMouseDown;*/ //not enough; overwhelmed by repeating key events
+	NSCursor	*cursor			= nil;
+	
+	//Zoom out (option-space-click)
+	if(		(self->currentKeyModifiers & NSAlternateKeyMask) != 0
+		&&	[self->currentKeyCharacters isEqualToString:@" "] )
+	{
+		self->toolMode = ZoomOutTool;
+		
+		NSImage *zoomOutImage = [NSImage imageNamed:@"ZoomOutCursor"];
+		cursor = [[[NSCursor alloc] initWithImage:zoomOutImage
+										  hotSpot:NSMakePoint(7, 10)] autorelease];
+	}
+	//Zoom in (command-space-click)
+	else if(	(self->currentKeyModifiers & NSCommandKeyMask) != 0
+			&&	[self->currentKeyCharacters isEqualToString:@" "] )
+	{
+		self->toolMode = ZoomInTool;
+		
+		NSImage *zoomInImage = [NSImage imageNamed:@"ZoomInCursor"];
+		cursor = [[[NSCursor alloc] initWithImage:zoomInImage
+										  hotSpot:NSMakePoint(7, 10)] autorelease];
+	}
+	//Smooth Zoom (command-drag)
+	else if( (self->currentKeyModifiers & NSCommandKeyMask) != 0 )
+	{
+		self->toolMode = SmoothZoomTool;
+		
+		NSImage *zoomImage = [NSImage imageNamed:@"ZoomCursor"];
+		cursor = [[[NSCursor alloc] initWithImage:zoomImage
+										  hotSpot:NSMakePoint(7, 10)] autorelease];
+	}
+	//Panning (space-drag)
+	else if([self->currentKeyCharacters isEqualToString:@" "]) //spacebar
+	{
+		self->toolMode = PanScrollTool;
+	
+		if(self->isDragging == YES || isClicked == YES)
+			cursor = [NSCursor closedHandCursor];
+		else
+			cursor = [NSCursor openHandCursor];
+	}
+	//Rotate/select (no hot key; normal behavior)
+	else
+	{
+		self->toolMode = RotateSelectTool;
+		//don't add any cursor here.
+	}
+	
+	if(cursor != nil)
+		[self addCursorRect:visibleRect cursor:cursor];
+		
+}//end resetCursorRects
+
+
+#pragma mark -
+
+//========== flagsChanged: =====================================================
+//
+// Purpose:		A modifier key was pressed or released.
+//
+//==============================================================================
+- (void)flagsChanged:(NSEvent *)theEvent
+{
+	NSLog(@"modifiers changed");
+	self->currentKeyModifiers = [theEvent modifierFlags];
+	
+	[self resetCursor];
+}
+
 
 //========== keyDown: ==========================================================
 //
@@ -488,6 +764,10 @@
 	unsigned short	keycode		= [theEvent keyCode];
 	NSString		*characters	= [theEvent characters];
 	
+	NSLog(@"Key down \"%@\"", [theEvent characters]);
+	[self->currentKeyCharacters release];
+	self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
+	[self resetCursor];
 	
 	[[self openGLContext] makeCurrentContext];
 		
@@ -544,7 +824,7 @@
 				isNudge = YES;
 				break;
 			
-			case 127: //regular delete character, apparently.
+			case NSDeleteCharacter: //regular delete character, apparently.
 			case NSDeleteFunctionKey: //forward delete--documented! My gosh!
 				[NSApp sendAction:@selector(delete:)
 							   to:nil //just send it somewhere!
@@ -556,17 +836,10 @@
 		//Convert this nudge into a meaningful movement based on the current 
 		// view orientation.
 		if(isNudge == YES) {
-			//Get the current transformation matrix. By using its inverse, we can 
+			//Get the inverse of the current transformation matrix, we can 
 			// convert projection-coordinates back to the model coordinates they 
 			// are displaying.
-			GLfloat	currentMatrix[16];
-			Matrix4	transformation;
-			Matrix4	inversed;
-			
-			glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
-			transformation = matrix4FromGLMatrix4(currentMatrix); //convert to the format of our utility library
-			inverse( &transformation, &inversed);
-			
+			Matrix4 inversed = [self getInverseMatrix];
 			
 			//Now we will convert what appears to be the vertical and horizontal axes 
 			// into the actual model vectors they represent. We do this conversion 
@@ -586,6 +859,45 @@
 }//end keyDown:
 
 
+//========== keyUp: ============================================================
+//
+// Purpose:		A key has been released.
+//
+//==============================================================================
+- (void) keyUp:(NSEvent *)theEvent
+{
+	NSLog(@"Key up \"%@\"", [theEvent characters]);
+	[self->currentKeyCharacters release];
+	self->currentKeyCharacters = @"";
+	[self resetCursor];
+
+}//end keyUp:
+
+
+//========== performKeyEquivalent: =============================================
+//
+// Purpose:		This is a command-key equivalent. Since we used the command key 
+//				a bit, we need to intercept these separately--they don't come 
+//				through key-down.
+//
+//				Return NO if we don't handle that, thus allowing the menu system 
+//				to take a stab at it.
+//
+//==============================================================================
+- (BOOL) performKeyEquivalent:(NSEvent *)theEvent
+{
+	NSLog(@"key equivalent %d", [theEvent type]);
+	//This is a key-down event in disguise. We need to record the new characters.
+	[self->currentKeyCharacters release];
+	self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
+	[self resetCursor];
+
+	//Let's just say we didn't handle it.
+	return [super performKeyEquivalent:theEvent];
+}//end performKeyEquivalent:
+
+
+#pragma mark -
 
 //========== mouseDown: ========================================================
 //
@@ -594,12 +906,46 @@
 //==============================================================================
 - (void)mouseDown:(NSEvent *)theEvent
 {
-	self->isRotating = NO; //not yet, anyway. If it does, that will be 
+	self->isDragging = NO; //not yet, anyway. If it does, that will be 
 		//recorded in mouseDragged. Otherwise, this value will remain NO.
+	
+	[self resetCursor];
 }	
 
 
 //========== mouseUp: ==========================================================
+//
+// Purpose:		The mouse has been released. Figure out exactly what that means 
+//				in the wider context of what the mouse did before now.
+//
+//==============================================================================
+- (void)mouseUp:(NSEvent *)theEvent
+{
+	if(self->toolMode == RotateSelectTool){
+		//We only want to select a part if this was NOT part of a mouseDrag event.
+		// Otherwise, the selection should remain intact.
+		if(self->isDragging == NO){
+			[self mousePartSelection:theEvent];
+		}
+	}
+	
+	else if(toolMode == ZoomInTool)
+		[self zoomIn:self];
+	
+	else if(toolMode == ZoomOutTool)
+		[self zoomOut:self];
+	
+	//Redraw from our dragging operations, if necessary.
+	if(	self->isDragging == YES && rotationDrawMode == LDrawGLDrawExtremelyFast )
+		[self setNeedsDisplay:YES];
+		
+	self->isDragging = NO; //not anymore.
+	[self resetCursor];
+	
+}//end mouseUp:
+
+
+//========== mousePartSelection: ===============================================
 //
 // Purpose:		Time to see if we should select something in the model.
 //				OpenGL has a selection mode in which it records the name-tag 
@@ -625,7 +971,7 @@
 //				Confused? So am I.
 //
 //==============================================================================
-- (void)mouseUp:(NSEvent *)theEvent
+- (void)mousePartSelection:(NSEvent *)theEvent
 {
 	LDrawDirective	*clickedDirective	= nil;
 	NSView			*referenceView		= nil;
@@ -635,75 +981,66 @@
 	GLint			 viewport[4]		= {0};
 	int				 numberOfHits		= 0;
 	
-	//We only want to select a part if this was NOT part of a mouseDrag event.
-	// Otherwise, the selection should remain intact.
-	if(self->isRotating == NO){
+	//Prepare OpenGL to record hits in the viewing area. We need to feed it 
+	// a buffer which will be filled with the tags of things that got hit.
+	[[self openGLContext] makeCurrentContext];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	glSelectBuffer(512, nameBuffer);
+	glRenderMode(GL_SELECT); //switch to hit-testing mode.
+	{
+		//Prepare for recording names. These functions must be called 
+		// *after* switching to render mode.
+		glInitNames();
+		glPushName(UINT_MAX); //0 would be a valid choice, after all...
 		
-		//Prepare OpenGL to record hits in the viewing area. We need to feed it 
-		// a buffer which will be filled with the tags of things that got hit.
-		[[self openGLContext] makeCurrentContext];
-		glGetIntegerv(GL_VIEWPORT, viewport);
-		glSelectBuffer(512, nameBuffer);
-		glRenderMode(GL_SELECT); //switch to hit-testing mode.
-		{
-			//Prepare for recording names. These functions must be called 
-			// *after* switching to render mode.
-			glInitNames();
-			glPushName(UINT_MAX); //0 would be a valid choice, after all...
-			
-			//Restrict our rendering area (and thus our hit-testing region) to 
-			// a very small rectangle around the mouse position.
-			glMatrixMode(GL_PROJECTION);
-			glPushMatrix();
-			
-				glLoadIdentity();
-				
-				//Lastly, convert to viewport coordinates:
-				float pickX = viewClickedPoint.x - NSMinX(visibleRect);
-				float pickY = viewClickedPoint.y - NSMinY(visibleRect);
-				
-				gluPickMatrix(pickX,
-							  pickY,
-							  1, //width
-							  1, //height
-							  viewport);
-				
-				NSRect newFrame = [self frame];
-				//Now load the common viewing frame
-				[self makeProjection];
-				
-				glMatrixMode(GL_MODELVIEW);
-				[self->fileBeingDrawn draw:DRAW_HIT_TEST_MODE parentColor:glColor];
-				
-			//Restore original viewing matrix after mangling for the hit area.
-			glMatrixMode(GL_PROJECTION);
-			glPopMatrix();
-			
-			glFlush();
-			[[self openGLContext] flushBuffer];
-			
-			[self setNeedsDisplay:YES];
-		}
-		numberOfHits = glRenderMode(GL_RENDER);
+		//Restrict our rendering area (and thus our hit-testing region) to 
+		// a very small rectangle around the mouse position.
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
 		
-		clickedDirective = [self getPartFromHits:nameBuffer hitCount:numberOfHits];
-		//Notify our delegate about this momentous event.
-		// It's okay to send nil; that means "deselect."
-		// We want to add this to the current selection if the shift key is down.
-		if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
-		{
-			[self->document LDrawGLView:self
-				 wantsToSelectDirective:clickedDirective
-				   byExtendingSelection:([theEvent modifierFlags] & NSShiftKeyMask) != 0 ];
-		}
-	}//end mouseDrag test.
-	else{
-		self->isRotating = NO; //not anymore.
-		if(	rotationDrawMode == LDrawGLDrawExtremelyFast )
-			[self setNeedsDisplay:YES];
+			glLoadIdentity();
+			
+			//Lastly, convert to viewport coordinates:
+			float pickX = viewClickedPoint.x - NSMinX(visibleRect);
+			float pickY = viewClickedPoint.y - NSMinY(visibleRect);
+			
+			gluPickMatrix(pickX,
+						  pickY,
+						  1, //width
+						  1, //height
+						  viewport);
+			
+			NSRect newFrame = [self frame];
+			//Now load the common viewing frame
+			[self makeProjection];
+			
+			glMatrixMode(GL_MODELVIEW);
+			[self->fileBeingDrawn draw:DRAW_HIT_TEST_MODE parentColor:glColor];
+			
+		//Restore original viewing matrix after mangling for the hit area.
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		
+		glFlush();
+		[[self openGLContext] flushBuffer];
+		
+		[self setNeedsDisplay:YES];
+	}
+	numberOfHits = glRenderMode(GL_RENDER);
+	
+	clickedDirective = [self getPartFromHits:nameBuffer hitCount:numberOfHits];
+	//Notify our delegate about this momentous event.
+	// It's okay to send nil; that means "deselect."
+	// We want to add this to the current selection if the shift key is down.
+	if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
+	{
+		[self->document LDrawGLView:self
+			 wantsToSelectDirective:clickedDirective
+			   byExtendingSelection:([theEvent modifierFlags] & NSShiftKeyMask) != 0 ];
 	}
 	
-}//end mouseUp:
+
+}//end mousePartSelection:
 
 
 //========== getPartFromHits:hitCount: =========================================
@@ -804,6 +1141,49 @@
 
 //========== mouseDragged: =====================================================
 //
+// Purpose:		The user has dragged the mouse after clicking it.
+//
+//==============================================================================
+- (void)mouseDragged:(NSEvent *)theEvent
+{
+	self->isDragging = YES;
+	[self resetCursor];
+	
+	//What to do?
+	
+	if(toolMode == PanScrollTool)
+		[self panDragged:theEvent];
+		
+	else if(toolMode == SmoothZoomTool)
+		[self zoomDragged:theEvent];
+	
+	else
+		[self rotationDragged:theEvent];
+	
+}//end mouseDragged
+
+
+//========== panDrag: ==========================================================
+//
+// Purpose:		Scroll the view as the mouse is dragged across it. This is 
+//				triggered by holding down the shift key and dragging
+//				(see -mouseDragged:).
+//
+//==============================================================================
+- (void) panDragged:(NSEvent *)theEvent
+{
+	NSRect visibleRect = [self visibleRect];
+	
+	visibleRect.origin.x -= [theEvent deltaX]; //scroll the opposite direction of pull.
+	visibleRect.origin.y -= [theEvent deltaY];
+	
+	[self scrollRectToVisible:visibleRect];
+
+}//end panDragged:
+
+
+//========== rotationDragged: ==================================================
+//
 // Purpose:		Tis time to rotate the object!
 //
 //				We need to translate horizontal and vertical 2-dimensional mouse 
@@ -843,15 +1223,12 @@
 //					-1 in order to make it go the right direction.
 //
 //==============================================================================
-- (void)mouseDragged:(NSEvent *)theEvent
+- (void)rotationDragged:(NSEvent *)theEvent
 {
 	//Since there are multiple OpenGL rendering areas on the screen, we must 
 	// explicitly indicate that we are drawing into ourself. Weird yes, but 
 	// horrible things happen without this call.
 	[[self openGLContext] makeCurrentContext];
-
-	//Now we dragged!
-	self->isRotating = YES;
 
 	//Find the mouse displacement from the last known mouse point.
 	NSPoint	newPoint		= [theEvent locationInWindow];
@@ -875,14 +1252,7 @@
 	//Get the current transformation matrix. By using its inverse, we can 
 	// convert projection-coordinates back to the model coordinates they 
 	// are displaying.
-	GLfloat	currentMatrix[16];
-	Matrix4	transformation;
-	Matrix4	inversed;
-	
-	glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
-	transformation = matrix4FromGLMatrix4(currentMatrix); //convert to the format of our utility library
-	inverse( &transformation, &inversed);
-	
+	Matrix4 inversed = [self getInverseMatrix];
 	
 	//Now we will convert what appears to be the vertical and horizontal axes 
 	// into the actual model vectors they represent.
@@ -904,7 +1274,44 @@
 	
 	[self setNeedsDisplay: YES];
 	
-}
+}//end rotationDragged
+
+
+//========== zoomDragged: ======================================================
+//
+// Purpose:		Drag up means zoom in, drag down means zoom out. 1 px = 1 %.
+//
+//==============================================================================
+- (void) zoomDragged:(NSEvent *)theEvent
+{
+	float zoomChange	= [theEvent deltaY];
+	float currentZoom	= [self zoomPercentage];
+	
+	//Negative means down
+	[self setZoomPercentage:currentZoom + zoomChange];
+	
+}//end zoomDragged:
+
+
+#pragma mark -
+#pragma mark MENUS
+#pragma mark -
+
+//========== validateMenuItem: =================================================
+//
+// Purpose:		We control our own contextual menu. Since all its actions point 
+//				into this class, this is where we manage the menu items.
+//
+//==============================================================================
+- (BOOL)validateMenuItem:(id <NSMenuItem>)menuItem
+{
+	if([menuItem tag] == self->viewingAngle)
+		[menuItem setState:NSOnState];
+	else
+		[menuItem setState:NSOffState];
+		
+	return YES;
+}//end validateMenuItem:
 
 
 #pragma mark -
@@ -923,6 +1330,37 @@
 	[self resetFrameSize]; //calls setNeedsDisplay
 }//end displayNeedsUpdating
 
+
+//========== reshape ===========================================================
+//
+// Purpose:		Something changed in the viewing department; we need to adjust 
+//				our projection and viewing area.
+//
+//==============================================================================
+- (void)reshape
+{
+	[[self openGLContext] makeCurrentContext];
+
+	NSRect	visibleRect	= [self visibleRect];
+	NSRect	frame		= [self frame];
+	float	scaleFactor	= [self zoomPercentage] / 100;
+	
+	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
+	glLoadIdentity();
+	
+//	NSLog(@"GL view(%X) reshaping; frame %@", [self autoresizingMask], NSStringFromRect(frame));
+
+	//Make a new view based on the current viewable area
+	[self makeProjection];
+
+	glViewport(0,0, NSWidth(visibleRect) * scaleFactor, NSHeight(visibleRect) * scaleFactor );
+	
+}//end reshape
+
+
+#pragma mark -
+#pragma mark UTILITIES
+#pragma mark -
 
 //========== resetFrameSize: ===================================================
 //
@@ -944,11 +1382,16 @@
 			NSPoint	centerPoint		= [self centerPoint];
 			Box3	newBounds		= [(id)fileBeingDrawn boundingBox3]; //cast to silence warning.
 			
-			if(V3EqualsBoxes(&newBounds, (Box3*)&InvalidBox) == NO) {
+			if(V3EqualsBoxes(&newBounds, &InvalidBox) == NO) {
+				//
+				// Find bounds size, based on model dimensions.
+				//
+				
 				float	distance1		= V3DistanceBetween2Points(&origin, &(newBounds.min) );
 				float	distance2		= V3DistanceBetween2Points(&origin, &(newBounds.max) );
 				float	newSize			= MAX(distance1, distance2) + 40; //40 is just to provide a margin.
 				NSSize	contentSize		= [[self enclosingScrollView] contentSize];
+				GLfloat	currentMatrix[16];
 				
 				contentSize = [self convertSize:contentSize fromView:[self enclosingScrollView]];
 				
@@ -956,13 +1399,42 @@
 				// doesn't constantly change on people.
 				newSize = ceil(newSize / 384) * 384;
 				
+				//
+				// Reposition the Camera
+				//
+				
+				//As the size of the model changes, we must move the camera in and out 
+				// so as to view the entire model in the right perspective. Moving the 
+				// camera is equivalent to translating the modelview matrix. (That's what 
+				// gluLookAt does.) 
+				// Note:	glTranslatef() doesn't work here. If M is the current matrix, 
+				//			and T is the translation, it performs M = M x T. But we need 
+				//			M = T x M, because OpenGL uses transposed matrices.
+				//			Solution: set matrix manually. Is there a better one?
+				[[self openGLContext] makeCurrentContext];
+				glMatrixMode(GL_MODELVIEW);
+				glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
+				
+				//As cameraDistance approaches infinity, the view approximates an 
+				// orthographic projection. We want a fairly large number here to 
+				// produce a small, only slightly-noticable perspective.
+				self->cameraDistance = - (newSize) * CAMERA_DISTANCE_FACTOR;
+				currentMatrix[12] = 0; //reset the camera location. Positions 12-14 of 
+				currentMatrix[13] = 0; // the matrix hold the translation values.
+				currentMatrix[14] = cameraDistance;
+				glLoadMatrixf(currentMatrix); // It's easiest to set them directly.
+				
+				//
+				// Resize the Frame
+				//
+				
 				NSSize	oldFrameSize	= [self frame].size;
 //				NSSize	newFrameSize	= NSMakeSize( newSize*2, newSize*2 );
 				//Make the frame either just a little bit bigger than the size 
 				// of the model, or the same as the scroll view, whichever is larger.
 				NSSize	newFrameSize	= NSMakeSize( MAX(newSize*2, contentSize.width),
 													  MAX(newSize*2, contentSize.height) );
-													  
+				
 				//The canvas size changes will effectively be distributed equally on 
 				// all sides, because the model is always drawn in the center of the 
 				// canvas. So, our effective viewing center will only change by half 
@@ -972,51 +1444,46 @@
 				
 				[self setFrameSize:newFrameSize];
 				[self scrollCenterToPoint:centerPoint]; //must preserve this; otherwise, viewing is funky.
-
+				
 				//NSLog(@"minimum (%f, %f, %f); maximum (%f, %f, %f)", newBounds.min.x, newBounds.min.y, newBounds.min.z, newBounds.max.x, newBounds.max.y, newBounds.max.z);
 			}//end valid bounds check
 		}//end boundable check
 	}
-
+	
 	[self setNeedsDisplay:YES];
 }
 
 
-//========== reshape ===========================================================
+//========== restoreConfiguration ==============================================
 //
-// Purpose:		Something changed in the viewing department; we need to adjust 
-//				our projection and viewing area.
+// Purpose:		Restores the viewing configuration (such as camera location and 
+//				projection mode) based on data found in persistent storage. Only 
+//				has effect if an autosave name has been specified.
 //
 //==============================================================================
-- (void)reshape
-{
+- (void) restoreConfiguration {
 	
-	[[self openGLContext] makeCurrentContext];
-	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
-
-	NSRect	visibleRect	= [self visibleRect];
-	NSRect	frame		= [self frame];
-	float	scaleFactor	= [self zoomPercentage] / 100;
+	if(self->autosaveName != nil){
+		
+		NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
+		NSString		*viewingAngleKey	= [NSString stringWithFormat:@"%@ %@", LDRAW_GL_VIEW_ANGLE, self->autosaveName];
+		NSString		*projectionModeKey	= [NSString stringWithFormat:@"%@ %@", LDRAW_GL_VIEW_PROJECTION, self->autosaveName];
+		
+		[self   setViewingAngle:[userDefaults integerForKey:viewingAngleKey] ];
+		[self setProjectionMode:[userDefaults integerForKey:projectionModeKey] ];
+	}
 	
-//	NSLog(@"GL view(%X) reshaping; frame %@", [self autoresizingMask], NSStringFromRect(frame));
-	
-	//Clear current view
-	glLoadIdentity();
-	
-	//Make a new view based on the current viewable area
-	[self makeProjection];
+}//end restoreConfiguration
 
-	glViewport(0,0, NSWidth(visibleRect) * scaleFactor, NSHeight(visibleRect) * scaleFactor );
-}
-
-
-#pragma mark -
-#pragma mark UTILITIES
-#pragma mark -
 
 //========== makeProjection ====================================================
 //
 // Purpose:		Loads the viewing projection appropriate for our canvas size.
+//
+// Notes:		We intentially do NOT load the identity matrix here! This method 
+//				merely *refines* the current projection matrix. By doing so, 
+//				we can use this method with a preexisting pick matrix, to do 
+//				hit-detection. See -mouseUp:.
 //
 //==============================================================================
 - (void) makeProjection {
@@ -1025,46 +1492,88 @@
 	// horrible things happen without this call.
 	[[self openGLContext] makeCurrentContext];
 	
-	NSRect	visibleRect	= [self visibleRect];
-	NSRect	frame		= [self frame];
-	float	fieldDepth	= 0;
+	NSRect	visibleRect		= [self visibleRect];
+	NSRect	frame			= [self frame];
+	float	fieldDepth		= 0;
+	NSRect	visibilityPlane	= NSZeroRect; //
 	
-	if(self->hasInfiniteDepth == NO)
-	{
-		//This is effectively equivalent to infinite field depth
-		fieldDepth = MAX(NSHeight(frame), NSWidth(frame));
-		
-		//Trouble with this one is, we can't zoom on on things that are far 
-		// from the center of the model.
-		//fieldDepth = NSWidth(visibleRect);
-	}
-	else
-	{	//Uh, well, so much for "infinite". When I enter values much bigger than 
-		// one million, the viewing goes haywire.
-		// (50,000 studs, >1500 ft; probably enough!)
-		fieldDepth = 1e6;
-		//fieldDepth = INFINITY;
-	}
+	//This is effectively equivalent to infinite field depth
+	fieldDepth = MAX(NSHeight(frame), NSWidth(frame));
+	
+		//Once upon a time, I had a feature called "infinite field depth," as 
+		// opposed to a depth that would clip the model. Eventually I concluded 
+		// this was a bad idea. But for future reference, the maximum fieldDepth 
+		// is about 1e6 (50,000 studs, >1300 ft; probably enough!); viewing 
+		// goes haywire with bigger numbers.
 	
 	float y = NSMinY(visibleRect);
 	if([self isFlipped] == YES)
 		y = NSHeight(frame) - y - NSHeight(visibleRect);
 	
-	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
-	glOrtho(NSMinX(visibleRect) - NSWidth(frame)/2,							//left
-			NSMinX(visibleRect) - NSWidth(frame)/2 + NSWidth(visibleRect),	//right
-			y - NSHeight(frame)/2,						//bottom
-			y - NSHeight(frame)/2 + NSHeight(visibleRect),//top
-			-fieldDepth,	//near (points beyond these are clipped)
-			fieldDepth );	//far
+	//The projection plane is stated in model coordinates.
+	visibilityPlane.origin.x	= NSMinX(visibleRect) - NSWidth(frame)/2;
+	visibilityPlane.origin.y	= y - NSHeight(frame)/2;
+	visibilityPlane.size.width	= NSWidth(visibleRect);
+	visibilityPlane.size.height	= NSHeight(visibleRect);
 	
-//	glFrustum(NSMinX(visibleRect) - NSWidth(frame)/2,	//left
-//			  NSMinX(visibleRect) - NSWidth(frame)/2 + NSWidth(visibleRect),	//right
-//			  NSMinY(visibleRect) - NSHeight(frame)/2,	//bottom
-//			  NSMinY(visibleRect) - NSHeight(frame)/2 + NSHeight(visibleRect),	//top
-//			  1,	//near (points beyond these are clipped)
-//			  2);
+	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
+	
+	if(self->projectionMode == ProjectionModePerspective){
+		
+		//We want the model to appear "full size" at the origin. Since
+		// perspective viewing is defined by a frustum (truncated pyramid),
+		// we have to shrink the visibily plane--which is located on the 
+		// near clipping plane--in such a way that a slice of the frustum 
+		// through the origin will have the dimensions of the desired 
+		// visibility plane. (Remember, slices grow *bigger* as they go 
+		// deeper into the view. Since the origin is deeper, that means 
+		// we need a near visibility plane that is *smaller* than the 
+		// desired size at the origin.)
+		float visibleProportion = (float) (CAMERA_DISTANCE_FACTOR - 1) / CAMERA_DISTANCE_FACTOR;
+					//based on some trigonometry: cos viewingAngle = modelSize / 7*modelSize
+		
+		glFrustum(visibleProportion * NSMinX(visibilityPlane),	//left
+				  visibleProportion * NSMaxX(visibilityPlane),	//right
+				  visibleProportion * NSMinY(visibilityPlane),	//bottom
+				  visibleProportion * NSMaxY(visibilityPlane),	//top
+				  fabs(cameraDistance) - fieldDepth,	//near (closer points are clipped); distance from CAMERA LOCATION
+				  fabs(cameraDistance) + fieldDepth		//far (points beyond this are clipped); distance from CAMERA LOCATION
+				  );
+	}
+	else{
+		glOrtho(NSMinX(visibilityPlane),	//left
+				NSMaxX(visibilityPlane),	//right
+				NSMinY(visibilityPlane),	//bottom
+				NSMaxY(visibilityPlane),	//top
+				fabs(cameraDistance) - fieldDepth,		//near (points beyond these are clipped)
+				fabs(cameraDistance) + fieldDepth );	//far
+	}
+	
 }//end makeProjection
+
+
+//========== saveConfiguration =================================================
+//
+// Purpose:		Saves the viewing configuration (such as camera location and 
+//				projection mode) into persistent storage. Only has effect if an 
+//				autosave name has been specified.
+//
+//==============================================================================
+- (void) saveConfiguration {
+
+	if(self->autosaveName != nil){
+		
+		NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
+		NSString		*viewingAngleKey	= [NSString stringWithFormat:@"%@ %@", LDRAW_GL_VIEW_ANGLE, self->autosaveName];
+		NSString		*projectionModeKey	= [NSString stringWithFormat:@"%@ %@", LDRAW_GL_VIEW_PROJECTION, self->autosaveName];
+		
+		[userDefaults setInteger:[self viewingAngle]	forKey:viewingAngleKey];
+		[userDefaults setInteger:[self projectionMode]	forKey:projectionModeKey];
+		
+		[userDefaults synchronize]; //because we may be quitting, we have to force this here.
+	}
+
+}//end saveConfiguration
 
 
 //========== scrollCenterToPoint ===============================================
@@ -1092,6 +1601,8 @@
 //
 //==============================================================================
 - (void) dealloc {
+
+	[self saveConfiguration];
 	
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	

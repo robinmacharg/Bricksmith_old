@@ -35,17 +35,18 @@
 
 	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
 	NSString		*startingCategory	= [userDefaults stringForKey:PART_BROWSER_PREVIOUS_CATEGORY];
+	int				 startingRow		= [userDefaults integerForKey:PART_BROWSER_PREVIOUS_SELECTED_ROW];
 	NSMenu			*searchMenuTemplate	= [[NSMenu alloc] initWithTitle:@"Search template"];
 	NSMenuItem		*recentsItem		= nil;
 	NSMenuItem		*noRecentsItem		= nil;
 	
-	if(startingCategory == nil)
-		startingCategory = NSLocalizedString(@"All Categories", nil);
-
 	[partPreview setAcceptsFirstResponder:NO];
+	
 	[self setPartCatalog:[[LDrawApplication sharedPartLibrary] partCatalog]];
 	[self setCategory:startingCategory];
-	[partPreview setHasInfiniteDepth:YES]; //we don't want any clipping on our previews.
+	[partsTable scrollRowToVisible:startingRow];
+	[partsTable selectRowIndexes:[NSIndexSet indexSetWithIndex:startingRow]
+			byExtendingSelection:NO];
 	[self syncSelectionAndPartDisplayed];
 	
 	
@@ -412,7 +413,7 @@
 
 
 #pragma mark -
-#pragma mark NOTIFICATIONS
+#pragma mark DELEGATES
 #pragma mark -
 
 
@@ -423,8 +424,21 @@
 //
 //==============================================================================
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
+	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
+	int				 newRow			= [self->partsTable selectedRow];
+	
+	//Redisplay preview.
 	[self syncSelectionAndPartDisplayed];
-}
+	
+	//save for posterity.
+	if(newRow != -1)
+		[userDefaults setInteger:newRow forKey:PART_BROWSER_PREVIOUS_SELECTED_ROW];
+}//end tableViewSelectionDidChange
+
+
+#pragma mark -
+#pragma mark NOTIFICATIONS
+#pragma mark -
 
 
 //========== sharedPartCatalogDidChange: =======================================

@@ -22,21 +22,24 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#define DOCUMENT_WINDOW_SIZE					@"Document Window Size"
+#define FILE_CONTENTS_DRAWER_STATE				@"File Contents Drawer State"
+#define GRID_SPACING_COARSE						@"Grid Spacing: Coarse"
+#define GRID_SPACING_FINE						@"Grid Spacing: Fine"
+#define GRID_SPACING_MEDIUM						@"Grid Spacing: Medium"
+#define LDRAW_GL_VIEW_ANGLE						@"LDrawGLView Viewing Angle"
+#define LDRAW_GL_VIEW_PROJECTION				@"LDrawGLView Viewing Projection"
 #define LDRAW_PATH_KEY							@"LDraw Path"
 #define PART_BROWSER_DRAWER_STATE				@"Part Browser Drawer State"
 #define PART_BROWSER_PREVIOUS_CATEGORY			@"Part Browser Previous Category"
-#define FILE_CONTENTS_DRAWER_STATE				@"File Contents Drawer State"
+#define PART_BROWSER_PREVIOUS_SELECTED_ROW		@"Part Browser Previous Selected Row"
 #define PREFERENCES_LAST_TAB_DISPLAYED			@"Preferences Tab"
-#define DOCUMENT_WINDOW_SIZE					@"Document Window Size"
+#define SYNTAX_COLOR_COMMENTS_KEY				@"Syntax Color Comments"
 #define SYNTAX_COLOR_MODELS_KEY					@"Syntax Color Models"
-#define SYNTAX_COLOR_STEPS_KEY					@"Syntax Color Steps"
 #define SYNTAX_COLOR_PARTS_KEY					@"Syntax Color Parts"
 #define SYNTAX_COLOR_PRIMITIVES_KEY				@"Syntax Color Primitives"
-#define SYNTAX_COLOR_COMMENTS_KEY				@"Syntax Color Comments"
+#define SYNTAX_COLOR_STEPS_KEY					@"Syntax Color Steps"
 #define SYNTAX_COLOR_UNKNOWN_KEY				@"Syntax Color Unknown"
-#define GRID_SPACING_FINE						@"Grid Spacing: Fine"
-#define GRID_SPACING_MEDIUM						@"Grid Spacing: Medium"
-#define GRID_SPACING_COARSE						@"Grid Spacing: Coarse"
 
 
 ////////////////////////////////////////////////////////////////////////////////

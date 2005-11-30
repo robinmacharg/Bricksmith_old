@@ -42,8 +42,11 @@
 //
 //==============================================================================
 + (LDrawFile *) fileFromContentsOfFile:(NSString *)path {
-	NSString *fileContents = [NSString stringWithContentsOfFile:path];
-	return [LDrawFile parseFromFileContents:fileContents];
+	NSString	*fileContents	= [NSString stringWithContentsOfFile:path];
+	LDrawFile	*parsedFile		= nil;
+	if(fileContents != nil)
+		parsedFile = [LDrawFile parseFromFileContents:fileContents];
+	return parsedFile;
 }
 
 

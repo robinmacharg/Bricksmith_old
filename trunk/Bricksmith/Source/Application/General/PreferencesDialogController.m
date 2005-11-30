@@ -12,6 +12,7 @@
 
 #import "MacLDraw.h"
 #import "LDrawApplication.h"
+#import "LDrawGLView.h"			//for ViewingAngleT
 #import "UserDefaultsCategory.h"
 #import "WindowCategory.h"
 #import <AMSProgressBar/AMSProgressBar.h>
@@ -498,15 +499,34 @@ PreferencesDialogController *preferencesDialog = nil;
 	//
 	// Grid Spacing
 	//
-	[initialDefaults setObject:[NSNumber numberWithFloat: 1] forKey:GRID_SPACING_FINE];
-	[initialDefaults setObject:[NSNumber numberWithFloat:10] forKey:GRID_SPACING_MEDIUM];
-	[initialDefaults setObject:[NSNumber numberWithFloat:20] forKey:GRID_SPACING_COARSE];
+	[initialDefaults setObject:[NSNumber numberWithFloat: 1]	forKey:GRID_SPACING_FINE];
+	[initialDefaults setObject:[NSNumber numberWithFloat:10]	forKey:GRID_SPACING_MEDIUM];
+	[initialDefaults setObject:[NSNumber numberWithFloat:20]	forKey:GRID_SPACING_COARSE];
 	
 	//
 	// Initial Window State
 	//
-	[initialDefaults setObject:[NSNumber numberWithInt:NSDrawerOpenState] forKey:PART_BROWSER_DRAWER_STATE];
-	[initialDefaults setObject:[NSNumber numberWithInt:NSDrawerOpenState] forKey:FILE_CONTENTS_DRAWER_STATE];
+	[initialDefaults setObject:[NSNumber numberWithInt:NSDrawerOpenState]	forKey:PART_BROWSER_DRAWER_STATE];
+	[initialDefaults setObject:[NSNumber numberWithInt:NSDrawerOpenState]	forKey:FILE_CONTENTS_DRAWER_STATE];
+	
+	//OpenGL viewer settings -- see -restoreConfiguration in LDrawGLView.
+	[initialDefaults setObject:[NSNumber numberWithInt:ViewingAngle3D]				forKey:[LDRAW_GL_VIEW_ANGLE			stringByAppendingString:@" fileGraphicsView"]];
+	[initialDefaults setObject:[NSNumber numberWithInt:ProjectionModePerspective]	forKey:[LDRAW_GL_VIEW_PROJECTION	stringByAppendingString:@" fileGraphicsView"]];
+	
+	[initialDefaults setObject:[NSNumber numberWithInt:ViewingAngleFront]			forKey:[LDRAW_GL_VIEW_ANGLE			stringByAppendingString:@" fileDetailView1"]];
+	[initialDefaults setObject:[NSNumber numberWithInt:ProjectionModeOrthographic]	forKey:[LDRAW_GL_VIEW_PROJECTION	stringByAppendingString:@" fileDetailView1"]];
+	
+	[initialDefaults setObject:[NSNumber numberWithInt:ViewingAngleLeft]			forKey:[LDRAW_GL_VIEW_ANGLE			stringByAppendingString:@" fileDetailView2"]];
+	[initialDefaults setObject:[NSNumber numberWithInt:ProjectionModeOrthographic]	forKey:[LDRAW_GL_VIEW_PROJECTION	stringByAppendingString:@" fileDetailView2"]];
+
+	[initialDefaults setObject:[NSNumber numberWithInt:ViewingAngleTop]				forKey:[LDRAW_GL_VIEW_ANGLE			stringByAppendingString:@" fileDetailView3"]];
+	[initialDefaults setObject:[NSNumber numberWithInt:ProjectionModeOrthographic]	forKey:[LDRAW_GL_VIEW_PROJECTION	stringByAppendingString:@" fileDetailView3"]];
+	
+	//
+	// Part Browser
+	//
+	[initialDefaults setObject:NSLocalizedString(@"All Categories", nil)	forKey:PART_BROWSER_PREVIOUS_CATEGORY];
+	[initialDefaults setObject:[NSNumber numberWithInt:0]					forKey:PART_BROWSER_PREVIOUS_SELECTED_ROW];
 	
 	[userDefaults registerDefaults:initialDefaults];
 	

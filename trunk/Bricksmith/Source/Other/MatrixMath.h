@@ -149,7 +149,7 @@ extern Vector3*	V3Mul(Vector3 *a, Vector3 *b, Vector3 *result);
 extern Vector3*	V3Cross(Vector3 *a, Vector3 *b, Vector3 *c);
 extern Point3	V3Midpoint(Point3 *point1, Point3 *point2);
 extern Box3*	V3BoundsFromPoints();
-extern int		V3EqualsBoxes(Box3 *box1, Box3 *box2);
+extern int		V3EqualsBoxes(const Box3 *box1, const Box3 *box2);
 extern Vector3*	V3IsolateGreatestComponent(Vector3 *vector);
 extern Point3*	V3MulPointByMatrix();
 extern Vector3*	V3MulPointByProjMatrix();

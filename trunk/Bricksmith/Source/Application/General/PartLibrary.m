@@ -600,9 +600,14 @@
 	// to UNIX above.
 	
 	NSString		*partPath			= nil;
-
-	//Try each directory.
-	if([fileManager fileExistsAtPath:partsPath])
+	
+	//If we pass an empty string, we'll wind up test for directories' existences--
+	// not what we want to do.
+	if([partName length] == 0)
+		partPath = nil;
+		
+	//We have a file path name; try each directory.
+	else if([fileManager fileExistsAtPath:partsPath])
 		partPath = partsPath;
 	else if([fileManager fileExistsAtPath:primitivesPath])
 		partPath = primitivesPath;

@@ -41,7 +41,7 @@ typedef enum {
 
 typedef enum {
 	RotateSelectTool			= 0,	//click to select, drag to rotate
-	AddToSelectionTool			= 1,	//clicked parts are added to the current selection
+//	AddToSelectionTool			= 1,	//   check key directly, so we can click around in different views.
 	PanScrollTool				= 2,	//"grabber" to scroll around while dragging
 	SmoothZoomTool				= 3,	//zoom in and out based on drag direction
 	ZoomInTool					= 4,	//click to zoom in
@@ -67,24 +67,28 @@ typedef enum {
 ////////////////////////////////////////////////////////////////////////////////
 @interface LDrawGLView : NSOpenGLView <LDrawColorable>
 {
+	IBOutlet LDrawDocument	*document;			//optional weak link. Enables editing capabilities.
+	
 	BOOL				 acceptsFirstResponder;	//YES if we can become key
 	NSString			*autosaveName;
-	GLfloat				 cameraDistance;
-	LDrawColorT			 color;					//default color to draw parts if none is specified
-	NSString			*currentKeyCharacters;	//identifies the current keys down, independent of modifiers (empty string if no keys down)
-	unsigned int		 currentKeyModifiers;	//identifiers the current modifiers down (including device-dependent)
 	LDrawDirective		*fileBeingDrawn;		//Should only be an LDrawFile or LDrawModel.
 												// if you want to do anything else, you must 
 												// tweak the selection code in LDrawDrawableElement
 												// and here in -mouseUp: to handle such cases.
-	BOOL				 isDragging;			//true if the last mousedown was followed by a drag.
+	ToolModeT			 toolMode;				//current tool in effect.
+	
+	//Drawing Environment
+	GLfloat				 cameraDistance;
+	LDrawColorT			 color;					//default color to draw parts if none is specified
 	GLfloat				 glColor[4];			//OpenGL equivalent of the LDrawColor.
 	ProjectionModeT		 projectionMode;
 	RotationDrawModeT	 rotationDrawMode;		//drawing detail while rotating.
-	ToolModeT			 toolMode;				//current tool in effect.
 	ViewingAngleT		 viewingAngle;			//our orientation
 	
-	IBOutlet LDrawDocument	*document;			//optional weak link. Enables editing capabilities.
+	//Event Tracking
+	NSString			*currentKeyCharacters;	//identifies the current keys down, independent of modifiers (empty string if no keys down)
+	unsigned int		 currentKeyModifiers;	//identifiers the current modifiers down (including device-dependent)
+	BOOL				 isDragging;			//true if the last mousedown was followed by a drag.
 }
 
 //Accessors
@@ -107,16 +111,20 @@ typedef enum {
 - (IBAction) zoomOut:(id)sender;
 
 //Events
-- (void)mousePartSelection:(NSEvent *)theEvent;
-- (LDrawDirective *) getPartFromHits:(GLuint *)nameBuffer hitCount:(GLuint)numberHits;
+- (void) resetCursor;
+- (void) nudgeKeyDown:(NSEvent *)theEvent;
 - (void) panDragged:(NSEvent *)theEvent;
-- (void)rotationDragged:(NSEvent *)theEvent;
+- (void) rotationDragged:(NSEvent *)theEvent;
 - (void) zoomDragged:(NSEvent *)theEvent;
+- (void) mouseCenterClick:(NSEvent*)theEvent ;
+- (void) mousePartSelection:(NSEvent *)theEvent;
+- (void) mouseZoomClick:(NSEvent*)theEvent;
 
 //Notifications
 - (void) displayNeedsUpdating:(NSNotification *)notification;
 
 //Utilities
+- (LDrawDirective *) getPartFromHits:(GLuint *)nameBuffer hitCount:(GLuint)numberHits;
 - (void) resetFrameSize;
 - (void) restoreConfiguration;
 - (void) makeProjection;
@@ -141,4 +149,5 @@ typedef enum {
 - (void)	LDrawGLView:(LDrawGLView *)glView
  wantsToSelectDirective:(LDrawDirective *)directiveToSelect
    byExtendingSelection:(BOOL) shouldExtend;
+   
 @end

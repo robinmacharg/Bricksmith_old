@@ -198,6 +198,7 @@ typedef enum MenuTags {
 	stepDisplayMenuTag			= 404,
 	nextStepMenuTag				= 405,
 	previousStepMenuTag			= 406,
+	orientationMenuTag			= 407,
 	
 	//Piece Menu
 	pieceMenuTag				= 5,

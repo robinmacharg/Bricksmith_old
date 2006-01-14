@@ -5,6 +5,34 @@
 	};
 	objectVersion = 39;
 	objects = {
+		0B25F03E093D5F960099D85E = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = BricksmithApplication.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B25F03F093D5F960099D85E = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.objc;
+			path = BricksmithApplication.m;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B25F040093D5F960099D85E = {
+			fileRef = 0B25F03E093D5F960099D85E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B25F041093D5F960099D85E = {
+			fileRef = 0B25F03F093D5F960099D85E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		0B2AA9CB07C1C79500085145 = {
 			children = (
 				0BF729AB08AD849300E3DA53,
@@ -2596,6 +2624,7 @@
 				0B8EBEA0093C102E00D87E0C,
 				0B8EBEA2093C102E00D87E0C,
 				0B8EBEA4093C102E00D87E0C,
+				0B25F040093D5F960099D85E,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2728,6 +2757,8 @@
 		};
 		0BF729AB08AD849300E3DA53 = {
 			children = (
+				0B25F03E093D5F960099D85E,
+				0B25F03F093D5F960099D85E,
 				0BF729AC08AD849300E3DA53,
 				0BF729AD08AD849300E3DA53,
 				0BF729AE08AD849300E3DA53,
@@ -3338,6 +3369,7 @@
 				0B8EBEA1093C102E00D87E0C,
 				0B8EBEA3093C102E00D87E0C,
 				0B8EBEA5093C102E00D87E0C,
+				0B25F041093D5F960099D85E,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

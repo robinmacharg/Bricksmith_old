@@ -797,6 +797,9 @@
 	}
 
 	
+	//I NEED to modify the matrix itself here. Some parts have funky, fragile 
+	// rotation values, and getting the components really badly botches them up.
+	
 	//Needs to be more complicated! I could just modify the matrix itself, 
 	// you know!
 

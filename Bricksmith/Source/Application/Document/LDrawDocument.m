@@ -129,13 +129,7 @@
 	if(drawerState == NSDrawerOpenState)
 		[fileContentsDrawer open];
 	
-	//We have to do the splitview saving manually. C'mon Apple, get with it!
-	[horizontalSplitView		setAutosaveName:@"Horizontal LDraw Splitview"];
-	[verticalDetailSplitView	setAutosaveName:@"Vertical LDraw Splitview"];
-	
-	[horizontalSplitView		restoreConfiguration];
-	[verticalDetailSplitView	restoreConfiguration];
-	
+	//Restore the state of our 3D viewers.
 	[fileGraphicView	setAutosaveName:@"fileGraphicView"];
 	[fileDetailView1	setAutosaveName:@"fileDetailView1"];
 	[fileDetailView2	setAutosaveName:@"fileDetailView2"];
@@ -146,10 +140,22 @@
 	[fileDetailView2	restoreConfiguration];
 	[fileDetailView3	restoreConfiguration];
 	
+		//For reasons I have not sufficiently investigated, setting the 
+		// zoom percentage on a collapsed (0 width/height) view causes 
+		// the view to get stuck at 0 width/height. The easiest fix was 
+		// to move this call above the splitview restoration so the 
+		// view's panes will never be collapsed.
 	[fileDetailView1	setZoomPercentage:75];
 	[fileDetailView2	setZoomPercentage:75];
 	[fileDetailView3	setZoomPercentage:75];
 
+	//We have to do the splitview saving manually. C'mon Apple, get with it!
+	[horizontalSplitView		setAutosaveName:@"Horizontal LDraw Splitview"];
+	[verticalDetailSplitView	setAutosaveName:@"Vertical LDraw Splitview"];
+	
+	[horizontalSplitView		restoreConfiguration];
+	[verticalDetailSplitView	restoreConfiguration];
+	
 	//Display our model.
 	[self loadDataIntoDocumentUI];
 	
@@ -848,7 +854,6 @@
 //==============================================================================
 - (IBAction) zoomActual:(id)sender {
 	[mostRecentLDrawView setZoomPercentage:100];
-	[self->toolbarController setZoom:100];
 }
 
 
@@ -858,10 +863,7 @@
 //
 //==============================================================================
 - (IBAction) zoomIn:(id)sender {
-	float currentZoom = [mostRecentLDrawView zoomPercentage];
-	float newZoom = currentZoom * 2;
-	[mostRecentLDrawView setZoomPercentage:newZoom];
-	[self->toolbarController setZoom:newZoom];
+	[mostRecentLDrawView zoomIn:sender];
 }
 
 
@@ -871,10 +873,23 @@
 //
 //==============================================================================
 - (IBAction) zoomOut:(id)sender {
-	float currentZoom = [mostRecentLDrawView zoomPercentage];
-	float newZoom = currentZoom / 2;
-	[mostRecentLDrawView setZoomPercentage:newZoom];
-	[self->toolbarController setZoom:newZoom];
+	[mostRecentLDrawView zoomOut:sender];
+}
+
+
+//========== orientationSelected: ==============================================
+//
+// Purpose:		The user has chosen a new viewing angle from a menu.
+//				sender is the menu item, whose tag is the viewing angle. We'll 
+//				just pass this off to the appropriate view.
+//
+// Note:		This method will get skipped entirely if an LDrawGLView is the 
+//				first responder; the message will instead go directly there 
+//				because this method has the same name as the one in LDrawGLView.
+//
+//==============================================================================
+- (IBAction) viewingAngleSelected:(id)sender {
+	[self->mostRecentLDrawView viewingAngleSelected:sender];
 }
 
 
@@ -1843,10 +1858,13 @@
 //==============================================================================
 - (void) LDrawGLViewBecameFirstResponder:(LDrawGLView *)glView {
 	
-	float zoomPercentage = [glView zoomPercentage];
-	
-	[self->toolbarController setZoom:zoomPercentage];
+	//We used bindings to sync up the ever-in-limbo zoom control. Since 
+	// mostRecentLDrawView is a private variable, we manually trigger the 
+	// key-value observing updates for it.
+	[self willChangeValueForKey:@"mostRecentLDrawView"];
 	self->mostRecentLDrawView = glView;
+	[self didChangeValueForKey:@"mostRecentLDrawView"];
+
 }
 
 
@@ -1990,8 +2008,11 @@
 
 	//Bug: if this document isn't the foremost window, this will botch up the menu!
 	// remember, we can close windows in the background.
-	if([window isMainWindow] == YES)
+	if([window isMainWindow] == YES){
 		[self clearModelMenus];
+	}
+	
+	[self->bindingsController setContent:nil];
 }
 
 #pragma mark -
@@ -2153,6 +2174,100 @@
 }
 
 #pragma mark -
+
+//========== addModelsToMenu ===================================================
+//
+// Purpose:		Creates a menu used to switch the active model. A list of all 
+//				the models in the document is inserted into the Models menu in 
+//				the application's menu bar; the active model gets a check next 
+//				to it.
+//
+//				We also regenerate the Insert Reference submenu (for inserting 
+//				MPD submodels as parts in a different model). They require 
+//				additional validation which occurs in validateMenuItem.
+//
+//==============================================================================
+- (void) addModelsToMenu {
+	
+	NSMenu			*mainMenu		= [NSApp mainMenu];
+	NSMenu			*modelMenu		= [[mainMenu itemWithTag:modelsMenuTag] submenu];
+	NSMenu			*referenceMenu	= [[modelMenu itemWithTag:insertReferenceMenuTag] submenu];
+	int				 separatorIndex	= [modelMenu indexOfItemWithTag:modelsSeparatorMenuTag];
+	NSMenuItem		*modelItem		= nil;
+	NSMenuItem		*referenceItem	= nil;
+	NSArray			*models			= [[self documentContents] submodels];
+	LDrawMPDModel	*currentModel	= nil;
+	int				 counter		= 0;
+	
+	[self clearModelMenus];
+	
+	//Create menu items for each model.
+	for(counter = 0; counter < [models count]; counter++){
+		
+		currentModel = [models objectAtIndex:counter];
+		
+		//
+		// Active Model menu items
+		//
+		modelItem = [[[NSMenuItem alloc] init] autorelease];
+		[modelItem setTitle:[currentModel modelName]];
+		[modelItem setRepresentedObject:currentModel];
+		[modelItem setTarget:self];
+		[modelItem setAction:@selector(modelSelected:)];
+		if([[self documentContents] activeModel] == currentModel)
+			[modelItem setState:NSOnState];
+		
+		//
+		// MPD reference menu items
+		//
+		referenceItem = [[[NSMenuItem alloc] init] autorelease];
+		[referenceItem setTitle:[currentModel modelName]];
+		[referenceItem setRepresentedObject:currentModel];
+		//We set the same tag for all items in the reference menu.
+		// Validation will distinguish them with their represented objects.
+		[referenceItem setTag:submodelReferenceMenuTag];
+		[referenceItem setTarget:self];
+		[referenceItem setAction:@selector(addSubmodelReferenceClicked:)];
+		
+		//
+		// Insert the new item at the end.
+		//
+		[modelMenu insertItem:modelItem atIndex:separatorIndex+counter+1];
+		[referenceMenu addItem:referenceItem];
+	}
+	
+}//end addModelsToMenu
+
+
+//========== clearModelMenus ===================================================
+//
+// Purpose:		Removes all submodels from the menus. There are two places we 
+//				track the submodels: in the Model menu (for selecting the active 
+//				model, and in the references submenu (for inserting submodels as 
+//				parts).
+//
+//==============================================================================
+- (void) clearModelMenus {
+	NSMenu			*mainMenu		= [NSApp mainMenu];
+	NSMenu			*modelMenu		= [[mainMenu itemWithTag:modelsMenuTag] submenu];
+	NSMenu			*referenceMenu	= [[modelMenu itemWithTag:insertReferenceMenuTag] submenu];
+	int				 separatorIndex	= [modelMenu indexOfItemWithTag:modelsSeparatorMenuTag];
+	NSMenuItem		*modelItem		= nil;
+	NSArray			*models			= [[self documentContents] submodels];
+	LDrawMPDModel	*currentModel	= nil;
+	int				 counter		= 0;
+	
+	//Kill all model menu items.
+	for(counter = [modelMenu numberOfItems]-1; counter > separatorIndex; counter--)
+		[modelMenu removeItemAtIndex: counter];
+	
+	for(counter = [referenceMenu numberOfItems]-1; counter >= 0; counter--)
+		[referenceMenu removeItemAtIndex:counter];
+	
+}//end clearModelMenus
+
+
+#pragma mark -
 #pragma mark UTILITIES
 #pragma mark -
 
@@ -2312,70 +2427,6 @@
 
 #pragma mark -
 
-//========== addModelsToMenu ===================================================
-//
-// Purpose:		Creates a menu used to switch the active model. A list of all 
-//				the models in the document is inserted into the Models menu in 
-//				the application's menu bar; the active model gets a check next 
-//				to it.
-//
-//				We also regenerate the Insert Reference submenu (for inserting 
-//				MPD submodels as parts in a different model). They require 
-//				additional validation which occurs in validateMenuItem.
-//
-//==============================================================================
-- (void) addModelsToMenu {
-	
-	NSMenu			*mainMenu		= [NSApp mainMenu];
-	NSMenu			*modelMenu		= [[mainMenu itemWithTag:modelsMenuTag] submenu];
-	NSMenu			*referenceMenu	= [[modelMenu itemWithTag:insertReferenceMenuTag] submenu];
-	int				 separatorIndex	= [modelMenu indexOfItemWithTag:modelsSeparatorMenuTag];
-	NSMenuItem		*modelItem		= nil;
-	NSMenuItem		*referenceItem	= nil;
-	NSArray			*models			= [[self documentContents] submodels];
-	LDrawMPDModel	*currentModel	= nil;
-	int				 counter		= 0;
-	
-	[self clearModelMenus];
-	
-	//Create menu items for each model.
-	for(counter = 0; counter < [models count]; counter++){
-		
-		currentModel = [models objectAtIndex:counter];
-		
-		//
-		// Active Model menu items
-		//
-		modelItem = [[[NSMenuItem alloc] init] autorelease];
-		[modelItem setTitle:[currentModel modelName]];
-		[modelItem setRepresentedObject:currentModel];
-		[modelItem setTarget:self];
-		[modelItem setAction:@selector(modelSelected:)];
-		if([[self documentContents] activeModel] == currentModel)
-			[modelItem setState:NSOnState];
-		
-		//
-		// MPD reference menu items
-		//
-		referenceItem = [[[NSMenuItem alloc] init] autorelease];
-		[referenceItem setTitle:[currentModel modelName]];
-		[referenceItem setRepresentedObject:currentModel];
-		//We set the same tag for all items in the reference menu.
-		// Validation will distinguish them with their represented objects.
-		[referenceItem setTag:submodelReferenceMenuTag];
-		[referenceItem setTarget:self];
-		[referenceItem setAction:@selector(addSubmodelReferenceClicked:)];
-		
-		//
-		// Insert the new item at the end.
-		//
-		[modelMenu insertItem:modelItem atIndex:separatorIndex+counter+1];
-		[referenceMenu addItem:referenceItem];
-	}
-	
-}//end addModelsToMenu
-
-
 //========== canDeleteDirective:displayErrors: =================================
 //
 // Purpose:		Tests whether the specified directive should be allowed to be 
@@ -2424,34 +2475,6 @@
 	return canDelete;
 	
 }//end canDeleteDirective:displayErrors:
-
-
-//========== clearModelMenus ===================================================
-//
-// Purpose:		Removes all submodels from the menus. There are two places we 
-//				track the submodels: in the Model menu (for selecting the active 
-//				model, and in the references submenu (for inserting submodels as 
-//				parts).
-//
-//==============================================================================
-- (void) clearModelMenus {
-	NSMenu			*mainMenu		= [NSApp mainMenu];
-	NSMenu			*modelMenu		= [[mainMenu itemWithTag:modelsMenuTag] submenu];
-	NSMenu			*referenceMenu	= [[modelMenu itemWithTag:insertReferenceMenuTag] submenu];
-	int				 separatorIndex	= [modelMenu indexOfItemWithTag:modelsSeparatorMenuTag];
-	NSMenuItem		*modelItem		= nil;
-	NSArray			*models			= [[self documentContents] submodels];
-	LDrawMPDModel	*currentModel	= nil;
-	int				 counter		= 0;
-	
-	//Kill all model menu items.
-	for(counter = [modelMenu numberOfItems]-1; counter > separatorIndex; counter--)
-		[modelMenu removeItemAtIndex: counter];
-	
-	for(counter = [referenceMenu numberOfItems]-1; counter >= 0; counter--)
-		[referenceMenu removeItemAtIndex:counter];
-	
-}
 
 
 //========== elementsAreSelectedOfVisibility: ==================================
@@ -2878,13 +2901,19 @@
 // Purpose:		We're crossing over Jordan; we're heading to that mansion just 
 //				over the hilltop (the gold one that's silver-lined).
 //
+// Note:		We DO NOT RELEASE TOP-LEVEL NIB OBJECTS HERE! NSWindowController 
+//				does that automagically.
+//
 //==============================================================================
 - (void) dealloc{
 
+	NSLog(@"deallocing LDrawDocument 0x%X", self);
+
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	[documentContents release];
-	[lastSelectedPart release];
+	[documentContents	release];
+	[lastSelectedPart	release];
+	[selectedDirectives	release];
 
 	[super dealloc];
 }

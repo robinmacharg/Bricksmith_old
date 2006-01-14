@@ -11,6 +11,12 @@
 
 @implementation ExtendedSplitView
 
+- (void)adjustSubviews
+{
+	NSLog(@"adjusting");
+	[super adjustSubviews];
+}
+
 - (NSString *) autosaveName {
 	return self->autosaveName;
 }
@@ -53,6 +59,14 @@
 	}
 	[self adjustSubviews];
 	
+	subviews		= [self subviews];
+	for(counter = 0; counter < [subviews count]; counter++){
+		currentSubview	= [subviews objectAtIndex:counter];
+		currentRect		= [currentSubview frame];
+		rectString		= NSStringFromRect(currentRect);
+		NSLog(@"%@", rectString);
+	}
+	NSLog(@"\n\n\n");
 }//end restoreConfiguration
 
 

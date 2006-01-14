@@ -24,6 +24,7 @@
                 toggleFileContentsDrawer = id; 
                 togglePartBrowserDrawer = id; 
                 toggleStepDisplay = id; 
+                viewingAngleSelected = id; 
                 zoomActual = id; 
                 zoomIn = id; 
                 zoomOut = id; 

@@ -18,6 +18,7 @@
 
 #import "MatrixMath.h"
 
+
 @implementation DocumentToolbarController
 
 //========== awakeFromNib ======================================================
@@ -26,8 +27,24 @@
 //
 //==============================================================================
 - (void) awakeFromNib {
-	gridSegmentedControl = [[self initGridSegmentControl] retain];
-}
+	gridSegmentedControl = [[self makeGridSegmentControl] retain];
+	
+	//Retain all our custom views for toolbar items. Why? Because all of these 
+	// could be inserted into the toolbar's view hierarchy, thereby *removing* 
+	// them from their current superview, which holds the ONLY retain on them!
+	// The result is that without retains here, all these views would be 
+	// deallocated once added then removed from the toolbar!
+	[nudgeXToolView		retain];
+	[nudgeYToolView		retain];
+	[nudgeZToolView		retain];
+	[zoomToolTextField	retain];
+	
+	[nudgeXToolView		removeFromSuperview];
+	[nudgeYToolView		removeFromSuperview];
+	[nudgeZToolView		removeFromSuperview];
+	[zoomToolTextField	removeFromSuperview];
+	
+}//end awakeFromNib
 
 #pragma mark -
 #pragma mark TOOLBAR DELEGATE
@@ -119,7 +136,7 @@
 		[newItem setMinSize:[nudgeZToolView frame].size];
 	}
 	else if([itemIdentifier isEqualToString:TOOLBAR_GRID_SPACING_IDENTIFIER]) {
-		newItem = [self makeGridSpacingControl];
+		newItem = [self makeGridSpacingItem];
 	}
 	//Rotations
 	else if([itemIdentifier isEqualToString:TOOLBAR_ROTATE_POSITIVE_X]) {
@@ -179,27 +196,17 @@
 }
 
 
-//========== setZoom: ==========================================================
-//
-// Purpose:		A view was selected with the specified zoom percentage. We need 
-//				to update the widget that displays this percentage.
-//
-//==============================================================================
-- (void) setZoom:(float)percentage {
-	[zoomToolTextField setFloatValue:percentage];
-}
-
 #pragma mark -
 #pragma mark BUTTON FACTORIES
 #pragma mark -
 
-//========== makeGridSpacingControl ============================================
+//========== makeGridSpacingItem ===============================================
 //
 // Purpose:		Creates the toolbar widget used to toggle the grid mode. 
 //				Currently, this is implemented as a segmented control.
 //
 //==============================================================================
-- (NSToolbarItem *) makeGridSpacingControl {
+- (NSToolbarItem *) makeGridSpacingItem {
 	NSToolbarItem		*newItem		= [[NSToolbarItem alloc] initWithItemIdentifier:TOOLBAR_GRID_SPACING_IDENTIFIER];
 	gridSpacingModeT	gridMode		= [self->document gridSpacingMode];
 	
@@ -214,7 +221,7 @@
 	[newItem setPaletteLabel:NSLocalizedString(@"GridSpacing",nil)];
 	
 	return [newItem autorelease];
-}
+}//end makeGridSpacingItem
 
 //========== makeRotationPlusXItem =============================================
 //
@@ -410,13 +417,13 @@
 
 #pragma mark -
 
-//========== initGridSegmentControl ============================================
+//========== makeGridSegmentControl ============================================
 //
 // Purpose:		Initializes the segmented cell to track the grid mode. Under 
 //				System 10.4, this is all available in Interface Builder.
 //
 //==============================================================================
-- (NSSegmentedControl *) initGridSegmentControl {
+- (NSSegmentedControl *) makeGridSegmentControl {
 	NSRect				segmentFrame	= NSMakeRect(0,0, 32, 32);
 	NSSegmentedControl	*gridSegments	= [[NSSegmentedControl alloc] initWithFrame:segmentFrame];
 	NSSegmentedCell		*segmentsCell	= [gridSegments cell];
@@ -445,7 +452,7 @@
 	[gridSegments setAction:@selector(gridSpacingSegmentedControlClicked:)];
 	
 	return [gridSegments autorelease];
-}
+}//end makeGridSegmentControl
 
 
 #pragma mark -
@@ -638,9 +645,18 @@
 //
 // Purpose:		My heart will go on...
 //
+// Note:		We DO NOT RELEASE TOP-LEVEL NIB OBJECTS HERE! NSWindowController 
+//				(which comes with our NSDocument) does that automagically.
+//
 //==============================================================================
 - (void) dealloc {
-	[gridSegmentedControl release];
+
+	[nudgeXToolView			release];
+	[nudgeYToolView			release];
+	[nudgeZToolView			release];
+	[zoomToolTextField		release];
+
+	[gridSegmentedControl	release];
 	
 	[super dealloc];
 }

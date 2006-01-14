@@ -43,6 +43,14 @@
 		[superview setCopiesOnScroll:NO];
 	}
 	
+	
+	NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+	
+	[notificationCenter addObserver:self
+						   selector:@selector(windowDidResignKey:)
+							   name:NSWindowDidResignKeyNotification
+							 object:[self window] ];
+	
 	//Machinery needed to draw Quartz overtop OpenGL. Sadly, it caused our view 
 	// to become transparent when minimizing to the dock. In the end, I didn't 
 	// need it anyway.
@@ -377,7 +385,11 @@
 		NSRect clipFrame	= [superview frame];
 		NSRect clipBounds	= [superview bounds];
 		
-		zoomPercentage = NSWidth(clipFrame) / NSWidth(clipBounds);
+		if(NSWidth(clipBounds) != 0)
+			zoomPercentage = NSWidth(clipFrame) / NSWidth(clipBounds);
+		else
+			zoomPercentage = 1; //avoid division by zero
+			
 		zoomPercentage *= 100; //convert to percent
 	}
 	else
@@ -550,12 +562,14 @@
 //
 //==============================================================================
 - (void) setZoomPercentage:(float) newPercentage {
-	id		clipView		= [self superview];
-	NSRect	clipFrame		= [clipView frame];
-	NSRect	clipBounds		= [clipView bounds];
-	NSPoint originalCenter	= [self centerPoint];
+	NSScrollView *scrollView = [self enclosingScrollView];
 	
-	if([clipView isKindOfClass:[NSClipView class]] == YES) {
+	if(scrollView != nil){
+		NSClipView	*clipView		= [scrollView contentView];
+		NSRect		 clipFrame		= [clipView frame];
+		NSRect		 clipBounds		= [clipView bounds];
+		NSPoint		 originalCenter	= [self centerPoint];
+		
 		newPercentage /= 100; //convert to a scale factor
 		
 		//Change the magnification level of the clip view, which has the effect 
@@ -644,6 +658,26 @@
 }
 
 
+//========== resignFirstResponder ==============================================
+//
+// Purpose:		Our privileged first responder status is being forcibly removed!
+//
+//==============================================================================
+- (BOOL)resignFirstResponder
+{
+	//We need to reset our event-tracking state completely, because we won't 
+	// get any more event messages after this!
+	// (also see -windowDidResignKey:)
+
+	[self->currentKeyCharacters release];
+	self->currentKeyCharacters	= @"";
+	self->currentKeyModifiers	= 0;
+	[self resetCursor];
+	
+	return YES;
+}//end resignFirstResponder
+
+
 //========== resetCursor =======================================================
 //
 // Purpose:		Force a mouse-cursor update. We call this whenever a significant 
@@ -656,8 +690,8 @@
 	// get called if there is currently a cursor in force. So we oblige it.
 	[self addCursorRect:[self visibleRect] cursor:[NSCursor arrowCursor]];
 	
-	[[self window] invalidateCursorRectsForView:self];
-}
+	[[self window] invalidateCursorRectsForView:self];	
+}//end resetCursor
 
 
 //========== resetCursorRects ==================================================
@@ -678,7 +712,6 @@
 //==============================================================================
 - (void) resetCursorRects
 {
-//	NSLog(@"resetting cursors");
 	[super resetCursorRects];
 	
 	NSRect		 visibleRect	= [self visibleRect];
@@ -724,6 +757,13 @@
 		else
 			cursor = [NSCursor openHandCursor];
 	}
+	//Multiple selection
+//	else if( (self->currentKeyModifiers & NSShiftKeyMask) != 0 )
+//	{
+//		self->toolMode = AddToSelectionTool;
+//		//no special cursor for this, yet.
+//	}
+	
 	//Rotate/select (no hot key; normal behavior)
 	else
 	{
@@ -731,8 +771,14 @@
 		//don't add any cursor here.
 	}
 	
-	if(cursor != nil)
+	if(cursor != nil){
+		//Make this cursor active over the entire document.
 		[self addCursorRect:visibleRect cursor:cursor];
+		
+		//Manually *set* the cursor, because sometimes the changed rectangle 
+		// doesn't result in a changed cursor.
+		[cursor set];
+	}
 		
 }//end resetCursorRects
 
@@ -746,7 +792,6 @@
 //==============================================================================
 - (void)flagsChanged:(NSEvent *)theEvent
 {
-	NSLog(@"modifiers changed");
 	self->currentKeyModifiers = [theEvent modifierFlags];
 	
 	[self resetCursor];
@@ -761,15 +806,12 @@
 //
 //==============================================================================
 - (void)keyDown:(NSEvent *)theEvent {
-	unsigned short	keycode		= [theEvent keyCode];
 	NSString		*characters	= [theEvent characters];
 	
-	NSLog(@"Key down \"%@\"", [theEvent characters]);
 	[self->currentKeyCharacters release];
 	self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
 	[self resetCursor];
 	
-	[[self openGLContext] makeCurrentContext];
 		
 //		[self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
 	//We are circumventing the AppKit's key processing system here, because we 
@@ -778,6 +820,121 @@
 	// -interpretKeyEvent:. But beware of no-character keypresses like deadkeys.
 	if([characters length] > 0) {
 	
+		unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
+
+		switch(firstCharacter) {
+			
+			case NSUpArrowFunctionKey:
+			case NSDownArrowFunctionKey:
+			case NSLeftArrowFunctionKey:
+			case NSRightArrowFunctionKey:
+				[self nudgeKeyDown:theEvent];
+				break;
+			
+			case NSDeleteCharacter: //regular delete character, apparently.
+			case NSDeleteFunctionKey: //forward delete--documented! My gosh!
+				[NSApp sendAction:@selector(delete:)
+							   to:nil //just send it somewhere!
+							 from:self];
+			default:
+				break;
+		}
+		
+	}
+
+}//end keyDown:
+
+
+//========== keyUp: ============================================================
+//
+// Purpose:		A key has been released.
+//
+//==============================================================================
+- (void) keyUp:(NSEvent *)theEvent
+{
+	[self->currentKeyCharacters release];
+	self->currentKeyCharacters = @"";
+	[self resetCursor];
+
+}//end keyUp:
+
+
+//========== performKeyEquivalent: =============================================
+//
+// Purpose:		This is a command-key equivalent. Since we used the command key 
+//				a bit, we need to intercept these separately--they don't come 
+//				through key-down.
+//
+//				Return NO if we don't handle that, thus allowing the menu system 
+//				to take a stab at it.
+//
+//==============================================================================
+- (BOOL) performKeyEquivalent:(NSEvent *)theEvent
+{
+	BOOL		handledEvent	= NO;
+//	ToolModeT	startingTool	= self->toolMode;
+	
+	if([[self window] firstResponder] == self){
+		//This is a key-down event in disguise. We need to record the new characters.
+		[self->currentKeyCharacters release];
+		self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
+		[self resetCursor];
+		
+		//See if it's a recognized command key (logic duplicated from -resetCursorRects)
+		if([currentKeyCharacters isEqualToString:@" "]){
+		//if(self->toolMode != startingTool){ //doesn't work; resetCursorRects is called after this.
+			handledEvent = YES; //prevent a beep, and also stop further processing of this message.
+		}
+		else
+			//We didn't handle it.
+			handledEvent = [super performKeyEquivalent:theEvent];
+	}
+	else {
+		//We don't want it, since our meddling with command keys is strictly a 
+		// first-responder kind of behavior.
+		handledEvent = [super performKeyEquivalent:theEvent];
+	}
+	
+	
+	return handledEvent;
+	
+}//end performKeyEquivalent:
+
+
+//========== commandKeyUp: =====================================================
+//
+// Purpose:		This method is triggered by BricksmithApplication in response to 
+//				an NSKeyUp event generated while the command key is depressed. 
+//				Unlike Cocoa's implementation of -performKeyEquivalent:, these 
+//				events are sent up the responder chain. Therefore, it is safe to 
+//				assume we are the first responder here.
+//
+// Notes:		Cocoa seems to just drop these events, which is why we needed an 
+//				NSApplication subclass to get them.
+//
+//==============================================================================
+- (void) commandKeyUp:(NSEvent *)theEvent
+{
+	[self->currentKeyCharacters release];
+	self->currentKeyCharacters = @"";
+	[self resetCursor];
+}//end commandKeyUp:
+
+
+//========== nudgeKeyDown: =====================================================
+//
+// Purpose:		We have received a keypress intended to move bricks. We need to 
+//				figure out which direction to move them in.
+//
+//==============================================================================
+- (void) nudgeKeyDown:(NSEvent *)theEvent
+{
+	NSString		*characters	= [theEvent characters];
+
+	[[self openGLContext] makeCurrentContext];
+	
+	if([characters length] > 0) {
+		
 		unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
 		Vector4 screenNudge		= {0,0,0,1}; //nudge in screen coordinates
 		Vector4 modelNudge		= {0,0,0,1}; //screen nudge adjusted to model coordinates
@@ -799,7 +956,7 @@
 					screenNudge.y = 1;
 				isNudge = YES;
 				break;
-			
+				
 			case NSDownArrowFunctionKey:
 				if(isZMovement == YES)
 					screenNudge.z =  1;
@@ -807,7 +964,7 @@
 					screenNudge.y = -1;
 				isNudge = YES;
 				break;
-			
+				
 			case NSLeftArrowFunctionKey:
 				if(isZMovement == YES)
 					screenNudge.z =  1;
@@ -815,7 +972,7 @@
 					screenNudge.x = -1;
 				isNudge = YES;
 				break;
-			
+				
 			case NSRightArrowFunctionKey:
 				if(isZMovement == YES)
 					screenNudge.z = -1;
@@ -823,12 +980,7 @@
 					screenNudge.x =  1;
 				isNudge = YES;
 				break;
-			
-			case NSDeleteCharacter: //regular delete character, apparently.
-			case NSDeleteFunctionKey: //forward delete--documented! My gosh!
-				[NSApp sendAction:@selector(delete:)
-							   to:nil //just send it somewhere!
-							 from:self];
+				
 			default:
 				break;
 		}
@@ -847,55 +999,16 @@
 			// the modelview matrix inverse. That has the effect of "undoing" the 
 			// model matrix on the screen point, leaving us a model point.
 			V4MulPointByMatrix(&screenNudge, &inversed, &modelNudge);
-
+			
 			adjustedNudge = V3FromV4(&modelNudge);
 			V3IsolateGreatestComponent(&adjustedNudge);
-					
+			
 			if(document != nil)
 				[document nudgeSelectionBy:adjustedNudge]; 
 		}
 	}
-
-}//end keyDown:
-
-
-//========== keyUp: ============================================================
-//
-// Purpose:		A key has been released.
-//
-//==============================================================================
-- (void) keyUp:(NSEvent *)theEvent
-{
-	NSLog(@"Key up \"%@\"", [theEvent characters]);
-	[self->currentKeyCharacters release];
-	self->currentKeyCharacters = @"";
-	[self resetCursor];
-
-}//end keyUp:
-
-
-//========== performKeyEquivalent: =============================================
-//
-// Purpose:		This is a command-key equivalent. Since we used the command key 
-//				a bit, we need to intercept these separately--they don't come 
-//				through key-down.
-//
-//				Return NO if we don't handle that, thus allowing the menu system 
-//				to take a stab at it.
-//
-//==============================================================================
-- (BOOL) performKeyEquivalent:(NSEvent *)theEvent
-{
-	NSLog(@"key equivalent %d", [theEvent type]);
-	//This is a key-down event in disguise. We need to record the new characters.
-	[self->currentKeyCharacters release];
-	self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
-	[self resetCursor];
-
-	//Let's just say we didn't handle it.
-	return [super performKeyEquivalent:theEvent];
-}//end performKeyEquivalent:
-
+	
+}//end nudgeKeyDown:
 
 #pragma mark -
 
@@ -910,233 +1023,10 @@
 		//recorded in mouseDragged. Otherwise, this value will remain NO.
 	
 	[self resetCursor];
+	
+	if(self->toolMode == SmoothZoomTool)
+		[self mouseCenterClick:theEvent];
 }	
-
-
-//========== mouseUp: ==========================================================
-//
-// Purpose:		The mouse has been released. Figure out exactly what that means 
-//				in the wider context of what the mouse did before now.
-//
-//==============================================================================
-- (void)mouseUp:(NSEvent *)theEvent
-{
-	if(self->toolMode == RotateSelectTool){
-		//We only want to select a part if this was NOT part of a mouseDrag event.
-		// Otherwise, the selection should remain intact.
-		if(self->isDragging == NO){
-			[self mousePartSelection:theEvent];
-		}
-	}
-	
-	else if(toolMode == ZoomInTool)
-		[self zoomIn:self];
-	
-	else if(toolMode == ZoomOutTool)
-		[self zoomOut:self];
-	
-	//Redraw from our dragging operations, if necessary.
-	if(	self->isDragging == YES && rotationDrawMode == LDrawGLDrawExtremelyFast )
-		[self setNeedsDisplay:YES];
-		
-	self->isDragging = NO; //not anymore.
-	[self resetCursor];
-	
-}//end mouseUp:
-
-
-//========== mousePartSelection: ===============================================
-//
-// Purpose:		Time to see if we should select something in the model.
-//				OpenGL has a selection mode in which it records the name-tag 
-//				for anything that renders within the viewing area. We utilize 
-//				this feature to find out what part was clicked on.
-//
-//	Notes:		There's a gotcha here. The click region is determined by 
-//				isolating a 1-pixel square around the place where the mouse was 
-//				clicked. This is done with gluPickMatrix.
-//
-//				The trouble is that gluPickMatrix works in viewport coordinates, 
-//				which NONE of our Cocoa views are using! (Exception: GLViews 
-//				outside a scroll view at 100% zoom level.) To avoid getting 
-//				mired in the terrifying array of possible coordinate systems, 
-//				we just convert both the click point and the LDraw visible rect 
-//				to Window Coordinates.
-//
-//				Actually, I bet that is fundamentally wrong too. But it won't 
-//				show up unless the window coordinate system is being modified. 
-//				The ultimate solution is probably to convert to screen 
-//				coordinates, because that's what OpenGL is using anyway.
-//
-//				Confused? So am I.
-//
-//==============================================================================
-- (void)mousePartSelection:(NSEvent *)theEvent
-{
-	LDrawDirective	*clickedDirective	= nil;
-	NSView			*referenceView		= nil;
-	NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
-	NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
-	GLuint			 nameBuffer[512]	= {0};
-	GLint			 viewport[4]		= {0};
-	int				 numberOfHits		= 0;
-	
-	//Prepare OpenGL to record hits in the viewing area. We need to feed it 
-	// a buffer which will be filled with the tags of things that got hit.
-	[[self openGLContext] makeCurrentContext];
-	glGetIntegerv(GL_VIEWPORT, viewport);
-	glSelectBuffer(512, nameBuffer);
-	glRenderMode(GL_SELECT); //switch to hit-testing mode.
-	{
-		//Prepare for recording names. These functions must be called 
-		// *after* switching to render mode.
-		glInitNames();
-		glPushName(UINT_MAX); //0 would be a valid choice, after all...
-		
-		//Restrict our rendering area (and thus our hit-testing region) to 
-		// a very small rectangle around the mouse position.
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		
-			glLoadIdentity();
-			
-			//Lastly, convert to viewport coordinates:
-			float pickX = viewClickedPoint.x - NSMinX(visibleRect);
-			float pickY = viewClickedPoint.y - NSMinY(visibleRect);
-			
-			gluPickMatrix(pickX,
-						  pickY,
-						  1, //width
-						  1, //height
-						  viewport);
-			
-			NSRect newFrame = [self frame];
-			//Now load the common viewing frame
-			[self makeProjection];
-			
-			glMatrixMode(GL_MODELVIEW);
-			[self->fileBeingDrawn draw:DRAW_HIT_TEST_MODE parentColor:glColor];
-			
-		//Restore original viewing matrix after mangling for the hit area.
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		
-		glFlush();
-		[[self openGLContext] flushBuffer];
-		
-		[self setNeedsDisplay:YES];
-	}
-	numberOfHits = glRenderMode(GL_RENDER);
-	
-	clickedDirective = [self getPartFromHits:nameBuffer hitCount:numberOfHits];
-	//Notify our delegate about this momentous event.
-	// It's okay to send nil; that means "deselect."
-	// We want to add this to the current selection if the shift key is down.
-	if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
-	{
-		[self->document LDrawGLView:self
-			 wantsToSelectDirective:clickedDirective
-			   byExtendingSelection:([theEvent modifierFlags] & NSShiftKeyMask) != 0 ];
-	}
-	
-
-}//end mousePartSelection:
-
-
-//========== getPartFromHits:hitCount: =========================================
-//
-// Purpose:		Deduce the part that was clicked on, given the selection data 
-//				returned from glMatrixMode(GL_SELECT). This hit data is created 
-//				by OpenGL when we click the mouse.
-//
-// Parameters	numberHits is the number of hit records recorded in nameBuffer.
-//					It seems to return -1 if the buffer overflowed.
-//				nameBuffer is structured as follows:
-//					nameBuffer[0] = number of names in first record
-//					nameBuffer[1] = minimum depth hit in field of view
-//					nameBuffer[2] = maximum depth hit in field of view
-//					nameBuffer[3] = bottom entry on name stack
-//						....
-//					nameBuffer[n] = top entry on name stack
-//					nameBuffer[n+1] = number names in second record
-//						.... etc.
-//
-//				Each time something gets rendered into our picking region around 
-//				the mouse (and it has a different name), it generates a hit 
-//				record. So we have to investigate our buffer and figure out 
-//				which hit was the nearest to the front (smallest minimum depth); 
-//				that is the one we clicked on.
-//
-//==============================================================================
-- (LDrawDirective *) getPartFromHits:(GLuint *)nameBuffer
-							hitCount:(GLuint)numberHits
-{
-	LDrawDirective *clickedDirective = nil;
-	
-	//The hit record depths are mapped between 0 and UINT_MAX, where the maximum 
-	// integer is the deepest point. We are looking for the shallowest point, 
-	// because that's what we clicked on.
-	GLuint	minimumDepth		= UINT_MAX;
-	GLuint	closestName			= 0;
-	int		numberNames			= 0;
-	int		hitCounter			= 0;
-	int		counter				= 0;
-	int		hitRecordBaseIndex	= 0;
-	
-	//Process all the hits. In theory, each hit record can be of variable 
-	// length, so the logic is a little messy. (In Bricksmith, each it record 
-	// is exactly 4 entries long, but we're being all general here!)
-	for(hitCounter = 0; hitCounter < numberHits; hitCounter++) {
-		
-		//We find hit records by reckoning them as starting at an 
-		// offset in the buffer. hitRecordBaseIndex is the index of the 
-		// first entry in the record.
-		
-		numberNames = nameBuffer[hitRecordBaseIndex + 0]; //first entry.
-		//Is this hit closer than the last closest one?
-		if(nameBuffer[hitRecordBaseIndex+1] < minimumDepth) {
-			minimumDepth = nameBuffer[hitRecordBaseIndex+1];
-			//If this was closer, we need to record the name!
-			for(counter = 0; counter < numberNames; counter++){
-				//Names start in the fourth entry of the hit.
-				closestName = nameBuffer[hitRecordBaseIndex + 3 + counter];
-				
-				//By convention in Bricksmith, we only have one name per hit.
-			}
-		}
-		
-		//Advance past this entire hit record. (Three standard entries followed 
-		// by a variable number of names per record.)
-		hitRecordBaseIndex += 3 + numberNames;
-	}
-	
-	//Match the closest name with the directive it represents. 
-	// Note that 0 is a perfectly valid directive tag; our clue that we 
-	// didn't find anything is if the number of hits is invalid.
-	if(numberHits > 0) {
-		//Name tags encode the indices at which the reside.
-		int stepIndex = closestName / STEP_NAME_MULTIPLIER; //integer division
-		int partIndex = closestName % STEP_NAME_MULTIPLIER;
-		
-		LDrawModel *enclosingModel = nil;
-		LDrawStep *enclosingStep = nil;
-		
-		//Find the reference we seek. Note that the "fileBeingDrawn" is 
-		// not necessarily a file, so we have to compensate.
-		if([fileBeingDrawn isKindOfClass:[LDrawFile class]] == YES)
-			enclosingModel = (LDrawModel *)[(LDrawFile*)fileBeingDrawn activeModel];
-		else if([fileBeingDrawn isKindOfClass:[LDrawModel class]] == YES)
-			enclosingModel = (LDrawModel *)fileBeingDrawn;
-		
-		if(enclosingModel != nil) {
-			enclosingStep    = [[enclosingModel steps] objectAtIndex:stepIndex];
-			clickedDirective = [[enclosingStep subdirectives] objectAtIndex:partIndex];
-		}
-	}
-	
-	return clickedDirective;
-	
-}//end getPartFromHits:hitCount:
 
 
 //========== mouseDragged: =====================================================
@@ -1153,14 +1043,45 @@
 	
 	if(toolMode == PanScrollTool)
 		[self panDragged:theEvent];
-		
+	
 	else if(toolMode == SmoothZoomTool)
 		[self zoomDragged:theEvent];
 	
-	else
+	else if(toolMode == RotateSelectTool)
 		[self rotationDragged:theEvent];
 	
 }//end mouseDragged
+
+
+//========== mouseUp: ==========================================================
+//
+// Purpose:		The mouse has been released. Figure out exactly what that means 
+//				in the wider context of what the mouse did before now.
+//
+//==============================================================================
+- (void)mouseUp:(NSEvent *)theEvent
+{
+	if(		self->toolMode == RotateSelectTool)
+	{
+		//We only want to select a part if this was NOT part of a mouseDrag event.
+		// Otherwise, the selection should remain intact.
+		if(self->isDragging == NO){
+			[self mousePartSelection:theEvent];
+		}
+	}
+	
+	else if(	toolMode == ZoomInTool
+			||	toolMode == ZoomOutTool )
+		[self mouseZoomClick:theEvent];
+	
+	//Redraw from our dragging operations, if necessary.
+	if(	self->isDragging == YES && rotationDrawMode == LDrawGLDrawExtremelyFast )
+		[self setNeedsDisplay:YES];
+		
+	self->isDragging = NO; //not anymore.
+	[self resetCursor];
+	
+}//end mouseUp:
 
 
 //========== panDrag: ==========================================================
@@ -1284,13 +1205,150 @@
 //==============================================================================
 - (void) zoomDragged:(NSEvent *)theEvent
 {
-	float zoomChange	= [theEvent deltaY];
+	float zoomChange	= -[theEvent deltaY];
 	float currentZoom	= [self zoomPercentage];
 	
 	//Negative means down
 	[self setZoomPercentage:currentZoom + zoomChange];
 	
 }//end zoomDragged:
+
+
+//========== mouseCenterClick: =================================================
+//
+// Purpose:		We have received a mouseDown event which is intended to center 
+//				our view on the point clicked.
+//
+//==============================================================================
+- (void) mouseCenterClick:(NSEvent*)theEvent {
+	
+	NSPoint newCenter = [self convertPoint:[theEvent locationInWindow]
+								  fromView:nil ];
+	
+	[self scrollCenterToPoint:newCenter];
+}//end mouseCenterClick:
+
+
+//========== mousePartSelection: ===============================================
+//
+// Purpose:		Time to see if we should select something in the model.
+//				OpenGL has a selection mode in which it records the name-tag 
+//				for anything that renders within the viewing area. We utilize 
+//				this feature to find out what part was clicked on.
+//
+//	Notes:		There's a gotcha here. The click region is determined by 
+//				isolating a 1-pixel square around the place where the mouse was 
+//				clicked. This is done with gluPickMatrix.
+//
+//				The trouble is that gluPickMatrix works in viewport coordinates, 
+//				which NONE of our Cocoa views are using! (Exception: GLViews 
+//				outside a scroll view at 100% zoom level.) To avoid getting 
+//				mired in the terrifying array of possible coordinate systems, 
+//				we just convert both the click point and the LDraw visible rect 
+//				to Window Coordinates.
+//
+//				Actually, I bet that is fundamentally wrong too. But it won't 
+//				show up unless the window coordinate system is being modified. 
+//				The ultimate solution is probably to convert to screen 
+//				coordinates, because that's what OpenGL is using anyway.
+//
+//				Confused? So am I.
+//
+//==============================================================================
+- (void)mousePartSelection:(NSEvent *)theEvent
+{
+	LDrawDirective	*clickedDirective	= nil;
+	NSView			*referenceView		= nil;
+	NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
+	NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
+	GLuint			 nameBuffer[512]	= {0};
+	GLint			 viewport[4]		= {0};
+	int				 numberOfHits		= 0;
+	
+	//Prepare OpenGL to record hits in the viewing area. We need to feed it 
+	// a buffer which will be filled with the tags of things that got hit.
+	[[self openGLContext] makeCurrentContext];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	glSelectBuffer(512, nameBuffer);
+	glRenderMode(GL_SELECT); //switch to hit-testing mode.
+	{
+		//Prepare for recording names. These functions must be called 
+		// *after* switching to render mode.
+		glInitNames();
+		glPushName(UINT_MAX); //0 would be a valid choice, after all...
+		
+		//Restrict our rendering area (and thus our hit-testing region) to 
+		// a very small rectangle around the mouse position.
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		
+		glLoadIdentity();
+		
+			//Lastly, convert to viewport coordinates:
+		float pickX = viewClickedPoint.x - NSMinX(visibleRect);
+		float pickY = viewClickedPoint.y - NSMinY(visibleRect);
+		
+		gluPickMatrix(pickX,
+					  pickY,
+					  1, //width
+					  1, //height
+					  viewport);
+		
+		NSRect newFrame = [self frame];
+			//Now load the common viewing frame
+		[self makeProjection];
+		
+		glMatrixMode(GL_MODELVIEW);
+		[self->fileBeingDrawn draw:DRAW_HIT_TEST_MODE parentColor:glColor];
+		
+		//Restore original viewing matrix after mangling for the hit area.
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		
+		glFlush();
+		[[self openGLContext] flushBuffer];
+		
+		[self setNeedsDisplay:YES];
+	}
+	numberOfHits = glRenderMode(GL_RENDER);
+	
+	clickedDirective = [self getPartFromHits:nameBuffer hitCount:numberOfHits];
+	//Notify our delegate about this momentous event.
+	// It's okay to send nil; that means "deselect."
+	// We want to add this to the current selection if the shift key is down.
+	if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
+	{
+		[self->document LDrawGLView:self
+			 wantsToSelectDirective:clickedDirective
+			   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
+	}
+	
+	
+}//end mousePartSelection:
+
+
+//========== mouseZoomClick: ===================================================
+//
+// Purpose:		Depending on the tool mode, we want to zoom in or out. We also 
+//				want to center the view on whatever we clicked on.
+//
+//==============================================================================
+- (void) mouseZoomClick:(NSEvent*)theEvent {
+	
+	float currentZoom	= [self zoomPercentage];
+	float newZoom		= 0;
+	NSPoint newCenter	= [self convertPoint:[theEvent locationInWindow]
+									fromView:nil ];
+
+	if(	toolMode == ZoomInTool )
+		newZoom = currentZoom * 2;
+	
+	else if( toolMode == ZoomOutTool )
+		newZoom = currentZoom / 2;
+		
+	[self setZoomPercentage:newZoom];
+	[self scrollCenterToPoint:newCenter];
+}//end mouseZoomClick:
 
 
 #pragma mark -
@@ -1348,7 +1406,7 @@
 	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
 	glLoadIdentity();
 	
-//	NSLog(@"GL view(%X) reshaping; frame %@", [self autoresizingMask], NSStringFromRect(frame));
+	NSLog(@"GL view(0x%X) reshaping; frame %@", self, NSStringFromRect(frame));
 
 	//Make a new view based on the current viewable area
 	[self makeProjection];
@@ -1358,9 +1416,126 @@
 }//end reshape
 
 
+//========== windowDidResignKey: ===============================================
+//
+// Purpose:		Called whenever the window in which this view resides loses its 
+//				key status. We register to get this in awakeFromNib.
+//
+//==============================================================================
+- (void) windowDidResignKey:(NSNotification *)notification{
+	
+	//We need to reset our event-tracking state completely, because we won't 
+	// get any more event messages after this!
+	// (also see -resignFirstResponder)
+	
+	[self->currentKeyCharacters release];
+	self->currentKeyCharacters	= @"";
+	self->currentKeyModifiers	= nil;
+	
+	[self resetCursor];
+
+}//end windowDidResignKey
+
+
 #pragma mark -
 #pragma mark UTILITIES
 #pragma mark -
+
+//========== getPartFromHits:hitCount: =========================================
+//
+// Purpose:		Deduce the part that was clicked on, given the selection data 
+//				returned from glMatrixMode(GL_SELECT). This hit data is created 
+//				by OpenGL when we click the mouse.
+//
+// Parameters	numberHits is the number of hit records recorded in nameBuffer.
+//					It seems to return -1 if the buffer overflowed.
+//				nameBuffer is structured as follows:
+//					nameBuffer[0] = number of names in first record
+//					nameBuffer[1] = minimum depth hit in field of view
+//					nameBuffer[2] = maximum depth hit in field of view
+//					nameBuffer[3] = bottom entry on name stack
+//						....
+//					nameBuffer[n] = top entry on name stack
+//					nameBuffer[n+1] = number names in second record
+//						.... etc.
+//
+//				Each time something gets rendered into our picking region around 
+//				the mouse (and it has a different name), it generates a hit 
+//				record. So we have to investigate our buffer and figure out 
+//				which hit was the nearest to the front (smallest minimum depth); 
+//				that is the one we clicked on.
+//
+//==============================================================================
+- (LDrawDirective *) getPartFromHits:(GLuint *)nameBuffer
+							hitCount:(GLuint)numberHits
+{
+	LDrawDirective *clickedDirective = nil;
+	
+	//The hit record depths are mapped between 0 and UINT_MAX, where the maximum 
+	// integer is the deepest point. We are looking for the shallowest point, 
+	// because that's what we clicked on.
+	GLuint	minimumDepth		= UINT_MAX;
+	GLuint	closestName			= 0;
+	int		numberNames			= 0;
+	int		hitCounter			= 0;
+	int		counter				= 0;
+	int		hitRecordBaseIndex	= 0;
+	
+	//Process all the hits. In theory, each hit record can be of variable 
+	// length, so the logic is a little messy. (In Bricksmith, each it record 
+	// is exactly 4 entries long, but we're being all general here!)
+	for(hitCounter = 0; hitCounter < numberHits; hitCounter++) {
+		
+		//We find hit records by reckoning them as starting at an 
+		// offset in the buffer. hitRecordBaseIndex is the index of the 
+		// first entry in the record.
+		
+		numberNames = nameBuffer[hitRecordBaseIndex + 0]; //first entry.
+		//Is this hit closer than the last closest one?
+		if(nameBuffer[hitRecordBaseIndex+1] < minimumDepth) {
+			minimumDepth = nameBuffer[hitRecordBaseIndex+1];
+			//If this was closer, we need to record the name!
+			for(counter = 0; counter < numberNames; counter++){
+				//Names start in the fourth entry of the hit.
+				closestName = nameBuffer[hitRecordBaseIndex + 3 + counter];
+				
+				//By convention in Bricksmith, we only have one name per hit.
+			}
+		}
+		
+		//Advance past this entire hit record. (Three standard entries followed 
+		// by a variable number of names per record.)
+		hitRecordBaseIndex += 3 + numberNames;
+	}
+	
+	//Match the closest name with the directive it represents. 
+	// Note that 0 is a perfectly valid directive tag; our clue that we 
+	// didn't find anything is if the number of hits is invalid.
+	if(numberHits > 0) {
+		//Name tags encode the indices at which the reside.
+		int stepIndex = closestName / STEP_NAME_MULTIPLIER; //integer division
+		int partIndex = closestName % STEP_NAME_MULTIPLIER;
+		
+		LDrawModel *enclosingModel = nil;
+		LDrawStep *enclosingStep = nil;
+		
+		//Find the reference we seek. Note that the "fileBeingDrawn" is 
+		// not necessarily a file, so we have to compensate.
+		if([fileBeingDrawn isKindOfClass:[LDrawFile class]] == YES)
+			enclosingModel = (LDrawModel *)[(LDrawFile*)fileBeingDrawn activeModel];
+		else if([fileBeingDrawn isKindOfClass:[LDrawModel class]] == YES)
+			enclosingModel = (LDrawModel *)fileBeingDrawn;
+		
+		if(enclosingModel != nil) {
+			enclosingStep    = [[enclosingModel steps] objectAtIndex:stepIndex];
+			clickedDirective = [[enclosingStep subdirectives] objectAtIndex:partIndex];
+		}
+	}
+	
+	return clickedDirective;
+	
+}//end getPartFromHits:hitCount:
+
 
 //========== resetFrameSize: ===================================================
 //
@@ -1579,7 +1754,8 @@
 //========== scrollCenterToPoint ===============================================
 //
 // Purpose:		Scrolls the receiver (if it is inside a scroll view) so that 
-//				newCenter is at the center of the viewing area.
+//				newCenter is at the center of the viewing area. newCenter is 
+//				given in frame coordinates.
 //
 //==============================================================================
 - (void) scrollCenterToPoint:(NSPoint)newCenter {

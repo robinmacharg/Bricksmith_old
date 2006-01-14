@@ -40,6 +40,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 @interface LDrawDocument : NSDocument
 {
 	IBOutlet DocumentToolbarController	*toolbarController;
+	IBOutlet NSObjectController			*bindingsController;
 
 	IBOutlet NSDrawer					*partBrowserDrawer;
 	IBOutlet NSDrawer					*fileContentsDrawer;
@@ -59,7 +60,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 		NSArray			*selectedDirectives; //mirrors the selection of the file contents outline.
 		insertionModeT	 insertionMode;
 		gridSpacingModeT gridMode;
-		LDrawGLView		*mostRecentLDrawView;
+		LDrawGLView		*mostRecentLDrawView; //file graphic view which most recently had focus. Weak link.
 }
 
 //Accessors
@@ -129,15 +130,17 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void)partChanged:(NSNotification *)notification;
 - (void)syntaxColorChanged:(NSNotification *)notification;
 
+//Menus
+- (void) addModelsToMenu;
+- (void) clearModelMenus;
+
 //Utilites
 - (void) addModel:(LDrawMPDModel *)newModel;
 - (void) addStep:(LDrawStep *)newStep;
 - (void) addPartNamed:(NSString *)partName;
 - (void) addStepComponent:(LDrawDirective *)newDirective;
 
-- (void) addModelsToMenu;
 - (BOOL) canDeleteDirective:(LDrawDirective *)directive displayErrors:(BOOL)errorFlag;
-- (void) clearModelMenus;
 - (BOOL) elementsAreSelectedOfVisibility:(BOOL)visibleFlag;
 - (NSAttributedString *) formatDirective:(LDrawDirective *)item withStringRepresentation:(NSString *)representation;
 - (void) loadDataIntoDocumentUI;

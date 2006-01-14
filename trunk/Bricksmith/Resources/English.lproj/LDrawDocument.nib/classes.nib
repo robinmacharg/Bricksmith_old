@@ -62,6 +62,7 @@
             CLASS = LDrawDocument; 
             LANGUAGE = ObjC; 
             OUTLETS = {
+                bindingsController = NSObjectController; 
                 fileContentsDrawer = NSDrawer; 
                 fileContentsOutline = LDrawFileOutlineView; 
                 fileDetailView1 = LDrawGLView; 

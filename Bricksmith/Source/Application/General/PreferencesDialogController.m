@@ -13,6 +13,7 @@
 #import "MacLDraw.h"
 #import "LDrawApplication.h"
 #import "LDrawGLView.h"			//for ViewingAngleT
+#import "PartLibrary.h"
 #import "UserDefaultsCategory.h"
 #import "WindowCategory.h"
 #import <AMSProgressBar/AMSProgressBar.h>
@@ -527,6 +528,11 @@ PreferencesDialogController *preferencesDialog = nil;
 	//
 	[initialDefaults setObject:NSLocalizedString(@"All Categories", nil)	forKey:PART_BROWSER_PREVIOUS_CATEGORY];
 	[initialDefaults setObject:[NSNumber numberWithInt:0]					forKey:PART_BROWSER_PREVIOUS_SELECTED_ROW];
+	
+	//
+	// Tool Palette
+	//
+	[initialDefaults setObject:[NSNumber numberWithBool:NO]					forKey:TOOL_PALETTE_HIDDEN];
 	
 	[userDefaults registerDefaults:initialDefaults];
 	

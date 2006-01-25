@@ -2,10 +2,18 @@
 //
 // File:		LDrawGLView.m
 //
-// Purpose:		Draws an LDrawFile with OpenGL. Also handles processing of mouse 
-//				events related to the document. Certain user interactions must 
-//				be handed off to an LDrawDocument in order to make them have 
-//				effect on the object being drawn.
+// Purpose:		Draws an LDrawFile with OpenGL.
+//
+//				We also handle processing of mouse events related to the 
+//				document. Certain user interactions must be handed off to an 
+//				LDrawDocument in order for them to effect the object being 
+//				drawn.
+//
+//				This class also provides for a number of mouse-based viewing 
+//				tools triggered by hotkeys. However, we don't track them here! 
+//				(We want *all* LDrawGLViews to respond to hotkeys at once.) So 
+//				there is a symbiotic relationship with ToolPalette to track 
+//				which tool mode we're in; we get notifications when it changes.
 //
 //  Created by Allen Smith on 4/17/05.
 //  Copyright 2005. All rights reserved.
@@ -14,6 +22,7 @@
 
 #import <GLUT/glut.h>
 #import <OpenGL/glu.h>
+
 #import "LDrawApplication.h"
 #import "LDrawDirective.h"
 #import "LDrawDocument.h"
@@ -47,9 +56,9 @@
 	NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
 	
 	[notificationCenter addObserver:self
-						   selector:@selector(windowDidResignKey:)
-							   name:NSWindowDidResignKeyNotification
-							 object:[self window] ];
+						   selector:@selector(mouseToolDidChange:)
+							   name:LDrawMouseToolDidChangeNotification
+							 object:nil ];
 	
 	//Machinery needed to draw Quartz overtop OpenGL. Sadly, it caused our view 
 	// to become transparent when minimizing to the dock. In the end, I didn't 
@@ -93,13 +102,10 @@
 	
 	[self setAcceptsFirstResponder:YES];
 	[self setLDrawColor:LDrawCurrentColor];
-	currentKeyCharacters	= @"";
-	currentKeyModifiers		= 0;
 	cameraDistance			= -10000;
 	isDragging				= NO;
 	projectionMode			= ProjectionModePerspective;
 	rotationDrawMode		= LDrawGLDrawNormal;
-	toolMode				= RotateSelectTool;
 	viewingAngle			= ViewingAngle3D;
 	
 	
@@ -260,6 +266,8 @@
 }//end drawRect:
 
 
+//========== isOpaque ==========================================================
+//==============================================================================
 //- (BOOL) isOpaque
 //{
 //	return NO;
@@ -275,6 +283,7 @@
 - (BOOL) isFlipped {
 	return YES;
 }
+
 
 #pragma mark -
 #pragma mark ACCESSORS
@@ -657,27 +666,6 @@
 	return success;
 }
 
-
-//========== resignFirstResponder ==============================================
-//
-// Purpose:		Our privileged first responder status is being forcibly removed!
-//
-//==============================================================================
-- (BOOL)resignFirstResponder
-{
-	//We need to reset our event-tracking state completely, because we won't 
-	// get any more event messages after this!
-	// (also see -windowDidResignKey:)
-
-	[self->currentKeyCharacters release];
-	self->currentKeyCharacters	= @"";
-	self->currentKeyModifiers	= 0;
-	[self resetCursor];
-	
-	return YES;
-}//end resignFirstResponder
-
-
 //========== resetCursor =======================================================
 //
 // Purpose:		Force a mouse-cursor update. We call this whenever a significant 
@@ -691,6 +679,7 @@
 	[self addCursorRect:[self visibleRect] cursor:[NSCursor arrowCursor]];
 	
 	[[self window] invalidateCursorRectsForView:self];	
+	
 }//end resetCursor
 
 
@@ -703,11 +692,7 @@
 //				Whenever the mouse enters our frame, the AppKit automatically 
 //				takes care of adjusting the cursor. This method itself is called 
 //				by the AppKit when necessary. We also coax it into happening 
-//				more frequently by calling. See -resetCursor.
-//
-// Note:		Because this is the central command center for cursor updates, 
-//				it also became the place where keys are analyzed for tool 
-//				changes.
+//				more frequently by invalidating. See -resetCursor.
 //
 //==============================================================================
 - (void) resetCursorRects
@@ -717,86 +702,74 @@
 	NSRect		 visibleRect	= [self visibleRect];
 	BOOL		 isClicked		= NO; /*[[NSApp currentEvent] type] == NSLeftMouseDown;*/ //not enough; overwhelmed by repeating key events
 	NSCursor	*cursor			= nil;
+	NSImage		*cursorImage	= nil;
+	ToolModeT	 toolMode		= [ToolPalette toolMode];
 	
-	//Zoom out (option-space-click)
-	if(		(self->currentKeyModifiers & NSAlternateKeyMask) != 0
-		&&	[self->currentKeyCharacters isEqualToString:@" "] )
+	switch(toolMode)
 	{
-		self->toolMode = ZoomOutTool;
+		case RotateSelectTool:
+			//just use the standard arrow cursor.
+			cursor = [NSCursor arrowCursor];
+			break;
 		
-		NSImage *zoomOutImage = [NSImage imageNamed:@"ZoomOutCursor"];
-		cursor = [[[NSCursor alloc] initWithImage:zoomOutImage
-										  hotSpot:NSMakePoint(7, 10)] autorelease];
-	}
-	//Zoom in (command-space-click)
-	else if(	(self->currentKeyModifiers & NSCommandKeyMask) != 0
-			&&	[self->currentKeyCharacters isEqualToString:@" "] )
-	{
-		self->toolMode = ZoomInTool;
+		case PanScrollTool:
+			if(self->isDragging == YES || isClicked == YES)
+				cursor = [NSCursor closedHandCursor];
+			else
+				cursor = [NSCursor openHandCursor];
+			break;
+			
+		case SmoothZoomTool:
+			if(self->isDragging == YES) {
+				cursorImage = [NSImage imageNamed:@"ZoomCursor"];
+				cursor = [[[NSCursor alloc] initWithImage:cursorImage
+												  hotSpot:NSMakePoint(7, 10)] autorelease];
+			}
+			else
+				cursor = [NSCursor crosshairCursor];
+			break;
+			
+		case ZoomInTool:
+			cursorImage = [NSImage imageNamed:@"ZoomInCursor"];
+			cursor = [[[NSCursor alloc] initWithImage:cursorImage
+											  hotSpot:NSMakePoint(7, 10)] autorelease];
+			break;
+			
+		case ZoomOutTool:
+			cursorImage = [NSImage imageNamed:@"ZoomOutCursor"];
+			cursor = [[[NSCursor alloc] initWithImage:cursorImage
+											  hotSpot:NSMakePoint(7, 10)] autorelease];
+			break;
 		
-		NSImage *zoomInImage = [NSImage imageNamed:@"ZoomInCursor"];
-		cursor = [[[NSCursor alloc] initWithImage:zoomInImage
-										  hotSpot:NSMakePoint(7, 10)] autorelease];
-	}
-	//Smooth Zoom (command-drag)
-	else if( (self->currentKeyModifiers & NSCommandKeyMask) != 0 )
-	{
-		self->toolMode = SmoothZoomTool;
-		
-		NSImage *zoomImage = [NSImage imageNamed:@"ZoomCursor"];
-		cursor = [[[NSCursor alloc] initWithImage:zoomImage
-										  hotSpot:NSMakePoint(7, 10)] autorelease];
-	}
-	//Panning (space-drag)
-	else if([self->currentKeyCharacters isEqualToString:@" "]) //spacebar
-	{
-		self->toolMode = PanScrollTool;
-	
-		if(self->isDragging == YES || isClicked == YES)
-			cursor = [NSCursor closedHandCursor];
-		else
-			cursor = [NSCursor openHandCursor];
-	}
-	//Multiple selection
-//	else if( (self->currentKeyModifiers & NSShiftKeyMask) != 0 )
-//	{
-//		self->toolMode = AddToSelectionTool;
-//		//no special cursor for this, yet.
-//	}
-	
-	//Rotate/select (no hot key; normal behavior)
-	else
-	{
-		self->toolMode = RotateSelectTool;
-		//don't add any cursor here.
 	}
 	
-	if(cursor != nil){
+	//update the cursor based on the tool mode.
+	if(cursor != nil)
+	{
 		//Make this cursor active over the entire document.
 		[self addCursorRect:visibleRect cursor:cursor];
+		[cursor setOnMouseEntered:YES];
 		
-		//Manually *set* the cursor, because sometimes the changed rectangle 
-		// doesn't result in a changed cursor.
-		[cursor set];
+		//okay, something very weird is going on here. When the cursor is inside 
+		// a view and THE PARTS BROWSER DRAWER IS OPEN, merely establishing a 
+		// cursor rect isn't enough. It's somehow instantly erased when the 
+		// LDrawGLView inside the drawer redoes its own cursor rects. Even 
+		// calling -set on the cursor often has little more effect than a brief 
+		// flicker. I don't know why this is happening, but this hack seems to 
+		// fix it.
+		if([self mouse:[self convertPoint:[[self window] mouseLocationOutsideOfEventStream] fromView:nil]
+				inRect:[self visibleRect] ] ) //mouse is inside view.
+		{
+			//[cursor set]; //not enough.
+			[cursor performSelector:@selector(set) withObject:nil afterDelay:0];
+		}
+		
 	}
 		
 }//end resetCursorRects
 
 
 #pragma mark -
-
-//========== flagsChanged: =====================================================
-//
-// Purpose:		A modifier key was pressed or released.
-//
-//==============================================================================
-- (void)flagsChanged:(NSEvent *)theEvent
-{
-	self->currentKeyModifiers = [theEvent modifierFlags];
-	
-	[self resetCursor];
-}
-
 
 //========== keyDown: ==========================================================
 //
@@ -805,14 +778,10 @@
 //				on the arrow key pressed.
 //
 //==============================================================================
-- (void)keyDown:(NSEvent *)theEvent {
+- (void)keyDown:(NSEvent *)theEvent
+{
 	NSString		*characters	= [theEvent characters];
 	
-	[self->currentKeyCharacters release];
-	self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
-	[self resetCursor];
-	
-		
 //		[self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
 	//We are circumventing the AppKit's key processing system here, because we 
 	// may want to extend our keys to mean different things with different 
@@ -845,20 +814,6 @@
 }//end keyDown:
 
 
-//========== keyUp: ============================================================
-//
-// Purpose:		A key has been released.
-//
-//==============================================================================
-- (void) keyUp:(NSEvent *)theEvent
-{
-	[self->currentKeyCharacters release];
-	self->currentKeyCharacters = @"";
-	[self resetCursor];
-
-}//end keyUp:
-
-
 //========== performKeyEquivalent: =============================================
 //
 // Purpose:		This is a command-key equivalent. Since we used the command key 
@@ -869,56 +824,36 @@
 //				to take a stab at it.
 //
 //==============================================================================
-- (BOOL) performKeyEquivalent:(NSEvent *)theEvent
-{
-	BOOL		handledEvent	= NO;
-//	ToolModeT	startingTool	= self->toolMode;
-	
-	if([[self window] firstResponder] == self){
-		//This is a key-down event in disguise. We need to record the new characters.
-		[self->currentKeyCharacters release];
-		self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
-		[self resetCursor];
-		
-		//See if it's a recognized command key (logic duplicated from -resetCursorRects)
-		if([currentKeyCharacters isEqualToString:@" "]){
-		//if(self->toolMode != startingTool){ //doesn't work; resetCursorRects is called after this.
-			handledEvent = YES; //prevent a beep, and also stop further processing of this message.
-		}
-		else
-			//We didn't handle it.
-			handledEvent = [super performKeyEquivalent:theEvent];
-	}
-	else {
-		//We don't want it, since our meddling with command keys is strictly a 
-		// first-responder kind of behavior.
-		handledEvent = [super performKeyEquivalent:theEvent];
-	}
-	
-	
-	return handledEvent;
-	
-}//end performKeyEquivalent:
-
-
-//========== commandKeyUp: =====================================================
-//
-// Purpose:		This method is triggered by BricksmithApplication in response to 
-//				an NSKeyUp event generated while the command key is depressed. 
-//				Unlike Cocoa's implementation of -performKeyEquivalent:, these 
-//				events are sent up the responder chain. Therefore, it is safe to 
-//				assume we are the first responder here.
-//
-// Notes:		Cocoa seems to just drop these events, which is why we needed an 
-//				NSApplication subclass to get them.
-//
-//==============================================================================
-- (void) commandKeyUp:(NSEvent *)theEvent
-{
-	[self->currentKeyCharacters release];
-	self->currentKeyCharacters = @"";
-	[self resetCursor];
-}//end commandKeyUp:
+//- (BOOL) performKeyEquivalent:(NSEvent *)theEvent
+//{
+//	BOOL		handledEvent	= NO;
+////	ToolModeT	startingTool	= self->toolMode;
+//	
+//	if([[self window] firstResponder] == self){
+//		//This is a key-down event in disguise. We need to record the new characters.
+//		[self->currentKeyCharacters release];
+//		self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
+//		[self resetCursor];
+//		
+//		//See if it's a recognized command key (logic duplicated from -resetCursorRects)
+//		if([currentKeyCharacters isEqualToString:@" "]){
+//		//if(self->toolMode != startingTool){ //doesn't work; resetCursorRects is called after this.
+//			handledEvent = YES; //prevent a beep, and also stop further processing of this message.
+//		}
+//		else
+//			//We didn't handle it.
+//			handledEvent = [super performKeyEquivalent:theEvent];
+//	}
+//	else {
+//		//We don't want it, since our meddling with command keys is strictly a 
+//		// first-responder kind of behavior.
+//		handledEvent = [super performKeyEquivalent:theEvent];
+//	}
+//	
+//	
+//	return handledEvent;
+//	
+//}//end performKeyEquivalent:
 
 
 //========== nudgeKeyDown: =====================================================
@@ -1024,7 +959,7 @@
 	
 	[self resetCursor];
 	
-	if(self->toolMode == SmoothZoomTool)
+	if([ToolPalette toolMode] == SmoothZoomTool)
 		[self mouseCenterClick:theEvent];
 }	
 
@@ -1036,6 +971,8 @@
 //==============================================================================
 - (void)mouseDragged:(NSEvent *)theEvent
 {
+	ToolModeT toolMode = [ToolPalette toolMode];
+
 	self->isDragging = YES;
 	[self resetCursor];
 	
@@ -1061,7 +998,9 @@
 //==============================================================================
 - (void)mouseUp:(NSEvent *)theEvent
 {
-	if(		self->toolMode == RotateSelectTool)
+	ToolModeT toolMode = [ToolPalette toolMode];
+
+	if( toolMode == RotateSelectTool )
 	{
 		//We only want to select a part if this was NOT part of a mouseDrag event.
 		// Otherwise, the selection should remain intact.
@@ -1093,10 +1032,12 @@
 //==============================================================================
 - (void) panDragged:(NSEvent *)theEvent
 {
-	NSRect visibleRect = [self visibleRect];
+	NSRect	visibleRect	= [self visibleRect];
+	float	scaleFactor	= [self zoomPercentage] / 100;
 	
-	visibleRect.origin.x -= [theEvent deltaX]; //scroll the opposite direction of pull.
-	visibleRect.origin.y -= [theEvent deltaY];
+	//scroll the opposite direction of pull.
+	visibleRect.origin.x -= [theEvent deltaX] / scaleFactor;
+	visibleRect.origin.y -= [theEvent deltaY] / scaleFactor;
 	
 	[self scrollRectToVisible:visibleRect];
 
@@ -1335,10 +1276,11 @@
 //==============================================================================
 - (void) mouseZoomClick:(NSEvent*)theEvent {
 	
-	float currentZoom	= [self zoomPercentage];
-	float newZoom		= 0;
-	NSPoint newCenter	= [self convertPoint:[theEvent locationInWindow]
-									fromView:nil ];
+	ToolModeT	toolMode	= [ToolPalette toolMode];
+	float		currentZoom	= [self zoomPercentage];
+	float		newZoom		= 0;
+	NSPoint		newCenter	= [self convertPoint:[theEvent locationInWindow]
+										fromView:nil ];
 
 	if(	toolMode == ZoomInTool )
 		newZoom = currentZoom * 2;
@@ -1389,6 +1331,19 @@
 }//end displayNeedsUpdating
 
 
+//========== mouseToolDidChange: ===============================================
+//
+// Purpose:		Someone (likely our file) has notified us that it has changed, 
+//				and thus we need to redraw.
+//
+//				We also use this opportunity to grow the canvas if necessary.
+//
+//==============================================================================
+- (void) mouseToolDidChange:(NSNotification *)notification {
+	[self resetCursor];
+}//end mouseToolDidChange
+
+
 //========== reshape ===========================================================
 //
 // Purpose:		Something changed in the viewing department; we need to adjust 
@@ -1406,7 +1361,7 @@
 	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
 	glLoadIdentity();
 	
-	NSLog(@"GL view(0x%X) reshaping; frame %@", self, NSStringFromRect(frame));
+//	NSLog(@"GL view(0x%X) reshaping; frame %@", self, NSStringFromRect(frame));
 
 	//Make a new view based on the current viewable area
 	[self makeProjection];
@@ -1414,27 +1369,6 @@
 	glViewport(0,0, NSWidth(visibleRect) * scaleFactor, NSHeight(visibleRect) * scaleFactor );
 	
 }//end reshape
-
-
-//========== windowDidResignKey: ===============================================
-//
-// Purpose:		Called whenever the window in which this view resides loses its 
-//				key status. We register to get this in awakeFromNib.
-//
-//==============================================================================
-- (void) windowDidResignKey:(NSNotification *)notification{
-	
-	//We need to reset our event-tracking state completely, because we won't 
-	// get any more event messages after this!
-	// (also see -resignFirstResponder)
-	
-	[self->currentKeyCharacters release];
-	self->currentKeyCharacters	= @"";
-	self->currentKeyModifiers	= nil;
-	
-	[self resetCursor];
-
-}//end windowDidResignKey
 
 
 #pragma mark -

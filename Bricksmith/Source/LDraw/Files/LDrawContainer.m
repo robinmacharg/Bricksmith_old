@@ -102,6 +102,31 @@
 #pragma mark ACCESSORS
 #pragma mark -
 
+//========== allEnclosedElements ===============================================
+//
+// Purpose:		Returns all of the terminal (leaf-node) subdirectives contained 
+//				within this object and all enclosed containers. Does not return 
+//				the enclosed containers themselves.
+//
+//==============================================================================
+- (NSArray *) allEnclosedElements {
+	NSMutableArray	*subelements		= [NSMutableArray array];
+	id				 currentDirective	= nil;
+	int				 counter			= 0;
+	
+	for(counter = 0; counter < [self->containedObjects count]; counter++){
+		currentDirective = [self->containedObjects objectAtIndex:counter];
+		if([currentDirective respondsToSelector:@selector(allEnclosedElements)])
+			[subelements addObjectsFromArray:[currentDirective allEnclosedElements]];
+		else
+			[subelements addObject:currentDirective];
+	}
+	
+	return subelements;
+	
+}//end allEnclosedElements
+
+
 //========== boundingBox3 ======================================================
 //
 // Purpose:		Returns the minimum and maximum points of the box which 

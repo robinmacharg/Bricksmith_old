@@ -13,6 +13,7 @@
 
 #import "LDrawApplication.h"
 #import "LDrawPart.h"
+#import "PartLibrary.h"
 #import "FormCategory.h"
 
 @implementation InspectionPart

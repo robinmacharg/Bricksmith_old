@@ -33,6 +33,7 @@
 #import "Inspector.h"
 #import "LDrawApplication.h"
 #import "LDrawColorPanel.h"
+#import "LDrawDocumentWindow.h"
 #import "LDrawFileOutlineView.h"
 #import "LDrawGLView.h"
 #import "MacLDraw.h"
@@ -457,6 +458,45 @@
 }//end rotateSelectionAround
 
 
+//========== selectDirective:byExtendingSelection: =============================
+//
+// Purpose:		Selects the specified directive.
+//				Pass nil to mean deselect.
+//
+//==============================================================================
+- (void) selectDirective:(LDrawDirective *) directiveToSelect
+	byExtendingSelection:(BOOL) shouldExtend
+{
+	NSArray			*ancestors			= [directiveToSelect ancestors];
+	LDrawDirective	*currentAncestor	= nil;
+	int				 indexToSelect		= 0;
+	int				 counter			= 0;
+	
+	if(directiveToSelect == nil)
+		[fileContentsOutline deselectAll:nil];
+	else {
+		//Expand the hierarchy all the way down to the directive we are about to 
+		// select.
+		for(counter = 0; counter < [ancestors count]; counter++)
+			[fileContentsOutline expandItem:[ancestors objectAtIndex:counter]];
+		
+		//Now we can safely select the directive. It is guaranteed to be visible, 
+		// since we expanded all its ancestors.
+		indexToSelect = [fileContentsOutline rowForItem:directiveToSelect];
+		//If we are doing multiple selection (shift-click), we want to deselect 
+		// already-selected parts.
+		if(		[[fileContentsOutline selectedRowIndexes] containsIndex:indexToSelect]
+				&&	shouldExtend == YES )
+			[fileContentsOutline deselectRow:indexToSelect];
+		else
+			[fileContentsOutline selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
+							 byExtendingSelection:shouldExtend];
+		[fileContentsOutline scrollRowToVisible:indexToSelect];
+	}
+	
+}//end selectDirective:byExtendingSelection:
+
+
 //========== setSelectionToHidden: =============================================
 //
 // Purpose:		Hides or shows all the hideable selected elements.
@@ -665,6 +705,35 @@
 	[fileContentsOutline deselectAll:sender];
 	[[self documentContents] setNeedsDisplay];
 }//end delete:
+
+
+//========== selectAll: ========================================================
+//
+// Purpose:		Selects all the visible LDraw elements in the active model. This 
+//				does not select the steps or model--only the contained elements 
+//				themselves. Hidden elements are also ignored.
+//
+//==============================================================================
+- (IBAction) selectAll:(id)sender
+{
+	LDrawModel	*activeModel	= [[self documentContents] activeModel];
+	NSArray		*elements		= [activeModel allEnclosedElements];
+	id			 currentElement	= nil;
+	int			 counter		= 0;
+	
+	//Deselect all first.
+	[self selectDirective:nil byExtendingSelection:NO];
+	
+	//Select everything now.
+	for(counter = 0; counter < [elements count]; counter++){
+		currentElement = [elements objectAtIndex:counter];
+		if(		[currentElement respondsToSelector:@selector(isHidden)] == NO
+			||	[currentElement isHidden] == NO)
+		{
+			[self selectDirective:currentElement byExtendingSelection:YES];
+		}
+	}
+}//end selectAll:
 
 
 //========== duplicate: ========================================================
@@ -1850,6 +1919,7 @@
 #pragma mark LDRAW GL VIEW
 #pragma mark -
 
+//**** LDrawGLView ****
 //========== LDrawGLViewBecameFirstResponder: ==================================
 //
 // Purpose:		One of our model views just became active, so we need to update 
@@ -1868,9 +1938,11 @@
 }
 
 
+//**** LDrawGLView ****
 //========== LDrawGLView:wantsToSelectDirective:byExtendingSelection: ==========
 //
-// Purpose:		The file we are displaying has changed its active model.
+// Purpose:		The given LDrawView has decided some directive should be 
+//				selected, probably because the user clicked on it.
 //				Pass nil to mean deselect.
 //
 //==============================================================================
@@ -1878,32 +1950,7 @@
  wantsToSelectDirective:(LDrawDirective *)directiveToSelect
    byExtendingSelection:(BOOL) shouldExtend
 {
-	NSArray			*ancestors			= [directiveToSelect ancestors];
-	LDrawDirective	*currentAncestor	= nil;
-	int				 indexToSelect		= 0;
-	int				 counter			= 0;
-	
-	if(directiveToSelect == nil)
-		[fileContentsOutline deselectAll:glView];
-	else {
-		//Expand the hierarchy all the way down to the directive we are about to 
-		// select.
-		for(counter = 0; counter < [ancestors count]; counter++)
-			[fileContentsOutline expandItem:[ancestors objectAtIndex:counter]];
-		
-		//Now we can safely select the directive. It is guaranteed to be visible, 
-		// since we expanded all its ancestors.
-		indexToSelect = [fileContentsOutline rowForItem:directiveToSelect];
-		//If we are doing multiple selection (shift-click), we want to deselect 
-		// already-selected parts.
-		if(		[[fileContentsOutline selectedRowIndexes] containsIndex:indexToSelect]
-			&&	shouldExtend == YES )
-			[fileContentsOutline deselectRow:indexToSelect];
-		else
-			[fileContentsOutline selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
-							 byExtendingSelection:shouldExtend];
-		[fileContentsOutline scrollRowToVisible:indexToSelect];
-	}
+	[self selectDirective:directiveToSelect byExtendingSelection:shouldExtend];
 	
 }//end LDrawGLView:wantsToSelectDirective:byExtendingSelection:
 
@@ -1911,15 +1958,40 @@
 #pragma mark SPLIT VIEW
 #pragma mark -
 
+//**** NSSplitView ****
 //========== splitView:canCollapseSubview: =====================================
 //
-// Purpose:		Collapsing is good if we don't like this thing.
+// Purpose:		Collapsing is good if we don't like this multipane view deal.
 //
 //==============================================================================
 - (BOOL)splitView:(NSSplitView *)sender canCollapseSubview:(NSView *)subview
 {
 	return YES;
 }
+
+
+//**** NSSplitView ****
+//========== splitViewWillResizeSubviews: ======================================
+//
+// Purpose:		A splitview is about to resize. Since we are displaying OpenGL 
+//				in our split-view, we have to do some special graphics flushing.
+//
+//==============================================================================
+- (void)splitViewWillResizeSubviews:(NSNotification *)notification
+{
+	//Quoting Apple's comments in its GLChildWindow sample code:
+	//
+	// Resizing the [OpenGL-bearing] split view causes some flicker.  So, as 
+	// soon as we know the resize is going to happen we use a Carbon call to 
+	// disable screen updates.
+	//
+	// Later when the parent window finally flushes we re-enable updates
+	// so that everything hits the screen at once.
+		
+	[(LDrawDocumentWindow *)[self foremostWindow] disableUpdatesUntilFlush];
+	
+}//end splitViewWillResizeSubviews:
+
 
 #pragma mark -
 #pragma mark NOTIFICATIONS
@@ -2906,8 +2978,6 @@
 //
 //==============================================================================
 - (void) dealloc{
-
-	NSLog(@"deallocing LDrawDocument 0x%X", self);
 
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	

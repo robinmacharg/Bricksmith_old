@@ -19,6 +19,7 @@
 
 #import "LDrawApplication.h"
 #import "MacLDraw.h"
+#import "PartLibrary.h"
 #import "StringCategory.h"
 
 
@@ -39,6 +40,9 @@
 	NSMenu			*searchMenuTemplate	= [[NSMenu alloc] initWithTitle:@"Search template"];
 	NSMenuItem		*recentsItem		= nil;
 	NSMenuItem		*noRecentsItem		= nil;
+	
+	[self->partsTable setTarget:self];
+	[self->partsTable setDoubleAction:@selector(doubleClickedInPartTable:)];
 	
 	[partPreview setAcceptsFirstResponder:NO];
 	
@@ -268,6 +272,16 @@
 		[userDefaults setObject:newCategory forKey:PART_BROWSER_PREVIOUS_CATEGORY];
 }
 
+
+//========== doubleClickedInPartTable: =========================================
+//
+// Purpose:		We mean this to insert a part.
+//
+//==============================================================================
+- (void) doubleClickedInPartTable:(id)sender
+{
+	//oops. We don't know where to insert it here, do we?
+}
 
 //========== searchFieldChanged: ===============================================
 //

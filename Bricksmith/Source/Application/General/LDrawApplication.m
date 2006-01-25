@@ -1,9 +1,25 @@
+//==============================================================================
+//
+// File:		LDrawApplication.h
+//
+// Purpose:		This is the "application controller." Here we find application-
+//				wide instance variables and actions, as well as application 
+//				delegate code for startup and shutdown.
+//
+// Note:		Do not confuse this class with BricksmithApplication, which is 
+//				an NSApplication subclass.
+//
+//  Created by Allen Smith on 2/14/05.
+//  Copyright 2005. All rights reserved.
+//==============================================================================
 #import "LDrawApplication.h"
 
 #import "Inspector.h"
 #import "LDrawColorPanel.h"
 #import "MacLDraw.h"
+#import "PartLibrary.h"
 #import "PreferencesDialogController.h"
+#import "ToolPalette.h"
 
 @implementation LDrawApplication
 
@@ -22,6 +38,18 @@
 }
 
 
+//========== showColors: =======================================================
+//
+// Purpose:		Opens the colors panel.
+//
+//==============================================================================
+- (IBAction) showColors:(id)sender{
+	
+	LDrawColorPanel *colorPanel = [LDrawColorPanel sharedColorPanel];
+	[colorPanel makeKeyAndOrderFront:sender];
+}
+
+
 //========== showInspector: ====================================================
 //
 // Purpose:		Opens the inspector window. It may have something in it; it may 
@@ -33,15 +61,14 @@
 }
 
 
-//========== showColors: =======================================================
+//========== showMouseTools: ===================================================
 //
-// Purpose:		Opens the colors panel.
+// Purpose:		Opens the mouse tools palette, used to control the mouse cursor 
+//				mode (e.g., selection, zooming, etc.).
 //
 //==============================================================================
-- (IBAction) showColors:(id)sender{
-	
-	LDrawColorPanel *colorPanel = [LDrawColorPanel sharedColorPanel];
-	[colorPanel makeKeyAndOrderFront:sender];
+- (IBAction) showMouseTools:(id)sender {
+	[[ToolPalette sharedToolPalette] showToolPalette:sender];
 }
 
 
@@ -154,6 +181,7 @@
 	//Create shared objects.
 	inspector = [Inspector new];
 	partLibrary = [PartLibrary new]; // creates a new part library which hasn't loaded the parts.
+	[ToolPalette sharedToolPalette];
 	
 	pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes: pixelAttributes];
 	sharedGLContext = [[NSOpenGLContext alloc] initWithFormat:pixelFormat shareContext:nil];

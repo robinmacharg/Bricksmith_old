@@ -428,10 +428,16 @@ LDrawColorPanel *sharedColorPanel = nil;
 	// are just displaying a new one. In that case, we don't want to go telling 
 	// the world.
 	if(updatingToReflectFile == NO)
+	{
 		[NSApp sendAction:@selector(changeLDrawColor:)
 					   to:nil //just send it somewhere!
 					 from:self]; //it's from us (we'll be the sender)
-}
+					 
+		[[NSNotificationCenter defaultCenter]
+							postNotificationName:LDrawColorDidChangeNotification
+										  object:[NSNumber numberWithInt:[self LDrawColor]] ];
+	}
+}//end tableViewSelectionDidChange:
 
 
 //**** NSWindow ****

@@ -29,6 +29,7 @@
 #import "LDrawModel.h"
 #import "LDrawStep.h"
 #import "MacLDraw.h"
+#import "PartLibrary.h"
 #import "PartReport.h"
 
 @implementation LDrawPart
@@ -800,17 +801,12 @@
 	//I NEED to modify the matrix itself here. Some parts have funky, fragile 
 	// rotation values, and getting the components really badly botches them up.
 	
-	//Needs to be more complicated! I could just modify the matrix itself, 
-	// you know!
-
-	TransformationComponents transformation = [self transformationComponents];
+	transformationMatrix.element[3][0] += nudgeVector.x;
+	transformationMatrix.element[3][1] += nudgeVector.y;
+	transformationMatrix.element[3][2] += nudgeVector.z;
 	
-	transformation.translate_X += nudgeVector.x;
-	transformation.translate_Y += nudgeVector.y;
-	transformation.translate_Z += nudgeVector.z;
+	[self setTransformationMatrix:&transformationMatrix];
 	
-	//round-off errors here? Potential for trouble.
-	[self setTransformationComponents:transformation];
 }//end nudge:
 
 

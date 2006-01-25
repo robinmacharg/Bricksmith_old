@@ -20,6 +20,7 @@
 }
 
 //Accessors
+- (NSArray *) allEnclosedElements;
 - (Box3) boundingBox3;
 - (int) indexOfDirective:(LDrawDirective *)directive;
 - (NSArray *) subdirectives;

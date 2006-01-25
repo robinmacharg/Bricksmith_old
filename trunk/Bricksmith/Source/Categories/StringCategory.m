@@ -18,11 +18,18 @@
 //
 // Purpose:		Handy for quick searches.
 //
+// Note:		Every string is reported as containing the empty string (@"").
+//
 //==============================================================================
-- (BOOL) containsString:(NSString *)substring options:(unsigned)mask{
+- (BOOL) containsString:(NSString *)substring options:(unsigned)mask
+{
 	NSRange foundRange = [self rangeOfString:substring options:mask];
-	if(foundRange.location == NSNotFound)
+	
+	if(		foundRange.location == NSNotFound
+		&& [substring isEqualToString:@""] == NO)
+	{
 		return NO;
+	}
 	else
 		return YES;
 }

@@ -1,19 +1,18 @@
 //==============================================================================
 //
-// File:		LDrawDocumentWindow.h
+// File:		BricksmithApplication.h
 //
-// Purpose:		Window for LDraw. Provides minor niceties.
+// Purpose:		Subclass of NSApplication allows us to do tricky things with 
+//				events.
 //
-//  Created by Allen Smith on 4/4/05.
+//  Created by Allen Smith on 11/29/05.
 //  Copyright 2005. All rights reserved.
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 
 
-@interface LDrawDocumentWindow : NSWindow {
+@interface BricksmithApplication : NSApplication {
 
-	BOOL needsEnableUpdate;
 }
-- (void)disableUpdatesUntilFlush;
 
 @end

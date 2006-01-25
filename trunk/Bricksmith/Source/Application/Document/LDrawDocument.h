@@ -74,6 +74,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) changeLDrawColor:(id)sender;
 - (void) nudgeSelectionBy:(Vector3) nudgeVector;
 - (void) rotateSelectionAround:(Vector3)rotationAxis;
+- (void) selectDirective:(LDrawDirective *)directiveToSelect byExtendingSelection:(BOOL)shouldExtend;
 - (void) setSelectionToHidden:(BOOL)hideFlag;
 - (void) setZoomPercentage:(float)newPercentage;
 

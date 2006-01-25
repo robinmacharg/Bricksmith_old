@@ -12,6 +12,7 @@
 
 #import "LDrawColor.h"
 #import "MatrixMath.h"
+#import "ToolPalette.h"
 
 //Forward declarations
 @class LDrawDirective;
@@ -40,16 +41,6 @@ typedef enum {
 
 
 typedef enum {
-	RotateSelectTool			= 0,	//click to select, drag to rotate
-//	AddToSelectionTool			= 1,	//   check key directly, so we can click around in different views.
-	PanScrollTool				= 2,	//"grabber" to scroll around while dragging
-	SmoothZoomTool				= 3,	//zoom in and out based on drag direction
-	ZoomInTool					= 4,	//click to zoom in
-	ZoomOutTool					= 5		//click to zoom out
-} ToolModeT;
-
-
-typedef enum {
 	ViewingAngle3D				= 0,
 	ViewingAngleFront			= 1,
 	ViewingAngleBack			= 2,
@@ -75,7 +66,6 @@ typedef enum {
 												// if you want to do anything else, you must 
 												// tweak the selection code in LDrawDrawableElement
 												// and here in -mouseUp: to handle such cases.
-	ToolModeT			 toolMode;				//current tool in effect.
 	
 	//Drawing Environment
 	GLfloat				 cameraDistance;
@@ -86,8 +76,6 @@ typedef enum {
 	ViewingAngleT		 viewingAngle;			//our orientation
 	
 	//Event Tracking
-	NSString			*currentKeyCharacters;	//identifies the current keys down, independent of modifiers (empty string if no keys down)
-	unsigned int		 currentKeyModifiers;	//identifiers the current modifiers down (including device-dependent)
 	BOOL				 isDragging;			//true if the last mousedown was followed by a drag.
 }
 

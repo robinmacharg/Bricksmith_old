@@ -34,7 +34,12 @@
             SUPERCLASS = NSObject; 
         }, 
         {
-            ACTIONS = {doPreferences = id; showInspector = id; }; 
+            ACTIONS = {
+                doPreferences = id; 
+                showColors = id; 
+                showInspector = id; 
+                showMouseTools = id; 
+            }; 
             CLASS = LDrawApplication; 
             LANGUAGE = ObjC; 
             SUPERCLASS = NSObject; 

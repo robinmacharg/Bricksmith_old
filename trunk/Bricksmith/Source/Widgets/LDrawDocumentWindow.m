@@ -37,6 +37,46 @@
 	}
 }//end keyDown:
 
+#pragma mark -
+#pragma mark GRAPHICS
+#pragma mark -
 
+
+//========== disableUpdatesUntilFlush ==========================================
+//
+// Purpose:		Prevents the window from being visually until it is flushed. 
+//				This is critically important for our OpenGL-in-SplitView setup, 
+//				because the Quartz window and the OpenGL viewport seem to be 
+//				getting flushed at different times. The syncs them up. 
+//
+// Note:		This solution was provided in Apple sample code. I don't quite 
+//				understand it.
+//
+//==============================================================================
+- (void)disableUpdatesUntilFlush
+{
+	if(needsEnableUpdate == NO)
+		NSDisableScreenUpdates(); //or DisableScreenUpdates() in Carbon.
+		
+	needsEnableUpdate = YES;
+}
+
+
+//========== flushWindow =======================================================
+//
+// Purpose:		Our window is ready to be flushed, and apparently everything has
+//				been collected in the same place now. Reenable screen updates if 
+//				they've been turned off.
+//
+//==============================================================================
+- (void)flushWindow
+{
+	[super flushWindow];
+	if(needsEnableUpdate)
+	{
+		needsEnableUpdate = NO;
+		NSEnableScreenUpdates(); //or EnableScreenUpdates() in Carbon.
+	}
+}
 
 @end

@@ -18,6 +18,7 @@
 #import "LDrawApplication.h"
 #import "LDrawPart.h"
 #import "MacLDraw.h"
+#import "PartLibrary.h"
 
 @implementation PartReport
 

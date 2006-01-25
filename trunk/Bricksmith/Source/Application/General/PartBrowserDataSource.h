@@ -33,6 +33,7 @@
 
 //Actions
 - (IBAction) categoryComboBoxChanged:(id)sender;
+- (void) doubleClickedInPartTable:(id)sender;
 - (IBAction) searchFieldChanged:(id)sender;
 
 //Notifications

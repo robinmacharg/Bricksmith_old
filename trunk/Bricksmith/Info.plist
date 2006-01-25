@@ -31,6 +31,10 @@
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>Bricksmith</string>
+	<key>CFBundleHelpBookFolder</key>
+	<string>Tutorial</string>
+	<key>CFBundleHelpBookName</key>
+	<string>Bricksmith Tutorial</string>
 	<key>CFBundleIconFile</key>
 	<string>Mac Brick</string>
 	<key>CFBundleIdentifier</key>

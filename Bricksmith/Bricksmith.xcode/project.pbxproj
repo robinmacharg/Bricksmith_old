@@ -2753,6 +2753,30 @@
 			settings = {
 			};
 		};
+		0BC6AACC0987296700505A88 = {
+			children = (
+				0BC6AACD0987296700505A88,
+			);
+			isa = PBXVariantGroup;
+			name = Help;
+			path = "";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0BC6AACD0987296700505A88 = {
+			isa = PBXFileReference;
+			lastKnownFileType = folder;
+			name = English;
+			path = English.lproj/Help;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0BC6AAEB0987296700505A88 = {
+			fileRef = 0BC6AACC0987296700505A88;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		0BCD0C6307FD0BA10066A536 = {
 			fileEncoding = 4;
 			isa = PBXFileReference;
@@ -3213,6 +3237,7 @@
 		};
 		2A37F4B8FDCFA73011CA2CEA = {
 			children = (
+				0BC6AACC0987296700505A88,
 				0B7D377D08AD96C700B12D4F,
 				0B6F427107CDAE8C007B1075,
 				0B9FE5C308AD97990046511D,
@@ -3351,6 +3376,7 @@
 			files = (
 				0B9FE55008AD971E0046511D,
 				0B9FE56608AD97280046511D,
+				0BC6AAEB0987296700505A88,
 				0B9FE58D08AD97670046511D,
 				0B9FE58E08AD97670046511D,
 				0B9FE58F08AD97670046511D,

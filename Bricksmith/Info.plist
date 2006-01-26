@@ -32,7 +32,7 @@
 	<key>CFBundleExecutable</key>
 	<string>Bricksmith</string>
 	<key>CFBundleHelpBookFolder</key>
-	<string>Tutorial</string>
+	<string>Help</string>
 	<key>CFBundleHelpBookName</key>
 	<string>Bricksmith Tutorial</string>
 	<key>CFBundleIconFile</key>

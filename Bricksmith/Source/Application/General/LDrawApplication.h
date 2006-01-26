@@ -25,6 +25,7 @@
 
 //Actions
 - (IBAction)doPreferences:(id)sender;
+- (IBAction)doHelp:(id)sender;
 - (IBAction) showColors:(id)sender;
 - (IBAction) showInspector:(id)sender;
 - (IBAction) showMouseTools:(id)sender;

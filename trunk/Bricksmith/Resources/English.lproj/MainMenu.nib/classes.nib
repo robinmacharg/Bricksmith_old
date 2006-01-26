@@ -35,6 +35,7 @@
         }, 
         {
             ACTIONS = {
+                doHelp = id; 
                 doPreferences = id; 
                 showColors = id; 
                 showInspector = id; 

@@ -38,6 +38,29 @@
 }
 
 
+//========== doHelp: ===========================================================
+//
+// Purpose:		Apple's automatic help registration is worthless. I've tried the 
+//				program on numerous Macs; it refuses to load until the OS 
+//				finally realizes a new program is there, which takes either 
+//				a) 2 million years or b) voodoo/ritualistic sacrifice. So 
+//				I'm bypassing what it does for something much less magical.
+//
+// Note:		I did manage to do *something* on two computers that got it 
+//				working automatically (touching, copying, I don't know). But 
+//				it never just happened when the application was first installed.
+//
+//==============================================================================
+- (IBAction)doHelp:(id)sender
+{
+	NSBundle *applicationBundle = [NSBundle mainBundle];
+	NSString *helpRoot = [applicationBundle pathForResource:@"index"
+													 ofType:@"html"
+												inDirectory:@"Help"];
+	[[NSWorkspace sharedWorkspace] openFile:helpRoot withApplication:@"Help Viewer.app"];
+}
+
+
 //========== showColors: =======================================================
 //
 // Purpose:		Opens the colors panel.

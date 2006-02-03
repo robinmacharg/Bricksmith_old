@@ -419,24 +419,28 @@ LDrawColorPanel *sharedColorPanel = nil;
 	[colorBar setLDrawColor:[self LDrawColor]];
 	
 	
-	//Well, our color has changed. Presumably, somebody cares about this 
-	// momentous event. But who knows who? So we just send this message toddling 
-	// along, and let whoever want it get it.
+	//Well, our color has changed. Presumably, somebody wants to update a part 
+	// color in response to this momentous event. But who knows who? So we just 
+	// send this message toddling along, and let whoever want it get it.
 	//
 	//But--if this notification is coming in response to selecting a different 
-	// part in the part browser, then our color did not *really* change; we 
-	// are just displaying a new one. In that case, we don't want to go telling 
-	// the world.
+	// part in the file, then our color did not *really* change; we 
+	// are just displaying a new one. In that case, we don't want any parts 
+	// changing colors.
 	if(updatingToReflectFile == NO)
 	{
 		[NSApp sendAction:@selector(changeLDrawColor:)
 					   to:nil //just send it somewhere!
 					 from:self]; //it's from us (we'll be the sender)
 					 
-		[[NSNotificationCenter defaultCenter]
-							postNotificationName:LDrawColorDidChangeNotification
-										  object:[NSNumber numberWithInt:[self LDrawColor]] ];
 	}
+	
+	//Clients that are tracking the global color state always need to know 
+	// about the current color, though!
+	[[NSNotificationCenter defaultCenter]
+						postNotificationName:LDrawColorDidChangeNotification
+									  object:[NSNumber numberWithInt:[self LDrawColor]] ];
+
 }//end tableViewSelectionDidChange:
 
 

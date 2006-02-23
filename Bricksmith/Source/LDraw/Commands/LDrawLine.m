@@ -313,20 +313,23 @@
 #pragma mark ACTIONS
 #pragma mark -
 
-//========== nudge: ============================================================
+//========== moveBy: ============================================================
 //
 // Purpose:		Moves the receiver in the specified direction.
 //
 //==============================================================================
-- (void) nudge:(Vector3)nudgeVector{
-	vertex1.x += nudgeVector.x;
-	vertex1.y += nudgeVector.y;
-	vertex1.z += nudgeVector.z;
+- (void) moveBy:(Vector3)moveVector
+{
+	vertex1.x += moveVector.x;
+	vertex1.y += moveVector.y;
+	vertex1.z += moveVector.z;
 	
-	vertex2.x += nudgeVector.x;
-	vertex2.y += nudgeVector.y;
-	vertex2.z += nudgeVector.z;
-}
+	vertex2.x += moveVector.x;
+	vertex2.y += moveVector.y;
+	vertex2.z += moveVector.z;
+	
+}//end moveBy:
+
 
 #pragma mark -
 #pragma mark UTILITIES

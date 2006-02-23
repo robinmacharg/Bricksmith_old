@@ -31,6 +31,7 @@
 - (void) setLDrawColor:(LDrawColorT)newColor;
 
 //Actions
-- (void) nudge:(Vector3)nudgeVector;
+- (Vector3) displacementForNudge:(Vector3)nudgeVector;
+- (void) moveBy:(Vector3)moveVector;
 
 @end

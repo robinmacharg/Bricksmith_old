@@ -331,7 +331,7 @@
 	Matrix4	inversed;
 	
 	glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
-	transformation = matrix4FromGLMatrix4(currentMatrix); //convert to our utility library format
+	transformation = Matrix4CreateFromGLMatrix4(currentMatrix); //convert to our utility library format
 	
 	//When using a perspective view, we must use gluLookAt to reposition the camera. 
 	// That basically means translating the model. But all we're concerned about 
@@ -340,7 +340,7 @@
 	transformation.element[3][1] = 0; //translation is in the bottom row of the matrix.
 	transformation.element[3][2] = 0;
 	
-	inverse( &transformation, &inversed);
+	Matrix4Invert( &transformation, &inversed);
 	
 	return inversed;
 }//end getInverseMatrix

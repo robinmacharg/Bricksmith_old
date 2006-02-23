@@ -75,7 +75,7 @@ typedef struct {
 #pragma mark -
 
 #define PI				3.141592654
-#define SMALL_NUMBER	1.e-8
+#define SMALL_NUMBER	1.e-6		//"close enough" zero for floating-point. 1e-8 is too small.
 
 extern const Box3						InvalidBox;
 extern const TransformationComponents	IdentityComponents;
@@ -154,16 +154,18 @@ extern Vector3*	V3IsolateGreatestComponent(Vector3 *vector);
 extern Point3*	V3MulPointByMatrix();
 extern Vector3*	V3MulPointByProjMatrix();
 extern Matrix4*	V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c);
+extern void		V3Print(Point3 *point);
 extern float	det3x3( float, float, float, float, float, float, float, float, float );
 
 extern Vector4	V4FromV3(Vector3 *originalVector);
-extern Matrix4	matrix4FromGLMatrix4(const GLfloat *glMatrix);
-extern Matrix4	createTransformationMatrix(TransformationComponents *);
-extern int		unmatrix( Matrix4 *, TransformationComponents *);
-extern Matrix4*	rotateMatrix4(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result);
-extern Matrix4*	translateMatrix4(Matrix4 *original, Vector3 *displacement, Matrix4 *result);
-extern Matrix4*	transposeMatrix4(Matrix4 *, Matrix4 *);
 extern Vector4*	V4MulPointByMatrix(Vector4 *, Matrix4 *, Vector4 *);
-extern void		inverse( Matrix4 *, Matrix4 * );
-extern void		adjoint( Matrix4 *, Matrix4 * );
-extern float	det4x4( Matrix4 * );
+extern Matrix4	Matrix4CreateFromGLMatrix4(const GLfloat *glMatrix);
+extern Matrix4	Matrix4CreateTransformation(TransformationComponents *);
+extern int		Matrix4DecomposeTransformation( Matrix4 *, TransformationComponents *);
+extern Matrix4*	Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result);
+extern Matrix4*	Matrix4Translate(Matrix4 *original, Vector3 *displacement, Matrix4 *result);
+extern Matrix4*	Matrix4Transpose(Matrix4 *, Matrix4 *);
+extern void		Matrix4Invert( Matrix4 *, Matrix4 * );
+extern void		Matrix4Adjoint( Matrix4 *, Matrix4 * );
+extern float	Matrix4x4Determinant( Matrix4 * );
+extern void		Matrix4Print(Matrix4 *matrix);

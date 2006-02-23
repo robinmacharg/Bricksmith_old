@@ -430,28 +430,31 @@
 #pragma mark ACTIONS
 #pragma mark -
 
-//========== nudge: ============================================================
+//========== moveBy: ===========================================================
 //
 // Purpose:		Moves the receiver in the specified direction.
 //
 //==============================================================================
-- (void) nudge:(Vector3)nudgeVector{
-	vertex1.x += nudgeVector.x;
-	vertex1.y += nudgeVector.y;
-	vertex1.z += nudgeVector.z;
+- (void) moveBy:(Vector3)moveVector
+{
+	vertex1.x += moveVector.x;
+	vertex1.y += moveVector.y;
+	vertex1.z += moveVector.z;
 	
-	vertex2.x += nudgeVector.x;
-	vertex2.y += nudgeVector.y;
-	vertex2.z += nudgeVector.z;
+	vertex2.x += moveVector.x;
+	vertex2.y += moveVector.y;
+	vertex2.z += moveVector.z;
 	
-	vertex3.x += nudgeVector.x;
-	vertex3.y += nudgeVector.y;
-	vertex3.z += nudgeVector.z;
+	vertex3.x += moveVector.x;
+	vertex3.y += moveVector.y;
+	vertex3.z += moveVector.z;
 	
-	vertex4.x += nudgeVector.x;
-	vertex4.y += nudgeVector.y;
-	vertex4.z += nudgeVector.z;
-}
+	vertex4.x += moveVector.x;
+	vertex4.y += moveVector.y;
+	vertex4.z += moveVector.z;
+
+}//end moveBy:
+
 
 #pragma mark -
 #pragma mark UTILITIES
@@ -463,7 +466,7 @@
 //				to draw one in OpenGL, you need to be able to trace around the 
 //				edges in order. If two vertices are out of order, you wind up 
 //				with a "bowtie" shape, which needs to be corrected back into a
-//				quadilateral.
+//				quadrilateral.
 //
 //					   4        3     3        4     4        2
 //						+------+       +------+       +      +
@@ -480,7 +483,8 @@
 //									switch 3 & 4   switch 2 & 3
 //
 //==============================================================================
-- (void) fixBowtie {
+- (void) fixBowtie
+{
 	//If correct, the crosses of these three pairs should all point up.
 	Vector3 vector1_2, vector1_4; //1 to 2, 1 to 4
 	Vector3 vector3_4, vector3_2;

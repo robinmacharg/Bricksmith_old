@@ -797,17 +797,27 @@
 	return linesWithoutHeader;
 }//end parseHeaderFromLines
 
-- (BOOL) line:(NSString *)line isValidForHeader:(NSString *)headerKey{
+
+//========== line:isValidForHeader: ============================================
+//
+// Purpose:		Determines if the given line of LDraw is formatted to be the 
+//				the specified field in a model header.
+//
+//==============================================================================
+- (BOOL)		line:(NSString *)line
+	isValidForHeader:(NSString *)headerKey
+{
 	BOOL isValid = NO;
-	if([line length] > [headerKey length]+2 &&
-	   [line characterAtIndex:0] == '0' &&
-	   [line hasPrefix:[NSString stringWithFormat:@"0 %@", headerKey]] )
+	
+	if( [line hasPrefix:[NSString stringWithFormat:@"0 %@", headerKey]] )
+	{
 		isValid = YES;
+	}
 	else
 		isValid = NO;
 		
 	return isValid;
-}
+}//end line:isValidForHeader:
 
 
 //========== registerUndoActions ===============================================

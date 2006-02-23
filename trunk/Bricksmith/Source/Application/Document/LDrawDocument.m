@@ -26,6 +26,7 @@
 #import "LDrawQuadrilateral.h"
 #import "LDrawTriangle.h"
 
+#import <AMSProgressBar/AMSProgressBar.h>
 #import "DimensionsPanel.h"
 #import "DocumentToolbarController.h"
 #import "ExtendedSplitView.h"
@@ -39,6 +40,7 @@
 #import "MacLDraw.h"
 #import "PartBrowserDataSource.h"
 #import "PartChooserPanel.h"
+#import "PartReport.h"
 #import "PieceCountPanel.h"
 #import "UserDefaultsCategory.h"
 
@@ -150,6 +152,8 @@
 	[fileDetailView2	setZoomPercentage:75];
 	[fileDetailView3	setZoomPercentage:75];
 
+	[[self foremostWindow] makeFirstResponder:fileGraphicView]; //so we can move it immediately.
+
 	//We have to do the splitview saving manually. C'mon Apple, get with it!
 	[horizontalSplitView		setAutosaveName:@"Horizontal LDraw Splitview"];
 	[verticalDetailSplitView	setAutosaveName:@"Vertical LDraw Splitview"];
@@ -180,42 +184,43 @@
 }//end windowControllerDidLoadNib:
 
 
-//========== dataRepresentationOfType: =========================================
-//
-// Purpose:		Converts this document into a data object that can be written 
-//				to disk. This is where a document gets saved.
-//
-// You can also choose to override -fileWrapperRepresentationOfType: or 
-// -writeToFile:ofType: instead.
-//==============================================================================
-- (NSData *)dataRepresentationOfType:(NSString *)aType
-{
-    NSString *modelOutput = [[self documentContents] write];
-	
-	return [modelOutput dataUsingEncoding:NSUTF8StringEncoding];
-}
+#pragma mark -
+#pragma mark Reading
 
-
-//========== loadDataRepresentation:ofType: ====================================
+//========== readFromFile:ofType: ==============================================
 //
-// Purpose:		Read a logical document structure from data. This is the "open" 
-//				method.
+// Purpose:		Reads the file off of disk. We are overriding this NSDocument 
+//				method to grab the path; the actual data-collection is done 
+//				elsewhere.
 //
-// You can also choose to override -loadFileWrapperRepresentation:ofType: 
-// or -readFromFile:ofType: instead.
 //==============================================================================
-- (BOOL)loadDataRepresentation:(NSData *)data ofType:(NSString *)aType
+- (BOOL)readFromFile:(NSString *)fileName ofType:(NSString *)docType
 {
-	//LDraw files are plain text.
-	NSString *fileContents = [[NSString alloc] initWithData:data
-												   encoding:NSUTF8StringEncoding ];
+	AMSProgressPanel	*progressPanel	= [AMSProgressPanel progressPanel];
+	NSString			*openMessage	= nil;
 	
-	LDrawFile *newFile = [LDrawFile parseFromFileContents:fileContents];
+	openMessage = [NSString stringWithFormat:	NSLocalizedString(@"OpeningFileX", nil), 
+		[self displayName] ];
 	
-	[self setDocumentContents:newFile];
+	//This might take a while. Show that we're doing something!
+	[progressPanel setMessage:openMessage];
+	[progressPanel setIndeterminate:YES];
+	[progressPanel showProgressPanel];
+
+	//do the actual loading.
+	[super readFromFile:fileName ofType:docType];
 	
-    return YES;
-}//end loadDataRepresentation:ofType:
+	//track the path.
+	[[self documentContents] setPath:fileName];
+	
+	[progressPanel close];
+	
+	//Postflight: find missing and moved parts.
+	[self doMissingPiecesCheck:self];
+	
+	return YES;
+	
+}//end readFromFile:ofType:
 
 
 //========== revertToSavedFromFile:ofType: =====================================
@@ -234,6 +239,82 @@
 	[self loadDataIntoDocumentUI];
 	
 }//end revertToSavedFromFile:ofType:
+
+
+//========== loadDataRepresentation:ofType: ====================================
+//
+// Purpose:		Read a logical document structure from data. This is the "open" 
+//				method.
+//
+// You can also choose to override -loadFileWrapperRepresentation:ofType: 
+// or -readFromFile:ofType: instead.
+//==============================================================================
+- (BOOL)loadDataRepresentation:(NSData *)data ofType:(NSString *)aType
+{
+	AMSProgressPanel	*progressPanel	= [AMSProgressPanel progressPanel];
+	NSString			*openMessage	= nil;
+	NSString			*fileContents	= nil;
+	LDrawFile			*newFile		= nil;
+	
+	openMessage = [NSString stringWithFormat:	NSLocalizedString(@"OpeningFileX", nil), 
+												[self displayName] ];
+	
+	//This might take a while. Show that we're doing something!
+	[progressPanel setMessage:openMessage];
+	[progressPanel setIndeterminate:YES];
+	[progressPanel showProgressPanel];
+
+	//LDraw files are plain text.
+	fileContents = [[NSString alloc] initWithData:data
+										 encoding:NSUTF8StringEncoding ];
+	if(fileContents == nil) //whoops. Not UTF-8. Try the Windows standby.
+		fileContents = [[NSString alloc] initWithData:data
+											 encoding:NSISOLatin1StringEncoding ];
+	
+	newFile = [LDrawFile parseFromFileContents:fileContents];
+	[self setDocumentContents:newFile];
+	
+	[progressPanel close];
+	[fileContents release];
+	
+    return YES;
+}//end loadDataRepresentation:ofType:
+
+
+#pragma mark -
+#pragma mark Writing
+
+//========== writeToFile:ofType: ===============================================
+//
+// Purpose:		Saves the file out. We are overriding this NSDocument method to 
+//				grab the path; the actual data-collection is done elsewhere.
+//
+//==============================================================================
+- (BOOL)writeToFile:(NSString *)fileName ofType:(NSString *)docType
+{
+	//do the actual writing.
+	[super writeToFile:fileName ofType:docType];
+	
+	//track the path.
+	[[self documentContents] setPath:fileName];
+	
+}//end writeToFile:ofType:
+
+
+//========== dataRepresentationOfType: =========================================
+//
+// Purpose:		Converts this document into a data object that can be written 
+//				to disk. This is where a document gets saved.
+//
+// You can also choose to override -fileWrapperRepresentationOfType: or 
+// -writeToFile:ofType: instead.
+//==============================================================================
+- (NSData *)dataRepresentationOfType:(NSString *)aType
+{
+    NSString *modelOutput = [[self documentContents] write];
+	
+	return [modelOutput dataUsingEncoding:NSUTF8StringEncoding];
+}
 
 
 #pragma mark -
@@ -364,9 +445,11 @@
 //				give them our best estimate based on the grid granularity.
 //
 //==============================================================================
-- (void) nudgeSelectionBy:(Vector3) nudgeVector {
+- (void) nudgeSelectionBy:(Vector3) nudgeVector
+{
 	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
 	NSArray			*selectedObjects	= [self selectedObjects];
+	NSMutableArray	*nudgables			= [NSMutableArray array];
 	LDrawDirective	*currentObject		= nil;
 	float			 nudgeMagnitude		= 0;
 	int				 counter			= 0;
@@ -389,15 +472,34 @@
 	nudgeVector.y *= nudgeMagnitude;
 	nudgeVector.z *= nudgeMagnitude;
 	
-	//nudge everything that can be nudged.
+	//find the nudgable items
 	for(counter = 0; counter < [selectedObjects count]; counter++){
 		currentObject = [selectedObjects objectAtIndex:counter];
 		
 		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
-			[self nudgeDirective: (LDrawDrawableElement*)currentObject
-					 inDirection: nudgeVector];
+			[nudgables addObject:currentObject];
 	}
-}
+	
+	if([nudgables count] > 0)
+	{
+		//compute the absolute movement for the relative nudge. The actual 
+		// movement for a nudge is dependent on the axis along which the 
+		// nudge is occuring (because Lego follows different vertical and 
+		// horizontal scales). But we must move all selected parts by the 
+		// SAME AMOUNT, otherwise they would get oriented all over the place.
+		nudgeVector = [[nudgables objectAtIndex:0] displacementForNudge:nudgeVector];
+		
+		//nudge everything that can be nudged.
+		for(counter = 0; counter < [nudgables count]; counter++)
+		{
+			currentObject = [nudgables objectAtIndex:counter];
+			
+			[self moveDirective: (LDrawDrawableElement*)currentObject
+					inDirection: nudgeVector];
+		}
+	}
+}//end nudgeSelectionBy:
+
 
 //========== rotateSelectionAround: ============================================
 //
@@ -523,6 +625,41 @@
 - (void) setZoomPercentage:(float)newPercentage {
 	[mostRecentLDrawView setZoomPercentage:newPercentage];
 }
+
+
+#pragma mark -
+
+//========== doMissingPiecesCheck: =============================================
+//
+// Purpose:		Searches the current model for any missing parts, and displays a 
+//				warning if there are some.
+//
+//==============================================================================
+- (void) doMissingPiecesCheck:(id)sender
+{
+	PartReport		*partReport			= [PartReport partReportForContainer:[self documentContents]];
+	NSArray			*missingParts		= [partReport missingParts];
+	NSMutableString	*informativeString	= nil;
+	
+	if([missingParts count] > 0)
+	{
+		informativeString = [NSMutableString stringWithString:NSLocalizedString(@"MissingPiecesInformative", nil)];
+		[informativeString appendString:@"\n"];
+		for(int counter = 0; counter < [missingParts count] - 1; counter++)
+		{
+			
+		}
+	
+		NSAlert *alert = [[NSAlert alloc] init];
+		
+		[alert     setMessageText:NSLocalizedString(@"MissingPiecesMessage", nil)];
+		[alert setInformativeText:NSLocalizedString(@"MissingPiecesInformative", nil)];
+		[alert addButtonWithTitle:NSLocalizedString(@"OKButtonName", nil)];
+		
+		[alert runModal];
+	}
+	
+}//end doMissingPiecesCheck:
 
 
 #pragma mark -
@@ -1353,35 +1490,40 @@
 	[self updateInspector];
 }
 
-//========== nudgeDirective:inDirection: =======================================
+//========== moveDirective:inDirection: ========================================
 //
 // Purpose:		Undo-aware call to move the object in the direction indicated. 
-//				The vector here should indicated the rough amount to move 
-//				(that is, it should be adjusted to the grid mode already).
+//				The vector here should indicate the exact amount to move. It 
+//				should be adjusted to the grid mode already).
 //
 //==============================================================================
-- (void) nudgeDirective:(LDrawDrawableElement *)object
-			inDirection:(Vector3)nudgeVector
+- (void) moveDirective:(LDrawDrawableElement *)object
+		   inDirection:(Vector3)moveVector
 {
 	NSUndoManager	*undoManager	= [self undoManager];
 	Vector3			 opposite		= {0};
 	
-	opposite.x = -(nudgeVector.x);
-	opposite.y = -(nudgeVector.y);
-	opposite.z = -(nudgeVector.z);
+	//Prepare the undo.
+	
+	opposite.x = -(moveVector.x);
+	opposite.y = -(moveVector.y);
+	opposite.z = -(moveVector.z);
 	
 	[[undoManager prepareWithInvocationTarget:self]
-			nudgeDirective: object
-			   inDirection: opposite ];
+			moveDirective: object
+			  inDirection: opposite ];
 	[undoManager setActionName:NSLocalizedString(@"UndoMove", nil)];
 	
-	[object nudge:nudgeVector];
+	//Do the move.
+	[object moveBy:moveVector];
 	
+	//our part changed; notify!
 	[self updateInspector];
 	[[NSNotificationCenter defaultCenter]
 					postNotificationName:LDrawDirectiveDidChangeNotification
 								  object:object];
-}
+								  
+}//end moveDirective:inDirection:
 
 
 //========== rotatePart:onAxis:byDegrees: ======================================

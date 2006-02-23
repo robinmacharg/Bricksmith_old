@@ -16,11 +16,12 @@
 
 @interface LDrawFile : LDrawContainer {
 	LDrawMPDModel		*activeModel;
+	NSString			*filePath;			//where this file came from on disk.
 }
 
 //Initialization
 + (LDrawFile *) newFile;
-+ (LDrawFile *) fileFromContentsOfFile:(NSString *)path;
++ (LDrawFile *) fileFromContentsAtPath:(NSString *)path;
 + (LDrawFile *) parseFromFileContents:(NSString *) fileContents;
 + (NSArray *) parseModelsFromLines:(NSArray *) linesFromFile;
 - (id) initNew;
@@ -29,12 +30,15 @@
 - (void) addSubmodel:(LDrawMPDModel *)newSubmodel;
 - (NSArray *) modelNames;
 - (LDrawMPDModel *) modelWithName:(NSString *)soughtName;
+- (NSString *)path;
 - (NSArray *) submodels;
 - (LDrawMPDModel *) activeModel;
 - (void) setActiveModel:(LDrawMPDModel *)newModel;
+- (void) setPath:(NSString *)newPath;
 
 //Utilities
 - (void) optimize;
 - (void) setNeedsDisplay;
++ (NSString *) stringFromFile:(NSString *)path;
 
 @end

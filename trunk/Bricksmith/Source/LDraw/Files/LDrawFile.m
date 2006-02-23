@@ -36,18 +36,22 @@
 }
 
 
-//========== fileFromContentsOfFile: ===========================================
+//========== fileFromContentsAtPath: ===========================================
 //
 // Purpose:		Reads a file from the specified path. 
 //
 //==============================================================================
-+ (LDrawFile *) fileFromContentsOfFile:(NSString *)path {
-	NSString	*fileContents	= [NSString stringWithContentsOfFile:path];
++ (LDrawFile *) fileFromContentsAtPath:(NSString *)path
+{
+	NSString	*fileContents	= [LDrawFile stringFromFile:path];
 	LDrawFile	*parsedFile		= nil;
+	
 	if(fileContents != nil)
 		parsedFile = [LDrawFile parseFromFileContents:fileContents];
+		
 	return parsedFile;
-}
+	
+}//end fileFromContentsAtPath:
 
 
 //========== parseFromFileContents: ============================================
@@ -81,19 +85,22 @@
 //==============================================================================
 + (NSArray *) parseModelsFromLines:(NSArray *) linesFromFile
 {
-	NSMutableArray	*models = [NSMutableArray array]; //array of parsed MPD models
-	NSMutableArray	*currentModelLines = [NSMutableArray array]; //lines to parse into a model.
-	LDrawMPDModel	*newModel; //the parsed result.
+	NSMutableArray	*models				= [NSMutableArray array]; //array of parsed MPD models
+	NSMutableArray	*currentModelLines	= [NSMutableArray array]; //lines to parse into a model.
+	LDrawMPDModel	*newModel			= nil; //the parsed result.
 	
-	int				 numberLines = [linesFromFile count];
-	NSString		*currentLine;
-	int				 counter;
+	int				 numberLines		= [linesFromFile count];
+	NSString		*currentLine		= nil;
+	int				 counter			= 0;
 	
 	//Search through all the lines in the file, and separate them out into 
 	// submodels.
-	for(counter = 0; counter < numberLines; counter++){
+	for(counter = 0; counter < numberLines; counter++)
+	{
 		currentLine = [linesFromFile objectAtIndex:counter];
-		if([currentLine hasPrefix:LDRAW_MPD_FILE_START_MARKER] == NO){
+		
+		if([currentLine hasPrefix:LDRAW_MPD_FILE_START_MARKER] == NO)
+		{
 			//still part of the previous model.
 			[currentModelLines addObject:currentLine];
 		}
@@ -314,6 +321,21 @@
 	return foundModel;
 }
 
+
+//========== path ==============================================================
+//
+// Purpose:		Returns the filesystem path at which this file was resides, or 
+//				nil if that information is undetermined. Only files that are 
+//				read by the user will have their paths set; parts from the 
+//				library disregard this information.
+//
+//==============================================================================
+- (NSString *)path
+{
+	return self->filePath;
+}//end path
+
+
 //========== submodels =========================================================
 //
 // Purpose:		Returns an array of the LDrawModels (or more likely, the 
@@ -377,6 +399,22 @@
 - (void) setEnclosingDirective:(LDrawContainer *)newParent{
 	// Do Nothing.
 }
+
+
+//========== setPath: ==========================================================
+//
+// Purpose:		Sets the filesystem path at which this file was resides. Only 
+//				files that are read by the user will have their paths set; parts 
+//				from the library disregard this information.
+//
+//==============================================================================
+- (void) setPath:(NSString *)newPath
+{
+	[newPath		retain];
+	[self->filePath	release];
+	
+	self->filePath = newPath;
+}//end setPath
 
 
 //========== setEnclosingDirective: ============================================
@@ -457,6 +495,30 @@
 }
 
 
+//========== stringFromFile ====================================================
+//
+// Purpose:		Reads the contents of the file at the given path into a string. 
+//				We try a few different encodings.
+//
+//==============================================================================
++ (NSString *) stringFromFile:(NSString *)path
+{
+	NSData *fileData = [NSData dataWithContentsOfFile:path];
+	NSString *fileString = nil;
+	
+	//try UTF-8 first, because it's so nice.
+	fileString = [[NSString alloc] initWithData:fileData
+									   encoding:NSUTF8StringEncoding];
+	
+	//uh-oh. Maybe Windows Latin?
+	if(fileString == nil)
+		fileString = [[NSString alloc] initWithData:fileData
+										   encoding:NSISOLatin1StringEncoding];
+	return [fileString autorelease];
+	
+}//end stringFromFile
+
+
 #pragma mark -
 #pragma mark DESTRUCTOR
 #pragma mark -
@@ -466,8 +528,10 @@
 // Purpose:		Takin' care o' business.
 //
 //==============================================================================
-- (void) dealloc {
-	[activeModel release];
+- (void) dealloc
+{
+	[activeModel	release];
+	[filePath		release];
 	
 	[super dealloc];
 }

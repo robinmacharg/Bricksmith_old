@@ -15,6 +15,7 @@
 //==============================================================================
 #import "PartReport.h"
 
+#import "LDrawContainer.h"
 #import "LDrawApplication.h"
 #import "LDrawPart.h"
 #import "MacLDraw.h"
@@ -26,15 +27,21 @@
 #pragma mark INITIALIZATION
 #pragma mark -
 
-//========== partReport ========================================================
+//---------- partReportForContainer: ---------------------------------[static]--
 //
 // Purpose:		Returns an empty part report object, ready to be passed to a 
 //				model to be filled up with information.
 //
-//==============================================================================
-+ (PartReport *) partReport {
-	return [[PartReport new] autorelease];
-}
+//------------------------------------------------------------------------------
++ (PartReport *) partReportForContainer:(LDrawContainer *)container
+{
+	PartReport *partReport = [PartReport new];
+	
+	[partReport setLDrawContainer:container];
+	
+	return [partReport autorelease];
+}//end partReportForContainer
+
 
 //========== init ==============================================================
 //
@@ -55,6 +62,82 @@
 #pragma mark COLLECTING INFORMATION
 #pragma mark -
 
+//========== setLDrawContainer: ================================================
+//
+// Purpose:		Sets the object on which we will collect report data.
+//
+//==============================================================================
+- (void) setLDrawContainer:(LDrawContainer *)newContainer
+{
+	[newContainer			retain];
+	[self->reportedObject	release];
+	
+	self->reportedObject = newContainer;
+	
+}//end setLDrawContainer:
+
+
+//========== getPieceCountReport ===============================================
+//
+// Purpose:		Produces a report detailing the number of pieces in the current
+//				Container, as well as the attributes of those parts.
+//
+//==============================================================================
+- (void) getPieceCountReport
+{
+	//unfortunately, the reporting responsibility falls on the container itself. 
+	// The reason is that the parts we are reporting might wind up being MPD 
+	// references, in which case we need to merge the report for the referenced 
+	// submodel into *this* report.
+	[reportedObject collectPartReport:self];
+	
+}//end getPieceCountReport
+
+
+//========== getMissingPiecesReport ============================================
+//
+// Purpose:		Collects information about all the parts in the model which 
+//				can't be found or have been moved.
+//
+//==============================================================================
+- (void) getMissingPiecesReport
+{
+	PartLibrary		*partLibrary		= [LDrawApplication sharedPartLibrary];
+	NSArray			*elements			= [self->reportedObject allEnclosedElements];
+	id				 currentElement		= nil;
+	LDrawModel		*partModel			= nil;
+	NSString		*category			= nil;
+	unsigned		 elementCount		= [elements count];
+	unsigned		 counter			= 0;
+	
+	//clear out any previous reports.
+	if(self->missingParts != nil)
+		[missingParts release];
+	if(self->movedParts != nil)
+		[movedParts release];
+		
+	missingParts	= [[NSMutableArray alloc] init];
+	movedParts		= [[NSMutableArray alloc] init];
+	
+	for(counter = 0; counter < elementCount; counter++)
+	{
+		currentElement = [elements objectAtIndex:counter];
+		
+		if( [currentElement isKindOfClass:[LDrawPart class]] )
+		{
+			//Missing?
+			partModel = [partLibrary modelForPart:currentElement];
+			if(partModel == nil)
+				[missingParts addObject:currentElement];
+			
+			//Moved?
+			category = [partLibrary categoryForPart:currentElement];
+			if([category isEqualToString:LDRAW_MOVED_CATEGORY]) 
+			   [movedParts addObject:currentElement];
+		}
+	}
+}//end getMissingPiecesReport
+
 //========== registerPart ======================================================
 //
 // Purpose:		We are being told to the add the specified part into our report.
@@ -69,12 +152,13 @@
 //							of this type and color
 //
 //==============================================================================
-- (void) registerPart:(LDrawPart *)part {
-	NSString			*partName		= [part referenceName];
-	NSNumber			*partColor		= [NSNumber numberWithInt:[part LDrawColor]];
+- (void) registerPart:(LDrawPart *)part
+{
+	NSString			*partName			= [part referenceName];
+	NSNumber			*partColor			= [NSNumber numberWithInt:[part LDrawColor]];
 	
-	NSMutableDictionary	*partRecord		= [self->partsReport objectForKey:partName];
-	unsigned			 numberParts	= 0;
+	NSMutableDictionary	*partRecord			= [self->partsReport objectForKey:partName];
+	unsigned			 numberColoredParts	= 0;
 
 	
 	if(partRecord == nil){
@@ -83,15 +167,15 @@
 		[self->partsReport setObject:partRecord forKey:partName];
 	}
 	
-	//Now let's see how many parts wit this color we have so far. If we don't have 
+	//Now let's see how many parts with this color we have so far. If we don't have 
 	// any, this call will conveniently return 0.
-	numberParts = [[partRecord objectForKey:partColor] intValue];
+	numberColoredParts = [[partRecord objectForKey:partColor] intValue];
 	
 	//Update our tallies.
 	self->totalNumberOfParts += 1;
-	numberParts += 1;
+	numberColoredParts += 1;
 	
-	[partRecord setObject:[NSNumber numberWithUnsignedInt:numberParts]
+	[partRecord setObject:[NSNumber numberWithUnsignedInt:numberColoredParts]
 				   forKey:partColor];
 				   
 }//end registerPart:
@@ -161,6 +245,38 @@
 }//end flattenedReport
 
 
+//========== missingParts ======================================================
+//
+// Purpose:		Returns an array of the LDrawParts in this file which are 
+//				~Moved aliases to new files.
+//
+//==============================================================================
+- (NSArray *) missingParts
+{
+	//haven't gotten the report yet; get it.
+	if(self->missingParts == nil)
+		[self getMissingPiecesReport];
+	
+	return self->missingParts;
+}//end missingParts
+
+
+//========== movedParts ========================================================
+//
+// Purpose:		Returns an array of the LDrawParts in this file which are 
+//				~Moved aliases to new files.
+//
+//==============================================================================
+- (NSArray *) movedParts
+{
+	//haven't gotten the report yet; get it.
+	if(self->movedParts == nil)
+		[self getMissingPiecesReport];
+		
+	return self->movedParts;
+}//end movedParts
+
+
 //========== numberOfParts =====================================================
 //
 // Purpose:		Returns the total number of parts registered in this report.
@@ -180,7 +296,9 @@
 // Purpose:		Quoth the Raven: "Nevermore!"
 //
 //==============================================================================
-- (void) dealloc {
+- (void) dealloc
+{
+	[reportedObject	release];
 	[partsReport	release];
 	
 	[super dealloc];

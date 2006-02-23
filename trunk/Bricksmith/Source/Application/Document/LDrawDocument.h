@@ -65,6 +65,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 
 //Accessors
 - (LDrawFile *) documentContents;
+- (NSWindow *)foremostWindow;
 - (gridSpacingModeT) gridSpacingMode;
 - (void) setDocumentContents:(LDrawFile *)newContents;
 - (void) setGridSpacingMode:(gridSpacingModeT)newMode;
@@ -77,6 +78,12 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) selectDirective:(LDrawDirective *)directiveToSelect byExtendingSelection:(BOOL)shouldExtend;
 - (void) setSelectionToHidden:(BOOL)hideFlag;
 - (void) setZoomPercentage:(float)newPercentage;
+
+// - miscellaneous
+- (void) doMissingPiecesCheck:(id)sender;
+
+// - File menu
+- (IBAction) exportSteps:(id)sender;
 
 // - Edit menu
 - (IBAction) copy:(id)sender;
@@ -121,7 +128,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) addDirective:(LDrawDirective *)newDirective toParent:(LDrawContainer * )parent;
 - (void) addDirective:(LDrawDirective *)newDirective toParent:(LDrawContainer * )parent atIndex:(int)index;
 - (void) deleteDirective:(LDrawDirective *)doomedDirective;
-- (void) nudgeDirective:(LDrawDrawableElement *)object inDirection:(Vector3)nudgeVector;
+- (void) moveDirective:(LDrawDrawableElement *)object inDirection:(Vector3)moveVector;
 - (void) rotatePart:(LDrawPart *)part aroundPoint:(Point3)rotationCenter onAxis:(Vector3)rotationAxis byDegrees:(float)degreesToRotate;
 - (void) setElement:(LDrawDrawableElement *)element toHidden:(BOOL)hideFlag;
 - (void) setObject:(id <LDrawColorable> )object toColor:(LDrawColorT)newColor;

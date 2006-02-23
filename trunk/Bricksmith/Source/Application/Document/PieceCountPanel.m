@@ -129,12 +129,13 @@
 //========== setActiveModelName: ===============================================
 //
 // Purpose:		Sets the name of the submodel in the file whose dimensions we 
-//				are currently analyzing and updates the data view.
+//				are currently analyzing, and also updates the data view.
 //
 //==============================================================================
-- (void) setActiveModelName:(NSString *)newName {
+- (void) setActiveModelName:(NSString *)newName
+{
 	LDrawMPDModel	*activeModel	= nil;
-	PartReport		*modelReport	= [PartReport partReport];
+	PartReport		*modelReport	= nil;
 	
 	//Update the model name.
 	[newName retain];
@@ -143,14 +144,17 @@
 	
 	//Get the report for the new model.
 	activeModel = [self->file modelWithName:newName];
-	[activeModel collectPartReport:modelReport];
+	modelReport = [PartReport partReportForContainer:activeModel];
+	[modelReport getPieceCountReport];
+	
 	[self setPartReport:modelReport];
-}
+	
+}//end setActiveModelName:
 
 
-//========== setContainer: =====================================================
+//========== setFile: ==========================================================
 //
-// Purpose:		Returns the container whose dimensions we are analyzing.
+// Purpose:		Sets the file we are reporting on.
 //
 //==============================================================================
 - (void) setFile:(LDrawFile *)newFile {

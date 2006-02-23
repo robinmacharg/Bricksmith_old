@@ -16,6 +16,7 @@
 #import <OpenGL/gl.h>
 #import "MatrixMath.h"
 
+@class LDrawFile;
 @class LDrawModel;
 @class LDrawStep;
 @class PartReport;
@@ -40,8 +41,9 @@
 - (NSString *) write;
 
 //Accessors
-- (LDrawStep *) enclosingStep;
 - (NSString *) displayName;
+- (LDrawFile *) enclosingFile;
+- (LDrawStep *) enclosingStep;
 - (Point3) position;
 - (NSString *) referenceName;
 - (LDrawModel *) referencedMPDSubmodel;

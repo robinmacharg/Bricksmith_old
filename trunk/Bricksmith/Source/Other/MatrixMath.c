@@ -338,6 +338,18 @@ Matrix4 *V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c)
 	return(c);
 }
 
+
+//========== V3Print ===========================================================
+//
+// Purpose:		Prints the given 3D point.
+//
+//==============================================================================
+void V3Print(Point3 *point)
+{
+	printf("(%12.6f, %12.6f, %12.6f)\n", point->x, point->y, point->z);
+}//end V3Print
+
+
 /*
  * float = det3x3(  a1, a2, a3, b1, b2, b3, c1, c2, c3 )
  * 
@@ -381,7 +393,32 @@ Vector4 V4FromV3(Vector3 *originalVector) {
 	return newVector;
 }
 
-//========== matrix4FromGLMatrix4() ============================================
+
+//========== V4MulPointByMatrix() ==============================================
+//
+// Purpose:		multiply a hom. point by a matrix and return the transformed 
+//				point
+//
+// Source:		Graphic Gems II, Spencer W. Thomas
+//
+//==============================================================================
+Vector4 *V4MulPointByMatrix(Vector4 *pin, Matrix4 *m, Vector4 *pout)
+{
+	pout->x = (pin->x * m->element[0][0]) + (pin->y * m->element[1][0]) +
+	(pin->z * m->element[2][0]) + (pin->w * m->element[3][0]);
+	pout->y = (pin->x * m->element[0][1]) + (pin->y * m->element[1][1]) +
+		(pin->z * m->element[2][1]) + (pin->w * m->element[3][1]);
+	pout->z = (pin->x * m->element[0][2]) + (pin->y * m->element[1][2]) +
+		(pin->z * m->element[2][2]) + (pin->w * m->element[3][2]);
+	pout->w = (pin->x * m->element[0][3]) + (pin->y * m->element[1][3]) +
+		(pin->z * m->element[2][3]) + (pin->w * m->element[3][3]);
+	return(pout);
+}
+
+
+#pragma mark -
+
+//========== Matrix4CreateFromGLMatrix4() ======================================
 //
 // Purpose:		Returns a two-dimensional (row matrix) representation of the 
 //				given OpenGL transformation matrix.
@@ -396,7 +433,8 @@ Vector4 V4FromV3(Vector3 *originalVector) {
 //				(flat column-major of transpose)   (shown multiplied by a point)  
 //
 //==============================================================================
-Matrix4 matrix4FromGLMatrix4(const GLfloat *glMatrix) {
+Matrix4 Matrix4CreateFromGLMatrix4(const GLfloat *glMatrix)
+{
 	int		row, column;
 	Matrix4	newMatrix;
 	
@@ -408,20 +446,20 @@ Matrix4 matrix4FromGLMatrix4(const GLfloat *glMatrix) {
 }
 
 
-//========== createTransformationMatrix() ======================================
+//========== Matrix4CreateTransformation() =====================================
 //
 // Purpose:		Given the scale, shear, rotation, translation, and perspective 
-//				paramaters, create a 4x4 transformation.element matrix used to modify 
-//				row-matrix points.
+//				paramaters, create a 4x4 transformation.element matrix used to 
+//				modify row-matrix points.
 //
-//				To reverse the procedure, pass the returned matrix to unmatrix().
+//				To reverse the procedure, pass the returned matrix to Matrix4DecomposeTransformation().
 //
 // Notes:		This ignores perspective, which is not supported.
 //
 // Source:		Allen Smith, after too much handwork.
 //
 //==============================================================================
-Matrix4 createTransformationMatrix(TransformationComponents *components) {
+Matrix4 Matrix4CreateTransformation(TransformationComponents *components) {
 
 	Matrix4 transformation = {0}; //zero out the whole thing.
 	float rotation[3][3];
@@ -449,7 +487,7 @@ Matrix4 createTransformationMatrix(TransformationComponents *components) {
 	rotation[2][2] = cosX*cosY;
 	
 	//Build the transformation.element matrix.
-	// Seeing the transformation.element matrix in these terms helps to make sense of unmatrix().
+	// Seeing the transformation.element matrix in these terms helps to make sense of Matrix4DecomposeTransformation().
 	transformation.element[0][0] = components->scale_X * rotation[0][0];
 	transformation.element[0][1] = components->scale_X * rotation[0][1];
 	transformation.element[0][2] = components->scale_X * rotation[0][2];
@@ -473,30 +511,30 @@ Matrix4 createTransformationMatrix(TransformationComponents *components) {
 	return transformation;
 }
 
-#pragma mark -
 
-//========== unmatrix() ========================================================
+//========== Matrix4DecomposeTransformation() ==================================
 //
-// Purpose:		Decompose a non-degenerate 4x4 transformation.element matrix into
-//				the sequence of transformations that produced it.
+// Purpose:		Decompose a non-degenerate 4x4 transformation.element matrix 
+//				into the sequence of transformations that produced it.
 //
 //		[Sx][Sy][Sz][Shearx/y][Sx/z][Sz/y][Rx][Ry][Rz][Tx][Ty][Tz][P(x,y,z,w)]
 //
-//				The coefficient of each transformation.element is returned in the 
-//				corresponding element of the vector tran.
+//				The coefficient of each transformation.element is returned in 
+//				the corresponding element of the vector tran.
 //
 // Returns:		1 upon success, 0 if the matrix is singular.
 //
 // Source:		Graphic Gems II, Spencer W. Thomas
 //
 //==============================================================================
-int unmatrix( Matrix4 *originalMatrix, TransformationComponents *decomposed )
+int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
+									TransformationComponents *decomposed )
 {
-	int counter, j;
-	Matrix4 localMatrix;
-	Matrix4 pmat, invpmat, tinvpmat;
-	Vector4 prhs, psol;
-	Point3 row[3], dummyPoint;
+	int			counter, j;
+	Matrix4		localMatrix;
+	Matrix4		pmat, invpmat, tinvpmat;
+	Vector4		prhs, psol;
+	Point3		row[3], dummyPoint;
 	
 	localMatrix = *originalMatrix;
 	
@@ -515,7 +553,7 @@ int unmatrix( Matrix4 *originalMatrix, TransformationComponents *decomposed )
  		pmat.element[counter][3] = 0;
  	pmat.element[3][3] = 1;
 	
- 	if ( det4x4(&pmat) == 0.0 )
+ 	if ( Matrix4x4Determinant(&pmat) == 0.0 )
  		return 0;
 	
  	// First, isolate perspective.  This is the messiest.
@@ -531,10 +569,10 @@ int unmatrix( Matrix4 *originalMatrix, TransformationComponents *decomposed )
  		// Solve the equation by inverting pmat and multiplying
 		// prhs by the inverse.  (This is the easiest way, not
 		// necessarily the best.)
-		// inverse function (and det4x4, above) from the Matrix
+		// inverse function (and Matrix4x4Determinant, above) from the Matrix
 		// Inversion gem in the first volume.
- 		inverse( &pmat, &invpmat );
-		transposeMatrix4( &invpmat, &tinvpmat );
+ 		Matrix4Invert( &pmat, &invpmat );
+		Matrix4Transpose( &invpmat, &tinvpmat );
  		V4MulPointByMatrix(&prhs, &tinvpmat, &psol);
 		
  		// Stuff the answer away.
@@ -615,16 +653,27 @@ int unmatrix( Matrix4 *originalMatrix, TransformationComponents *decomposed )
 		
 	}
 	
+	
 	// Now, extract the rotation angles.
-	// This is just some simple algebra on the simplest components of the 
-	// rotation matrix.
 	decomposed->rotate_Y = asin(-row[0].z);
- 	if ( cos(decomposed->rotate_Y) != 0 ) {
+	
+	//cos(Y) != 0.
+	// We can just use some simple algebra on the simplest components 
+	// of the rotation matrix.
+ 	if ( fabs(cos(decomposed->rotate_Y)) > SMALL_NUMBER ) { //within a tolerance of zero.
  		decomposed->rotate_X = atan2(row[1].z, row[2].z);
  		decomposed->rotate_Z = atan2(row[0].y, row[0].x);
  	}
-	else {
- 		decomposed->rotate_X = atan2(-row[2].x, row[1].y);
+	//cos(Y) == 0; so Y = +/- PI/2
+	// this is a "singularity" that zeroes out the information we would 
+	// usually use to determine X and Y.
+	
+	else if( decomposed->rotate_Y < 0) { // -PI/2
+ 		decomposed->rotate_X = atan2(-row[2].y, row[1].y);
+ 		decomposed->rotate_Z = 0;
+ 	}
+	else if( decomposed->rotate_Y > 0) { // +PI/2
+ 		decomposed->rotate_X = atan2(row[2].y, row[1].y);
  		decomposed->rotate_Z = 0;
  	}
 	
@@ -633,7 +682,7 @@ int unmatrix( Matrix4 *originalMatrix, TransformationComponents *decomposed )
 }
 
 
-//========== rotateMatrix4() ===================================================
+//========== Matrix4Rotate() ===================================================
 //
 // Purpose:		Rotates the given matrix by the given number of degrees around 
 //				each axis, placing the rotated matrix into the Matrix specified 
@@ -642,7 +691,7 @@ int unmatrix( Matrix4 *originalMatrix, TransformationComponents *decomposed )
 // Note:		You may safely pass the same matrix for original and result.
 //
 //==============================================================================
-Matrix4* rotateMatrix4(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result)
+Matrix4* Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result)
 {
 	TransformationComponents	rotateComponents	= IdentityComponents;
 	Matrix4						addedRotation		= {0};
@@ -653,7 +702,7 @@ Matrix4* rotateMatrix4(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *resu
 	rotateComponents.rotate_X = radians(degreesToRotate->x);
 	rotateComponents.rotate_Y = radians(degreesToRotate->y);
 	rotateComponents.rotate_Z = radians(degreesToRotate->z);
-	addedRotation = createTransformationMatrix(&rotateComponents);
+	addedRotation = Matrix4CreateTransformation(&rotateComponents);
 	
 	V3MatMul(original, &addedRotation, &newMatrix); //rotate at rotationCenter
 	
@@ -663,9 +712,10 @@ Matrix4* rotateMatrix4(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *resu
 	
 	return result;
 
-}//end rotateMatrix4
+}//end Matrix4Rotate
 
-//========== translateMatrix4() ================================================
+
+//========== Matrix4Translate() ================================================
 //
 // Purpose:		Translates the given matrix by the given displacement, placing 
 //				the translated matrix into the Matrix specified by the result 
@@ -674,7 +724,10 @@ Matrix4* rotateMatrix4(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *resu
 // Note:		You may safely pass the same matrix for original and result.
 //
 //==============================================================================
-Matrix4* translateMatrix4(Matrix4 *original, Vector3 *displacement, Matrix4 *result){
+Matrix4* Matrix4Translate(Matrix4 *original,
+						  Vector3 *displacement,
+						  Matrix4 *result)
+{
 	//Copy original to result
 	if(original != result) //pointer compare
 		*result = *original;
@@ -684,17 +737,17 @@ Matrix4* translateMatrix4(Matrix4 *original, Vector3 *displacement, Matrix4 *res
 	result->element[3][2] += displacement->z; //that's easier here.
 	
 	return result;
-}//end translateMatrix4
+}//end Matrix4Translate
 
 
-//========== transposeMatrix4() ================================================
+//========== Matrix4Transpose() ================================================
 //
 // Purpose:		transpose rotation portion of matrix a, return b
 //
 // Source:		Graphic Gems II, Spencer W. Thomas
 //
 //==============================================================================
-Matrix4 *transposeMatrix4(Matrix4 *a, Matrix4 *b)
+Matrix4 *Matrix4Transpose(Matrix4 *a, Matrix4 *b)
 {
 	int i, j;
 	for (i=0; i<4; i++)
@@ -703,53 +756,31 @@ Matrix4 *transposeMatrix4(Matrix4 *a, Matrix4 *b)
 	return(b);
 }
 
-//========== V4MulPointByMatrix() ==============================================
+
+//========== Matrix4Invert() ===================================================
 //
-// Purpose:		multiply a hom. point by a matrix and return the transformed 
-//				point
+// Purpose:		calculate the inverse of a 4x4 matrix
 //
-// Source:		Graphic Gems II, Spencer W. Thomas
+//				 -1     
+//				A  = ___1__ adjoint A
+//					  det A
 //
 //==============================================================================
-Vector4 *V4MulPointByMatrix(Vector4 *pin, Matrix4 *m, Vector4 *pout)
-{
-	pout->x = (pin->x * m->element[0][0]) + (pin->y * m->element[1][0]) +
-	(pin->z * m->element[2][0]) + (pin->w * m->element[3][0]);
-	pout->y = (pin->x * m->element[0][1]) + (pin->y * m->element[1][1]) +
-		(pin->z * m->element[2][1]) + (pin->w * m->element[3][1]);
-	pout->z = (pin->x * m->element[0][2]) + (pin->y * m->element[1][2]) +
-		(pin->z * m->element[2][2]) + (pin->w * m->element[3][2]);
-	pout->w = (pin->x * m->element[0][3]) + (pin->y * m->element[1][3]) +
-		(pin->z * m->element[2][3]) + (pin->w * m->element[3][3]);
-	return(pout);
-}
-
-
-/* 
-*   inverse( original_matrix, inverse_matrix )
- * 
- *    calculate the inverse of a 4x4 matrix
- *
- *     -1     
- *     A  = ___1__ adjoint A
- *         det A
- */
-
-void inverse( Matrix4 *in, Matrix4 *out )
+void Matrix4Invert( Matrix4 *in, Matrix4 *out )
 {
     int i, j;
-    float det, det4x4();
+    float det, Matrix4x4Determinant();
 	
     /* calculate the adjoint matrix */
 	
-    adjoint( in, out );
+    Matrix4Adjoint( in, out );
 	
     /*  calculate the 4x4 determinant
 		*  if the determinant is zero, 
 		*  then the inverse matrix is not unique.
 		*/
 	
-    det = det4x4( in );
+    det = Matrix4x4Determinant( in );
 	
     if ( fabs( det ) < SMALL_NUMBER) {
         printf("Non-singular matrix, no inverse!\n");
@@ -764,25 +795,24 @@ void inverse( Matrix4 *in, Matrix4 *out )
 }
 
 
-/* 
-*   adjoint( original_matrix, inverse_matrix )
- * 
- *     calculate the adjoint of a 4x4 matrix
- *
- *      Let  a   denote the minor determinant of matrix A obtained by
- *           ij
- *
- *      deleting the ith row and jth column from A.
- *
- *                    i+j
- *     Let  b   = (-1)    a
- *          ij            ji
- *
- *    The matrix B = (b  ) is the adjoint of A
- *                     ij
- */
-
-void adjoint( Matrix4 *in, Matrix4 *out )
+//========== Matrix4Adjoint() ==================================================
+//
+// Purpose:		calculate the adjoint of a 4x4 matrix
+//
+//				Let  a   denote the minor determinant of matrix A obtained by
+//					  ij
+//
+//				deleting the ith row and jth column from A.
+//
+//								i+j
+//				Let  b   = (-1)    a
+//					  ij            ji
+//
+//				The matrix B = (b  ) is the adjoint of A
+//								 ij
+//
+//==============================================================================
+void Matrix4Adjoint( Matrix4 *in, Matrix4 *out )
 {
     float a1, a2, a3, a4, b1, b2, b3, b4;
     float c1, c2, c3, c4, d1, d2, d3, d4;
@@ -825,12 +855,16 @@ void adjoint( Matrix4 *in, Matrix4 *out )
     out->element[2][3]  = - det3x3( a1, a2, a3, b1, b2, b3, d1, d2, d3);
     out->element[3][3]  =   det3x3( a1, a2, a3, b1, b2, b3, c1, c2, c3);
 }
-/*
- * float = det4x4( matrix )
- * 
- * calculate the determinant of a 4x4 matrix.
- */
-float det4x4( Matrix4 *m )
+
+
+//========== Matrix4x4Determinant() ============================================
+//
+// Purpose:		calculate the determinant of a 4x4 matrix.
+//
+// Source:		Graphic Gems II, Spencer W. Thomas
+//
+//==============================================================================
+float Matrix4x4Determinant( Matrix4 *m )
 {
     float ans;
     float a1, a2, a3, a4, b1, b2, b3, b4, c1, c2, c3, c4, d1, d2, d3, 			d4;
@@ -857,3 +891,23 @@ float det4x4( Matrix4 *m )
     return ans;
 }
 
+
+//========== Matrix4Print() ====================================================
+//
+// Purpose:		Prints the elements of matrix.
+//
+//==============================================================================
+void Matrix4Print(Matrix4 *matrix)
+{
+	int counter;
+	
+	for(counter = 0; counter < 4; counter++)
+	{
+		printf("[%12.6f %12.6f %12.6f %12.6f]\n",	
+								matrix->element[counter][0],
+								matrix->element[counter][1],
+								matrix->element[counter][2],
+								matrix->element[counter][3] );
+	}
+	printf("\n");
+}//end Matrix4Print

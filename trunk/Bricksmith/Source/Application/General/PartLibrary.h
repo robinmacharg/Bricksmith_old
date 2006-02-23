@@ -29,6 +29,12 @@
 //Actions
 - (void)reloadParts:(id)sender;
 
+//Finding Parts
+- (LDrawModel *) modelForName:(NSString *) partName;
+- (LDrawModel *) modelForPart:(LDrawPart *) part;
+- (NSString *) pathForPartName:(NSString *)partName;
+- (LDrawModel *) modelFromNeighboringFileForPart:(LDrawPart *)part;
+
 //Utilites
 - (void) addPartsInFolder:(NSString *)folderPath
 				toCatalog:(NSMutableDictionary *)catalog
@@ -36,12 +42,11 @@
 			   namePrefix:(NSString *)namePrefix
 			progressPanel:(AMSProgressPanel	*)progressPanel;
 - (NSString *)categoryForDescription:(NSString *)modelDescription;
+- (NSString *)categoryForPart:(LDrawPart *)part;
 - (NSString *)descriptionForPart:(LDrawPart *)part;
 - (NSString *)descriptionForPartName:(NSString *)name;
-- (LDrawModel *) modelForName:(NSString *) partName;
-- (LDrawModel *) modelForPart:(LDrawPart *) part;
-- (NSString *) partDescriptionForFile:(NSString *)filepath;
-- (NSString *) pathForFileName:(NSString *)partName;
+- (NSString *) descriptionForFilePath:(NSString *)filepath;
+- (LDrawModel *) readModelAtPath:(NSString *)partPath partName:(NSString *)partName;
 - (BOOL) validateLDrawFolder:(NSString *) folderPath;
 - (BOOL) validateLDrawFolderWithMessage:(NSString *) folderPath;
 

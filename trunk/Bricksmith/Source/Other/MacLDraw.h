@@ -118,6 +118,9 @@
 #define LDRAW_HEADER_OFFICIAL_MODEL				@"LDraw.org Official Model Repository"
 #define LDRAW_HEADER_UNOFFICIAL_MODEL			@"Unofficial Model"
 
+//Important Categories
+#define LDRAW_MOVED_CATEGORY					@"Moved"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //

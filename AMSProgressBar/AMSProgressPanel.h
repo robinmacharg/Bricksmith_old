@@ -31,6 +31,7 @@
 - (id) initWithMax:(float)maximum message:(NSString*)messageKey;
 
 //Accessors
+- (void) setIndeterminate:(BOOL)flag;
 - (void) setValue:(float)newValue;
 - (void) increment;
 - (void) setMinValue:(double)newValue;

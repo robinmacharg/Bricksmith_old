@@ -11,14 +11,19 @@
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 
-#import "LDrawFile.h"
+#import "LDrawColor.h"
 #import "MatrixMath.h"
+
 @class DocumentToolbarController;
 @class ExtendedSplitView;
+@class LDrawContainer;
+@class LDrawDirective;
 @class LDrawDrawableElement;
+@class LDrawFile;
 @class LDrawFileOutlineView;
 @class LDrawGLView;
 @class LDrawModel;
+@class LDrawMPDModel;
 @class LDrawStep;
 @class LDrawPart;
 @class PartBrowserDataSource;
@@ -81,6 +86,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 
 // - miscellaneous
 - (void) doMissingPiecesCheck:(id)sender;
+- (void) doMovedPiecesCheck:(id)sender;
 
 // - File menu
 - (IBAction) exportSteps:(id)sender;

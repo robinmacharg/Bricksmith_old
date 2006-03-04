@@ -17,6 +17,7 @@
 #import "LDrawStep.h"
 
 #import "LDrawModel.h"
+#import "LDrawUtilities.h"
 #import "StringCategory.h"
 #import "MacLDraw.h"
 
@@ -73,11 +74,11 @@
 		currentLine = [lines objectAtIndex:counter];
 		if([currentLine length] > 0){
 		
-			commandCodeString = [LDrawDirective readNextField:currentLine remainder:NULL];
+			commandCodeString = [LDrawUtilities readNextField:currentLine remainder:NULL];
 			//We may need to check for nil here someday.
 			commandCode = [commandCodeString intValue];
 		
-			CommandClass = [LDrawDirective classForLineType:commandCode];
+			CommandClass = [LDrawUtilities classForLineType:commandCode];
 			
 			newDirective = [CommandClass directiveWithString:currentLine];
 			if(newDirective != nil)

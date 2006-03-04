@@ -21,6 +21,7 @@
 #import "LDrawFile.h"
 #import "LDrawModel.h"
 #import "LDrawPart.h"
+#import "LDrawUtilities.h"
 #import "MacLDraw.h"
 
 @implementation PartLibrary
@@ -668,7 +669,7 @@
 						  
 		firstLine = [fileContents substringToIndex:newlineIndex];
 		
-		NSString *lineCode = [LDrawDirective readNextField:firstLine
+		NSString *lineCode = [LDrawUtilities readNextField:firstLine
 												 remainder:&partDescription ];
 
 		//Check to see if this is a valid LDraw header.

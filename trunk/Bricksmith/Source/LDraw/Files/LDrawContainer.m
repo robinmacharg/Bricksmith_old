@@ -12,6 +12,7 @@
 //==============================================================================
 #import "LDrawContainer.h"
 
+#import "LDrawUtilities.h"
 #import "MacLDraw.h"
 #import "PartReport.h"
 
@@ -134,7 +135,7 @@
 //
 //==============================================================================
 - (Box3) boundingBox3 {
-	return [LDrawDirective boundingBox3ForDirectives:self->containedObjects];
+	return [LDrawUtilities boundingBox3ForDirectives:self->containedObjects];
 }
 
 

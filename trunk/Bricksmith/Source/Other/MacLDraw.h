@@ -120,6 +120,7 @@
 
 //Important Categories
 #define LDRAW_MOVED_CATEGORY					@"Moved"
+#define LDRAW_MOVED_DESCRIPTION_PREFIX			@"~Moved to"
 
 
 ////////////////////////////////////////////////////////////////////////////////

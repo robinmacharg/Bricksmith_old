@@ -28,6 +28,7 @@
 #import "LDrawFile.h"
 #import "LDrawModel.h"
 #import "LDrawStep.h"
+#import "LDrawUtilities.h"
 #import "MacLDraw.h"
 #import "PartLibrary.h"
 #import "PartReport.h"
@@ -82,7 +83,7 @@
 	// raise an exception. We don't want this to happen here.
 	NS_DURING
 		//Read in the line code and advance past it.
-		parsedField = [LDrawDirective readNextField:  workingLine
+		parsedField = [LDrawUtilities readNextField:  workingLine
 										  remainder: &workingLine ];
 		//Only attempt to create the part if this is a valid line.
 		if([parsedField intValue] == 1){
@@ -90,55 +91,55 @@
 	
 			//Read in the color code.
 			// (color)
-			parsedField = [LDrawDirective readNextField:  workingLine
+			parsedField = [LDrawUtilities readNextField:  workingLine
 											  remainder: &workingLine ];
 			[parsedPart setLDrawColor:[parsedField intValue]];
 			
 			//Read position.
 			// (x)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[3][0] = [parsedField floatValue];
 			// (y)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[3][1] = [parsedField floatValue];
 			// (z)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[3][2] = [parsedField floatValue];
 			
 			
 			//Read Transformation X.
 			// (a)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[0][0] = [parsedField floatValue];
 			// (b)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[1][0] = [parsedField floatValue];
 			// (c)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[2][0] = [parsedField floatValue];
 			
 			
 			//Read Transformation Y.
 			// (d)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[0][1] = [parsedField floatValue];
 			// (e)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[1][1] = [parsedField floatValue];
 			// (f)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[2][1] = [parsedField floatValue];
 			
 			
 			//Read Transformation Z.
 			// (g)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[0][2] = [parsedField floatValue];
 			// (h)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[1][2] = [parsedField floatValue];
 			// (i)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			transformation.element[2][2] = [parsedField floatValue];
 			
 			//finish off the corner of the matrix.

@@ -104,6 +104,22 @@ Vector3 V3FromV4(Vector4 *originalVector) {
 
 #pragma mark -
 
+//========== V3EqualPoints() ===================================================
+//
+// Purpose:		Returns YES if point1 and point2 have the same coordinates..
+//
+//==============================================================================
+bool V3EqualPoints(Point3 point1, Point3 point2)
+{
+	if(point1.x == point2.x &&
+	   point1.y == point2.y &&
+	   point1.z == point2.z )
+		return true;
+	else
+		return false;
+}
+
+
 /* returns squared length of input vector */	
 float V3SquaredLength(Vector3 *a) 
 {

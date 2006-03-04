@@ -104,33 +104,34 @@
 //				an MPD submodel object.
 //
 //==============================================================================
-- (id) initWithLines:(NSArray *)lines {
-	
-	//get the line that should contain 0 FILE
-	NSString		*mpdFileCommand = [lines objectAtIndex:0];
-	NSString		*mpdSubmodelName = @"";
-	BOOL			 isMPDModel = NO;
-	NSMutableArray	*nonMPDLines = [NSMutableArray arrayWithArray:lines];
+- (id) initWithLines:(NSArray *)lines
+{
+						//get the line that should contain 0 FILE
+	NSString		*mpdFileCommand		= [lines objectAtIndex:0];
+	NSString		*mpdSubmodelName	= @"";
+	BOOL			 isMPDModel			= NO;
+	NSMutableArray	*nonMPDLines		= [NSMutableArray arrayWithArray:lines];
 
 	if([mpdFileCommand hasPrefix:LDRAW_MPD_FILE_START_MARKER]) //does it contain 0 FILE?
 		isMPDModel = YES; //it does start with 0 FILE; it is MPD.
 	
 	//Strip out the MPD commands for model parsing, and read in the model name.
-	if(isMPDModel == YES){
-
-		//Strip out the first line.
-		[nonMPDLines removeObjectAtIndex:0];
-		//Remove NOFILE command, if there is one.
-		[nonMPDLines removeObject:LDRAW_MPD_FILE_END_MARKER];
-		
-		
-		//Now extract MPD-specific data: the submodel name.
-		int indexOfName = [LDRAW_MPD_FILE_START_MARKER length] + 1; // after "0 FILE "
-		//Make sure there is actually a name after the marker. There certainly 
+	if(isMPDModel == YES)
+	{
+		//Extract MPD-specific data: the submodel name.
+		// Make sure there is actually a name after the marker. There certainly 
 		// should be, but let's be extra-special safe.
+		int indexOfName = [LDRAW_MPD_FILE_START_MARKER length] + 1; // after "0 FILE "
 		if([mpdFileCommand length] >= indexOfName)
+		{
 			mpdSubmodelName = [mpdFileCommand substringFromIndex:indexOfName];
+			mpdSubmodelName = [mpdSubmodelName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+								//I've encountered models with extra whitespace around their names.
+		}
 		
+		//Strip out the first line and the NOFILE command, if there is one.
+		[nonMPDLines removeObjectAtIndex:0];
+		[nonMPDLines removeObject:LDRAW_MPD_FILE_END_MARKER];
 	}
 
 	//Create a basic model.
@@ -146,7 +147,8 @@
 
 	return self;
 
-}
+}//end initWithLines:
+
 
 //========== initWithCoder: ====================================================
 //

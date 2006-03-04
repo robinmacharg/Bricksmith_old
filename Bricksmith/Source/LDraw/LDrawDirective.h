@@ -9,9 +9,7 @@
 //  Copyright 2005. All rights reserved.
 //==============================================================================
 #import <Cocoa/Cocoa.h>
-
-#import "LDrawColor.h"
-#import "MatrixMath.h"
+#import <OpenGL/GL.h>
 
 @class LDrawContainer;
 
@@ -44,9 +42,5 @@
 - (void) registerUndoActions:(NSUndoManager *)undoManager;
 - (void) snapshot;
 - (BOOL)isAncestorInList:(NSArray *)containers;
-+ (Box3) boundingBox3ForDirectives:(NSArray *)directives;
-+ (Class) classForLineType:(int)lineType;
-+ (NSString *) readNextField:(NSString *) partialDirective
-				   remainder:(NSString **) remainder;
 
 @end

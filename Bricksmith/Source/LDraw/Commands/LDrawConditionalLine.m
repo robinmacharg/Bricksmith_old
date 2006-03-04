@@ -24,6 +24,8 @@
 //==============================================================================
 #import "LDrawConditionalLine.h"
 
+#import "LDrawUtilities.h"
+
 @implementation LDrawConditionalLine
 
 #pragma mark -
@@ -61,7 +63,7 @@
 	// raise an exception. We don't want this to happen here.
 	NS_DURING
 		//Read in the line code and advance past it.
-		parsedField = [LDrawDirective readNextField:  workingLine
+		parsedField = [LDrawUtilities readNextField:  workingLine
 										  remainder: &workingLine ];
 		//Only attempt to create the part if this is a valid line.
 		if([parsedField intValue] == 5){
@@ -69,58 +71,58 @@
 			
 			//Read in the color code.
 			// (color)
-			parsedField = [LDrawDirective readNextField:  workingLine
+			parsedField = [LDrawUtilities readNextField:  workingLine
 											  remainder: &workingLine ];
 			[parsedConditionalLine setLDrawColor:[parsedField intValue]];
 			
 			//Read Vertex 1.
 			// (x1)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.x = [parsedField floatValue];
 			// (y1)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.y = [parsedField floatValue];
 			// (z1)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.z = [parsedField floatValue];
 			
 			[parsedConditionalLine setVertex1:workingVertex];
 				
 			//Read Vertex 2.
 			// (x2)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.x = [parsedField floatValue];
 			// (y2)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.y = [parsedField floatValue];
 			// (z2)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.z = [parsedField floatValue];
 			
 			[parsedConditionalLine setVertex2:workingVertex];
 			
 			//Read Conditonal Vertex 1.
 			// (x3)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.x = [parsedField floatValue];
 			// (y3)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.y = [parsedField floatValue];
 			// (z3)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.z = [parsedField floatValue];
 			
 			[parsedConditionalLine setConditionalVertex1:workingVertex];
 			
 			//Read Conditonal Vertex 2.
 			// (x4)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.x = [parsedField floatValue];
 			// (y4)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.y = [parsedField floatValue];
 			// (z4)
-			parsedField = [LDrawDirective readNextField:workingLine  remainder: &workingLine ];
+			parsedField = [LDrawUtilities readNextField:workingLine  remainder: &workingLine ];
 			workingVertex.z = [parsedField floatValue];
 			
 			[parsedConditionalLine setConditionalVertex2:workingVertex];

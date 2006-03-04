@@ -9,17 +9,7 @@
 //==============================================================================
 #import "LDrawDirective.h"
 
-//GAA! Incest! Importing the subclasses inside the base class has got to violate 
-// sixteen kerjillion holy principles of object-oriented programming. But in my 
-// limited knowledge, nothing else is coming to mind.
-#import "LDrawMetaCommand.h"
-#import "LDrawPart.h"
-#import "LDrawLine.h"
-#import "LDrawTriangle.h"
-#import "LDrawQuadrilateral.h"
-#import "LDrawConditionalLine.h"
 #import "LDrawContainer.h"
-
 #import "MacLDraw.h"
 	
 @implementation LDrawDirective
@@ -44,7 +34,7 @@
 //				//The linecode (0, 1, 2, 3, 4, 5) identifies the type of command, 
 //				// and is always the first character in the line.
 //				NSString *lineCode = [lineFromFile substringToIndex:1];
-//				Class LineTypeClass = [LDrawDirective classForLineType:[lineCode intValue]];
+//				Class LineTypeClass = [LDrawUtilities classForLineType:[lineCode intValue]];
 //				//Now initialize whatever subclass we came up with for this line.
 //				newDirective = [LineTypeClass directiveWithString:lineFromFile];
 //
@@ -351,149 +341,6 @@
 	[[undoManager prepareWithInvocationTarget:self] snapshot];
 	//First thing to call is snapshot, so that redo commands are filled 
 	// with the values of the current state.
-}
-
-
-//========== boundingBox3 ======================================================
-//
-// Purpose:		Returns the minimum and maximum points of the box which 
-//				perfectly contains all the given objects. (Only objects which 
-//				respond to -boundingBox3 will be tested.)
-//
-// Notes:		This method used to live in LDrawContainer, which was a very 
-//				nice place. But I moved it here so that other interested parties 
-//				could do bounds testing on ad-hoc collections of directives.
-//
-//==============================================================================
-+ (Box3) boundingBox3ForDirectives:(NSArray *)directives {
-	Box3	bounds				= InvalidBox;
-	Box3	partBounds			= {0};
-	id		currentDirective	= nil;
-	int		numberOfDirectives	= [directives count];
-	int		counter				= 0;
-	
-	for(counter = 0; counter < numberOfDirectives; counter++){
-		currentDirective = [directives objectAtIndex:counter];
-		if([currentDirective respondsToSelector:@selector(boundingBox3)]) {
-			partBounds = [currentDirective boundingBox3];
-			
-			bounds.min.x = MIN(bounds.min.x, partBounds.min.x);
-			bounds.min.y = MIN(bounds.min.y, partBounds.min.y);
-			bounds.min.z = MIN(bounds.min.z, partBounds.min.z);
-			
-			bounds.max.x = MAX(bounds.max.x, partBounds.max.x);
-			bounds.max.y = MAX(bounds.max.y, partBounds.max.y);
-			bounds.max.z = MAX(bounds.max.z, partBounds.max.z);
-		}
-	}
-	
-	return bounds;
-}//end boundingBox3ForDirectives
-
-
-//========== classForLineType ==================================================
-//
-// Purpose:		Allows initializing the right kind of class based on the code 
-//				found at the beginning of an LDraw line.
-//
-//==============================================================================
-+ (Class) classForLineType:(int)lineType
-{
-	Class classForType = nil;
-	
-	switch(lineType){
-		case 0:
-			classForType = [LDrawMetaCommand class];
-			break;
-		case 1:
-			classForType = [LDrawPart class];
-			break;
-		case 2:
-			classForType = [LDrawLine class];
-			break;
-		case 3:
-			classForType = [LDrawTriangle class];
-			break;
-		case 4:
-			classForType = [LDrawQuadrilateral class];
-			break;
-		case 5:
-			classForType = [LDrawConditionalLine class];
-			break;
-		default:
-			NSLog(@"unrecognized LDraw line type: %d", lineType);
-	}
-	
-	return classForType;
-}
-
-//========== readNextField: ====================================================
-//
-// Purpose:		Given the portion of the LDraw line, read the first available 
-//				field. Fields are separated by whitespace of any length.
-//
-//				If remainder is not NULL, return by indirection the remainder of 
-//				partialDirective after the first field has been removed. If 
-//				there is no remainder, an empty string will be returned.
-//
-//				So, given the line
-//				1 8 -150 -8 20 0 0 -1 0 1 0 1 0 0 3710.DAT
-//
-//				remainder will be set to:
-//				 8 -150 -8 20 0 0 -1 0 1 0 1 0 0 3710.DAT
-//
-// Notes:		This method is incapable of reading field strings with spaces 
-//				in them!
-//
-//				A case could be made to replace this method with an NSScanner!
-//				They don't seem to be as adept at scanning in unknown string 
-//				tags though, which would make them difficult to use to 
-//				distinguish between "0 WRITE blah" and "0 COMMENT blah".
-//
-//==============================================================================
-+ (NSString *) readNextField:(NSString *) partialDirective
-				   remainder:(NSString **) remainder
-{
-	NSCharacterSet	*whitespaceCharacterSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-	NSRange			 rangeOfNextWhiteSpace;
-	NSString		*fieldContents			= nil;
-	
-	//First, remove any heading whitespace.
-	partialDirective = [partialDirective stringByTrimmingCharactersInSet:whitespaceCharacterSet];
-	//Find the beginning of the next field separation
-	rangeOfNextWhiteSpace = [partialDirective rangeOfCharacterFromSet:whitespaceCharacterSet];
-	
-	//The text between the beginning and the next field separator is the first 
-	// field (what we are after).
-	if(rangeOfNextWhiteSpace.location != NSNotFound){
-		fieldContents = [partialDirective substringToIndex:rangeOfNextWhiteSpace.location];
-		//See if they want the rest of the line, sans the field we just parsed.
-		if(remainder != NULL)
-			*remainder = [partialDirective substringFromIndex:rangeOfNextWhiteSpace.location];
-	}
-	else{
-		//There was no subsequent field separator; we must be at the end of the line.
-		fieldContents = partialDirective;
-		if(remainder != NULL)
-			*remainder = [NSString string];
-	}
-	
-	return fieldContents;
-}//end readNextField
-
-
-//========== LDrawEqualPoints() ================================================
-//
-// Purpose:		Returns YES if point1 and point2 have the same coordinates..
-//
-//==============================================================================
-BOOL LDrawEqualPoints(Point3 point1, Point3 point2){
-	if(point1.x == point2.x &&
-	   point1.y == point2.y &&
-	   point1.z == point2.z )
-		return YES;
-	else
-		return NO;
 }
 
 

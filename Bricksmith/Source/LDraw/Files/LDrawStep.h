@@ -10,6 +10,7 @@
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 
+#import "LDrawColor.h"
 #import "LDrawContainer.h"
 
 @class LDrawModel;

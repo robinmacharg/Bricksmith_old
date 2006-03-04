@@ -18,6 +18,7 @@
 #import "LDrawMetaCommand.h"
 
 #import "LDrawComment.h"
+#import "LDrawUtilities.h"
 
 @implementation LDrawMetaCommand
 
@@ -59,7 +60,7 @@
 		// raise an exception. We don't want this to happen here.
 		NS_DURING
 			//Read in the line code and advance past it.
-			parsedField = [LDrawDirective readNextField:  workingLine
+			parsedField = [LDrawUtilities readNextField:  workingLine
 											  remainder: &workingLine ];
 			//Only attempt to create the part if this is a valid line.
 			if([parsedField intValue] == 0){

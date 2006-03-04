@@ -37,6 +37,7 @@
 #import "LDrawDocumentWindow.h"
 #import "LDrawFileOutlineView.h"
 #import "LDrawGLView.h"
+#import "LDrawUtilities.h"
 #import "MacLDraw.h"
 #import "PartBrowserDataSource.h"
 #import "PartChooserPanel.h"
@@ -217,6 +218,7 @@
 	
 	//Postflight: find missing and moved parts.
 	[self doMissingPiecesCheck:self];
+	[self doMovedPiecesCheck:self];
 	
 	return YES;
 	
@@ -512,7 +514,7 @@
 
 	NSArray			*selectedObjects	= [self selectedObjects]; //array of LDrawDirectives.
 	id				 currentObject		= nil;
-	Box3			 selectionBounds	= [LDrawDirective boundingBox3ForDirectives:selectedObjects];
+	Box3			 selectionBounds	= [LDrawUtilities boundingBox3ForDirectives:selectedObjects];
 	Point3			 rotationCenter		= {0};
 	float			 degreesToRotate	= 0;
 	int				 counter			= 0;
@@ -639,27 +641,69 @@
 {
 	PartReport		*partReport			= [PartReport partReportForContainer:[self documentContents]];
 	NSArray			*missingParts		= [partReport missingParts];
+	NSArray			*missingNames		= nil;
 	NSMutableString	*informativeString	= nil;
 	
 	if([missingParts count] > 0)
 	{
+		//Build a string listing all the missing parts.
 		informativeString = [NSMutableString stringWithString:NSLocalizedString(@"MissingPiecesInformative", nil)];
-		[informativeString appendString:@"\n"];
-		for(int counter = 0; counter < [missingParts count] - 1; counter++)
-		{
-			
-		}
-	
+		[informativeString appendString:@"\n\n"];
+		missingNames = [missingParts valueForKey:@"displayName"]; // I love Cocoa.
+		[informativeString appendString:[missingNames componentsJoinedByString:@"\n"]];
+		
+		//Alert! Alert!
 		NSAlert *alert = [[NSAlert alloc] init];
 		
 		[alert     setMessageText:NSLocalizedString(@"MissingPiecesMessage", nil)];
-		[alert setInformativeText:NSLocalizedString(@"MissingPiecesInformative", nil)];
+		[alert setInformativeText:informativeString];
 		[alert addButtonWithTitle:NSLocalizedString(@"OKButtonName", nil)];
 		
 		[alert runModal];
 	}
 	
 }//end doMissingPiecesCheck:
+
+
+//========== doMovedPiecesCheck: ===============================================
+//
+// Purpose:		Searches the current model for any ~Moved parts, and displays a 
+//				warning if there are some.
+//
+//==============================================================================
+- (void) doMovedPiecesCheck:(id)sender
+{
+	PartReport		*partReport			= [PartReport partReportForContainer:[self documentContents]];
+	NSArray			*movedParts			= [partReport movedParts];
+	int				 buttonReturned		= 0;
+	int				 counter			= 0;
+	
+	if([movedParts count] > 0)
+	{
+		//Alert! Alert! What should we do?
+		NSAlert *alert = [[NSAlert alloc] init];
+		
+		[alert     setMessageText:NSLocalizedString(@"MovedPiecesMessage", nil)];
+		[alert setInformativeText:NSLocalizedString(@"MovedPiecesInformative", nil)];
+		[alert addButtonWithTitle:NSLocalizedString(@"OKButtonName", nil)];
+		[alert addButtonWithTitle:NSLocalizedString(@"CancelButtonName", nil)];
+		
+		buttonReturned = [alert runModal];
+		
+		//They want us to update the ~Moved parts.
+		if(buttonReturned == NSAlertFirstButtonReturn)
+		{
+			for(counter = 0; counter < [movedParts count]; counter++)
+			{
+				[LDrawUtilities updateNameForMovedPart:[movedParts objectAtIndex:counter]];
+			}
+			
+			//mark document as modified.
+			[self updateChangeCount:NSChangeDone];
+		}
+	}
+	
+}//end doMovedPiecesCheck:
 
 
 #pragma mark -
@@ -2573,7 +2617,7 @@
 		//Set up the part attributes
 		[newPart setLDrawColor:selectedColor];
 		[newPart setDisplayName:partName];
-		if(lastSelectedPart != nil){
+		if(self->lastSelectedPart != nil){
 			//Collect the transformation from the previous part and apply it to the 
 			// new one.
 			TransformationComponents transformation = [lastSelectedPart transformationComponents];

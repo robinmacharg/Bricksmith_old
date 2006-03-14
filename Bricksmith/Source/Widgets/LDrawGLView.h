@@ -25,7 +25,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #define SIMPLIFICATION_THRESHOLD	0.4 //seconds
-#define CAMERA_DISTANCE_FACTOR		7	//cameraLocation = modelSize * CAMERA_DISTANCE_FACTOR
+#define CAMERA_DISTANCE_FACTOR		6.5	//controls perspective; cameraLocation = modelSize * CAMERA_DISTANCE_FACTOR
 
 
 typedef enum {
@@ -78,6 +78,10 @@ typedef enum {
 	//Event Tracking
 	BOOL				 isDragging;			//true if the last mousedown was followed by a drag.
 }
+
+//Drawing
+- (void) drawFocusRing;
+- (void) strokeInsideRect:(NSRect)rect thickness:(float)borderWidth;
 
 //Accessors
 - (LDrawColorT) LDrawColor;

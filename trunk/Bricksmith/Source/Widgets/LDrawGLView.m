@@ -240,7 +240,10 @@
 	glColor4fv(glColor);
 	
 	[self->fileBeingDrawn draw:options parentColor:glColor];
-
+	
+	if([[self window] firstResponder] == self)
+		[self drawFocusRing];
+	
 	glFlush();
 	[[self openGLContext] flushBuffer];
 	
@@ -264,6 +267,99 @@
 //	NSRectFill(visibleRect);
 
 }//end drawRect:
+
+
+//========== drawFocusRing =====================================================
+//
+// Purpose:		Draws a focus ring around the view, which indicates that this 
+//				view is the first responder.
+//
+//==============================================================================
+- (void) drawFocusRing
+{
+	NSRect	visibleRect = [self visibleRect];
+	float	lineWidth	= 1.0;
+	
+	lineWidth /= [self zoomPercentage] / 100;
+	
+	//we just want to DRAW plain colored pixels.
+	glDisable(GL_LIGHTING);
+	
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	{
+		glLoadIdentity();
+		gluOrtho2D( NSMinX(visibleRect), NSMaxX(visibleRect),
+				    NSMinY(visibleRect), NSMaxY(visibleRect) );
+				   
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		{
+			//we indicate focus by drawing a series of framing lines.
+			
+			glLoadIdentity();
+			
+			glColor4ub(125, 151, 174, 255);
+			[self strokeInsideRect:visibleRect
+						 thickness:lineWidth];
+			
+			glColor4ub(137, 173, 204, 213);
+			[self strokeInsideRect:NSInsetRect( visibleRect, 1 * lineWidth, 1 * lineWidth )
+						 thickness:lineWidth];
+			
+			glColor4ub(161, 184, 204, 172);
+			[self strokeInsideRect:NSInsetRect( visibleRect, 2 * lineWidth, 2 * lineWidth )
+						 thickness:lineWidth];
+			
+			glColor4ub(184, 195, 204, 128);
+			[self strokeInsideRect:NSInsetRect( visibleRect, 3 * lineWidth, 3 * lineWidth )
+						 thickness:lineWidth];
+		}
+		glPopMatrix();
+	}
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	
+	glEnable(GL_LIGHTING);
+
+}//end drawFocusRing
+
+
+//========== strokeInsideRect:thickness: =======================================
+//
+// Purpose:		Draws a line of the specified thickness on the inside edge of 
+//				the rectangle.
+//
+//==============================================================================
+- (void) strokeInsideRect:(NSRect)rect
+				thickness:(float)borderWidth
+{
+	//draw like the wood of a picture frame: four trapezoids
+	glBegin(GL_QUAD_STRIP);
+	
+	//lower left
+	glVertex2f( NSMinX(rect),				NSMinY(rect)				);
+	glVertex2f( NSMinX(rect) + borderWidth,	NSMinY(rect) + borderWidth	);
+	
+	//lower right
+	glVertex2f( NSMaxX(rect),				NSMinY(rect)				);
+	glVertex2f( NSMaxX(rect) - borderWidth,	NSMinY(rect) + borderWidth	);
+	
+	//upper right
+	glVertex2f( NSMaxX(rect),				NSMaxY(rect)				);
+	glVertex2f( NSMaxX(rect) - borderWidth,	NSMaxY(rect) - borderWidth	);
+	
+	//upper left
+	glVertex2f( NSMinX(rect),				NSMaxY(rect)				);
+	glVertex2f( NSMinX(rect) + borderWidth,	NSMaxY(rect) - borderWidth	);
+	
+	//lower left (finish last trapezoid)
+	glVertex2f( NSMinX(rect),				NSMinY(rect)				);
+	glVertex2f( NSMinX(rect) + borderWidth,	NSMinY(rect) + borderWidth	);
+	
+	glEnd();
+	
+}//end strokeInsideRect:thickness:
 
 
 //========== isOpaque ==========================================================
@@ -325,7 +421,8 @@
 //				correspond to points in the LDraw model itself.
 //
 //==============================================================================
-- (Matrix4) getInverseMatrix {
+- (Matrix4) getInverseMatrix
+{
 	GLfloat	currentMatrix[16];
 	Matrix4	transformation;
 	Matrix4	inversed;
@@ -386,13 +483,16 @@
 //				method returns 100.
 //
 //==============================================================================
-- (float) zoomPercentage {
-	id			superview	= [self superview];
-	float		zoomPercentage = 0;
+- (float) zoomPercentage
+{
+	NSScrollView	*scrollview		= [self enclosingScrollView];
+	float			 zoomPercentage	= 0;
 	
-	if([superview isKindOfClass:[NSClipView class]] == YES) {
-		NSRect clipFrame	= [superview frame];
-		NSRect clipBounds	= [superview bounds];
+	if(scrollview != nil)
+	{
+		NSClipView	*clipview	= [scrollview contentView];
+		NSRect		 clipFrame	= [clipview frame];
+		NSRect		 clipBounds	= [clipview bounds];
 		
 		if(NSWidth(clipBounds) != 0)
 			zoomPercentage = NSWidth(clipFrame) / NSWidth(clipBounds);
@@ -405,15 +505,19 @@
 		zoomPercentage = 100;
 	
 	return zoomPercentage;
-}
+	
+}//end zoomPercentage
 
+
+#pragma mark -
 
 //========== setAcceptsFirstResponder: =========================================
 //
 // Purpose:		Do we want to pick up key events?
 //
 //==============================================================================
-- (void) setAcceptsFirstResponder:(BOOL)flag {
+- (void) setAcceptsFirstResponder:(BOOL)flag
+{
 	self->acceptsFirstResponder = flag;
 }
 
@@ -424,7 +528,8 @@
 //				configuration. Pass nil for no saving.
 //
 //==============================================================================
-- (void) setAutosaveName:(NSString *)newName {
+- (void) setAutosaveName:(NSString *)newName
+{
 	[newName retain];
 	[self->autosaveName release];
 	autosaveName = newName;
@@ -437,7 +542,8 @@
 //				color themselves.
 //
 //==============================================================================
--(void) setLDrawColor:(LDrawColorT)newColor{
+-(void) setLDrawColor:(LDrawColorT)newColor
+{
 	color = newColor;
 	
 	//Look up the OpenGL color now so we don't have to whenever we draw.
@@ -454,7 +560,8 @@
 //				model. We also automatically center the model in the view.
 //
 //==============================================================================
-- (void) setLDrawDirective:(LDrawDirective *) newFile {
+- (void) setLDrawDirective:(LDrawDirective *) newFile
+{
 	NSRect frame = NSZeroRect;
 	
 	//Update our variable.
@@ -570,10 +677,12 @@
 // Parameters:	newPercentage: new zoom; pass 100 for 100%, etc.
 //
 //==============================================================================
-- (void) setZoomPercentage:(float) newPercentage {
+- (void) setZoomPercentage:(float) newPercentage
+{
 	NSScrollView *scrollView = [self enclosingScrollView];
 	
-	if(scrollView != nil){
+	if(scrollView != nil)
+	{
 		NSClipView	*clipView		= [scrollView contentView];
 		NSRect		 clipFrame		= [clipView frame];
 		NSRect		 clipBounds		= [clipView bounds];
@@ -639,11 +748,13 @@
 // Purpose:		Shrink the scale of the current LDraw view.
 //
 //==============================================================================
-- (IBAction) zoomOut:(id)sender {
+- (IBAction) zoomOut:(id)sender
+{
 	float currentZoom = [self zoomPercentage];
 	float newZoom = currentZoom / 2;
 	[self setZoomPercentage:newZoom];
-}
+	
+}//end zoomOut:
 
 
 #pragma mark -
@@ -656,15 +767,42 @@
 //				the rest of the file's views about this event.
 //
 //==============================================================================
-- (BOOL) becomeFirstResponder {
+- (BOOL) becomeFirstResponder
+{
 	BOOL success = [super becomeFirstResponder];
 	
-	if(self->document != nil) {
-		[document LDrawGLViewBecameFirstResponder:self];
+	if(success == YES)
+	{
+		if(self->document != nil)
+			[document LDrawGLViewBecameFirstResponder:self];
+		
+		//need to draw the focus ring now
+		[self setNeedsDisplay:YES];
 	}
 	
 	return success;
-}
+}//end becomeFirstResponder
+
+
+//========== resignFirstResponder ==============================================
+//
+// Purpose:		We are losing key status.
+//
+//==============================================================================
+- (BOOL)resignFirstResponder
+{
+	BOOL success = [super resignFirstResponder];
+	
+	if(success == YES)
+	{
+		//need to lose the focus ring
+		[self setNeedsDisplay:YES];
+	}
+	
+	return success;
+	
+}//end resignFirstResponder
+
 
 //========== resetCursor =======================================================
 //

@@ -2194,7 +2194,10 @@
 	
 	//Update the models menu.
 	[self addModelsToMenu];
-}
+	
+	[self setLastSelectedPart:nil];
+	
+}//end activeModelDidChange:
 
 
 //========== partChanged: ======================================================

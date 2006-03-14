@@ -70,6 +70,11 @@ ToolPalette *sharedToolPalette = nil;
 							   name:LDrawKeyboardDidChangeNotification
 							 object:nil ];
 	
+	[notificationCenter addObserver:self
+						   selector:@selector(applicationDidBecomeActive:)
+							   name:NSApplicationDidBecomeActiveNotification
+							 object:nil ];
+	
 	//bring the palette onscreen
 	if([userDefaults boolForKey:TOOL_PALETTE_HIDDEN] == NO)
 		[palettePanel orderFront:self];
@@ -86,7 +91,8 @@ ToolPalette *sharedToolPalette = nil;
 //				throughout the application, creating it if necessary.
 //
 //------------------------------------------------------------------------------
-+ (ToolPalette *) sharedToolPalette {
++ (ToolPalette *) sharedToolPalette
+{
 	if(sharedToolPalette == nil)
 		sharedToolPalette = [[ToolPalette alloc] init];
 		
@@ -110,7 +116,8 @@ ToolPalette *sharedToolPalette = nil;
 	[NSBundle loadNibNamed:@"ToolPalette" owner:self];
 	
 	return self;
-}
+	
+}//end init
 
 
 #pragma mark -
@@ -236,6 +243,28 @@ ToolPalette *sharedToolPalette = nil;
 	[self findCurrentToolMode];
 	
 }//end keyboardDidChange:
+
+
+//========== applicationDidBecomeActive: =======================================
+//
+// Purpose:		The application has just been brought to the foreground. Clear 
+//				out our current keys, because we have no idea what keys are 
+//				current. We just need to start tracking them all over.
+//
+//==============================================================================
+- (void) applicationDidBecomeActive:(NSNotification *)notification
+{
+	//clear the keys. We don't know what they are now, since Bricksmith wasn't 
+	// active to keep track of them.
+
+	[self->currentKeyCharacters release];
+	
+	self->currentKeyCharacters	= @"";
+	self->currentKeyModifiers	= 0;
+	
+	[self findCurrentToolMode];
+	
+}//end applicationDidBecomeActive:
 
 
 #pragma mark -

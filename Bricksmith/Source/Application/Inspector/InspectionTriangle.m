@@ -59,10 +59,9 @@
 // Purpose:		Called in response to the conclusion of editing in the palette.
 //
 //==============================================================================
-- (IBAction)finishedEditing:(id)sender{
+- (void) commitChanges:(id)sender{
 
 	LDrawTriangle *representedObject = [self object];
-	[representedObject snapshot];
 	
 	Point3 vertex1 = [vertex1Form coordinateValue];
 	Point3 vertex2 = [vertex2Form coordinateValue];
@@ -72,7 +71,7 @@
 	[representedObject setVertex2:vertex2];
 	[representedObject setVertex3:vertex3];
 	
-	[super finishedEditing:sender];
+	[super commitChanges:sender];
 }
 
 //========== revert ============================================================
@@ -115,7 +114,7 @@
 	Point3 vertex1		= [[self object] vertex1];
 	
 	//If the values really did change, then update.
-	if(LDrawEqualPoints(formContents, vertex1) == NO)
+	if(V3EqualPoints(formContents, vertex1) == NO)
 		[self finishedEditing:sender];
 }
 
@@ -132,7 +131,7 @@
 	Point3 vertex2		= [[self object] vertex2];
 	
 	//If the values really did change, then update.
-	if(LDrawEqualPoints(formContents, vertex2) == NO)
+	if(V3EqualPoints(formContents, vertex2) == NO)
 		[self finishedEditing:sender];
 }
 
@@ -149,7 +148,7 @@
 	Point3 vertex3		= [[self object] vertex3];
 	
 	//If the values really did change, then update.
-	if(LDrawEqualPoints(formContents, vertex3) == NO)
+	if(V3EqualPoints(formContents, vertex3) == NO)
 		[self finishedEditing:sender];
 }
 

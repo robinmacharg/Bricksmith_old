@@ -15,6 +15,18 @@
 //				there is a symbiotic relationship with ToolPalette to track 
 //				which tool mode we're in; we get notifications when it changes.
 //
+// Threading:	LDrawGLView spawns a separate thread to draw. There are two 
+//				critical pieces of shared data which must be protected by 
+//				mutual-exclusion locks:
+//				
+//					* the NSOpenGLContext
+//
+//					* the contents of the directive being drawn
+//						--	I kinda cheated on this one. Only LDrawFiles 
+//							automatically maintain mutexes. It's a safe shortcut
+//							because only Files are edited! The editor must track 
+//							the lock manually.
+//
 //  Created by Allen Smith on 4/17/05.
 //  Copyright 2005. All rights reserved.
 //==============================================================================
@@ -97,7 +109,7 @@
 	
 	self = [super initWithCoder: coder];
 	
-	//Yes, we have a nib file. Don't laugh. This view has an accessory menu.
+	//Yes, we have a nib file. Don't laugh. This view has accessories.
 	[NSBundle loadNibNamed:@"LDrawGLViewAccessories" owner:self];
 	
 	[self setAcceptsFirstResponder:YES];
@@ -220,52 +232,95 @@
 // Purpose:		Draw the file into the view.
 //
 //==============================================================================
-- (void) drawRect:(NSRect)rect {
+- (void) drawRect:(NSRect)rect
+{
+	[NSThread detachNewThreadSelector:@selector(drawThreaded:) toTarget:self withObject:nil];
+}
 
-	NSDate			*startTime	= [NSDate date];
-	unsigned		 options	= DRAW_NO_OPTIONS;
-	NSTimeInterval	 drawTime	= 0;
-	
-	//If we're rotating, we may need to simplify large models.
-#if DEBUG_DRAWING == 0
-	if(self->isDragging && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
-		options |= DRAW_BOUNDS_ONLY;
-#endif //DEBUG_DRAWING
-	
-	//Load the model matrix to make sure we are applying the right stuff.
-	glMatrixMode(GL_MODELVIEW);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glLineWidth(1.1);
-	glColor4fv(glColor);
+//========== drawThreaded: =====================================================
+//
+// Purpose:		My great attempt at organized chaos. This draw routine may be 
+//				safely called off a thread!
+//
+//==============================================================================
+- (void) drawThreaded:(id)sender
+{
+	NSAutoreleasePool	*pool		= [[NSAutoreleasePool alloc] init];
+	NSDate				*startTime	= [NSDate date];
+	unsigned			 options	= DRAW_NO_OPTIONS;
+	NSTimeInterval		 drawTime	= 0;
 	
-	[self->fileBeingDrawn draw:options parentColor:glColor];
-	
-	if([[self window] firstResponder] == self)
-		[self drawFocusRing];
-	
-	glFlush();
-	[[self openGLContext] flushBuffer];
-	
-	//If we just did a full draw, let's see if rotating needs to be done simply.
-	drawTime = -[startTime timeIntervalSinceNow];
-	if(self->isDragging == NO) {
-		if( drawTime > SIMPLIFICATION_THRESHOLD )
-			rotationDrawMode = LDrawGLDrawExtremelyFast;
-		else
-			rotationDrawMode = LDrawGLDrawNormal;
+	//mark another outstanding draw request, then get in line by requesting the 
+	// mutex.
+	@synchronized(self)
+	{
+		numberDrawRequests += 1;
 	}
-
-#if DEBUG_DRAWING
-	NSLog(@"draw time: %f", drawTime);
-#endif //DEBUG_DRAWING
 	
+	@synchronized([self openGLContext])
+	{
+		[[self openGLContext] makeCurrentContext];
+		//any previous draw requests have now executed and let go of the mutex.
+		// if we are the LAST draw in the queue, we draw. Otherwise, we drop 
+		// ourselves, and defer to the last guy.
+		if(numberDrawRequests == 1)
+		{
+			//If we're rotating, we may need to simplify large models.
+		#if DEBUG_DRAWING == 0
+			if(self->isDragging && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
+				options |= DRAW_BOUNDS_ONLY;
+		#endif //DEBUG_DRAWING
+			
+			//Load the model matrix to make sure we are applying the right stuff.
+			glMatrixMode(GL_MODELVIEW);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//	NSRect visibleRect = [self visibleRect];
-//	[[NSColor colorWithCalibratedWhite:0.5 alpha:0.75] set];
-////	[[NSColor clearColor] set];
-//	NSRectFill(visibleRect);
+			glLineWidth(1.1);
+			glColor4fv(glColor);
+			
+		
+			[self->fileBeingDrawn draw:options parentColor:glColor];
+			
+			if([[self window] firstResponder] == self)
+				[self drawFocusRing];
+			
+			//glFlush(); //implicit in -flushBuffer
+			[[self openGLContext] flushBuffer];
+		
+			
+			//If we just did a full draw, let's see if rotating needs to be done simply.
+			drawTime = -[startTime timeIntervalSinceNow];
+			if(self->isDragging == NO) {
+				if( drawTime > SIMPLIFICATION_THRESHOLD )
+					rotationDrawMode = LDrawGLDrawExtremelyFast;
+				else
+					rotationDrawMode = LDrawGLDrawNormal;
+			}
 
+		#if DEBUG_DRAWING
+			NSLog(@"draw time: %f", drawTime);
+		#endif //DEBUG_DRAWING
+			
+
+		//	NSRect visibleRect = [self visibleRect];
+		//	[[NSColor colorWithCalibratedWhite:0.5 alpha:0.75] set];
+		////	[[NSColor clearColor] set];
+		//	NSRectFill(visibleRect);
+			
+			
+		}
+		//else we just drop the draw.
+	}
+	
+	//cleanup
+	@synchronized(self)
+	{
+		self->numberDrawRequests -= 1;
+	}
+	
+	[pool release];
+	
 }//end drawRect:
 
 
@@ -402,7 +457,8 @@
 //				determining the point being viewed in the scroll view.
 //
 //==============================================================================
-- (NSPoint) centerPoint {
+- (NSPoint) centerPoint
+{
 	NSRect visibleRect = [self visibleRect];
 	return NSMakePoint( NSMidX(visibleRect), NSMidY(visibleRect) );
 }
@@ -423,23 +479,26 @@
 //==============================================================================
 - (Matrix4) getInverseMatrix
 {
-	GLfloat	currentMatrix[16];
-	Matrix4	transformation;
-	Matrix4	inversed;
-	
-	glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
-	transformation = Matrix4CreateFromGLMatrix4(currentMatrix); //convert to our utility library format
-	
-	//When using a perspective view, we must use gluLookAt to reposition the camera. 
-	// That basically means translating the model. But all we're concerned about 
-	// here is the *rotation*, so we'll zero out the translation components.
-	transformation.element[3][0] = 0;
-	transformation.element[3][1] = 0; //translation is in the bottom row of the matrix.
-	transformation.element[3][2] = 0;
-	
-	Matrix4Invert( &transformation, &inversed);
-	
-	return inversed;
+	@synchronized([self openGLContext])
+	{
+		GLfloat	currentMatrix[16];
+		Matrix4	transformation;
+		Matrix4	inversed;
+		
+		glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
+		transformation = Matrix4CreateFromGLMatrix4(currentMatrix); //convert to our utility library format
+		
+		//When using a perspective view, we must use gluLookAt to reposition the camera. 
+		// That basically means translating the model. But all we're concerned about 
+		// here is the *rotation*, so we'll zero out the translation components.
+		transformation.element[3][0] = 0;
+		transformation.element[3][1] = 0; //translation is in the bottom row of the matrix.
+		transformation.element[3][2] = 0;
+		
+		Matrix4Invert( &transformation, &inversed);
+		
+		return inversed;
+	}
 }//end getInverseMatrix
 
 
@@ -562,38 +621,41 @@
 //==============================================================================
 - (void) setLDrawDirective:(LDrawDirective *) newFile
 {
-	NSRect frame = NSZeroRect;
-	
-	//Update our variable.
-	[newFile retain];
-	[self->fileBeingDrawn release];
-	fileBeingDrawn = newFile;
-	
-	[[NSNotificationCenter defaultCenter] //force redisplay with glOrtho too.
-			postNotificationName:NSViewFrameDidChangeNotification
-						  object:self ];
-	[self resetFrameSize];
-	frame = [self frame]; //now that it's been changed above.
-	[self scrollCenterToPoint:NSMakePoint(NSWidth(frame)/2, NSHeight(frame)/2 )];
-	[self setNeedsDisplay:YES];
-
-	//Register for important notifications.
-	[[NSNotificationCenter defaultCenter] removeObserver:self name:LDrawFileDidChangeNotification object:nil];
-	[[NSNotificationCenter defaultCenter] removeObserver:self name:LDrawFileActiveModelDidChangeNotification object:nil];
+	//we lock around the drawing context in case the current directive is being 
+	// drawn right now. We certainly wouldn't want to release what we're drawing!
+	@synchronized([self openGLContext])
+	{
+		NSRect frame = NSZeroRect;
 		
-	[[NSNotificationCenter defaultCenter]
-			addObserver:self
-			   selector:@selector(displayNeedsUpdating:)
-				   name:LDrawFileDidChangeNotification
-				 object:self->fileBeingDrawn ];
-	
-	[[NSNotificationCenter defaultCenter]
-			addObserver:self
-			   selector:@selector(displayNeedsUpdating:)
-				   name:LDrawFileActiveModelDidChangeNotification
-				 object:self->fileBeingDrawn ];
-	
+		//Update our variable.
+		[newFile retain];
+		[self->fileBeingDrawn release];
+		fileBeingDrawn = newFile;
+		
+		[[NSNotificationCenter defaultCenter] //force redisplay with glOrtho too.
+				postNotificationName:NSViewFrameDidChangeNotification
+							  object:self ];
+		[self resetFrameSize];
+		frame = [self frame]; //now that it's been changed above.
+		[self scrollCenterToPoint:NSMakePoint(NSWidth(frame)/2, NSHeight(frame)/2 )];
+		[self setNeedsDisplay:YES];
 
+		//Register for important notifications.
+		[[NSNotificationCenter defaultCenter] removeObserver:self name:LDrawFileDidChangeNotification object:nil];
+		[[NSNotificationCenter defaultCenter] removeObserver:self name:LDrawFileActiveModelDidChangeNotification object:nil];
+			
+		[[NSNotificationCenter defaultCenter]
+				addObserver:self
+				   selector:@selector(displayNeedsUpdating:)
+					   name:LDrawFileDidChangeNotification
+					 object:self->fileBeingDrawn ];
+		
+		[[NSNotificationCenter defaultCenter]
+				addObserver:self
+				   selector:@selector(displayNeedsUpdating:)
+					   name:LDrawFileActiveModelDidChangeNotification
+					 object:self->fileBeingDrawn ];
+	}
 }//end setLDrawDirective:
 
 
@@ -610,11 +672,16 @@
 {
 	self->projectionMode = newProjectionMode;
 	
-	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
-	glLoadIdentity();
-	[self makeProjection];
-	
-	[self setNeedsDisplay:YES];
+	@synchronized([self openGLContext])
+	{
+		[[self openGLContext] makeCurrentContext];
+		
+		glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
+		glLoadIdentity();
+		[self makeProjection];
+		
+		[self setNeedsDisplay:YES];
+	}
 	
 } //end setProjectionMode:
 
@@ -625,45 +692,48 @@
 //				i.e., ViewingAngleFront means we see the model head-on.
 //
 //==============================================================================
-- (void) setViewingAngle:(ViewingAngleT) newAngle {
-
+- (void) setViewingAngle:(ViewingAngleT) newAngle
+{
 	self->viewingAngle = newAngle;
 		
-	//This method can get called from -prepareOpenGL, which is itself called 
-	// from -makeCurrentContext. That's a recipe for infinite recursion. So, 
-	// we only makeCurrentContext if we *need* to.
-	if([NSOpenGLContext currentContext] != [self openGLContext])
-		[[self openGLContext] makeCurrentContext];
-	
-	
-	//Get the default angle.
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	
-	//The camera distance was set for us by -resetFrameSize, so as to be able 
-	// to see the entire model.
-	gluLookAt( 0, 0, cameraDistance, //camera location
-			   0,0,0, //look-at point
-			   0, -1, 0 ); //LDraw is upside down.
-	
-	//okay, now we are oriented looking at the front of the model.
-	switch(newAngle){
-		case ViewingAngle3D:
-			
-			glRotatef( 45, 0, 1, 0);
-			glRotatef( 45, 1, 0, 1);
-			
-			break;
-		case ViewingAngleFront:			glRotatef(  0, 0, 0, 0); break;
-		case ViewingAngleBack:			glRotatef(180, 0, 1, 0); break;
-		case ViewingAngleLeft:			glRotatef(-90, 0, 1, 0); break;
-		case ViewingAngleRight:			glRotatef( 90, 0, 1, 0); break;
-		case ViewingAngleTop:			glRotatef( 90, 1, 0, 0); break;
-		case ViewingAngleBottom:		glRotatef(-90, 1, 0, 0); break;
+	@synchronized([self openGLContext])
+	{
+		//This method can get called from -prepareOpenGL, which is itself called 
+		// from -makeCurrentContext. That's a recipe for infinite recursion. So, 
+		// we only makeCurrentContext if we *need* to.
+		if([NSOpenGLContext currentContext] != [self openGLContext])
+			[[self openGLContext] makeCurrentContext];
+		
+		
+		//Get the default angle.
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		
+		//The camera distance was set for us by -resetFrameSize, so as to be able 
+		// to see the entire model.
+		gluLookAt( 0, 0, cameraDistance, //camera location
+				   0,0,0, //look-at point
+				   0, -1, 0 ); //LDraw is upside down.
+		
+		//okay, now we are oriented looking at the front of the model.
+		switch(newAngle){
+			case ViewingAngle3D:
+				
+				glRotatef( 45, 0, 1, 0);
+				glRotatef( 45, 1, 0, 1);
+				
+				break;
+			case ViewingAngleFront:			glRotatef(  0, 0, 0, 0); break;
+			case ViewingAngleBack:			glRotatef(180, 0, 1, 0); break;
+			case ViewingAngleLeft:			glRotatef(-90, 0, 1, 0); break;
+			case ViewingAngleRight:			glRotatef( 90, 0, 1, 0); break;
+			case ViewingAngleTop:			glRotatef( 90, 1, 0, 0); break;
+			case ViewingAngleBottom:		glRotatef(-90, 1, 0, 0); break;
+		}
+		
+		[self setNeedsDisplay:YES];
+		
 	}
-	
-	[self setNeedsDisplay:YES];
-	
 }//end setViewingAngle:
 
 
@@ -715,8 +785,8 @@
 //				sender is the menu item, whose tag is the viewing angle.
 //
 //==============================================================================
-- (IBAction) viewingAngleSelected:(id)sender {
-	
+- (IBAction) viewingAngleSelected:(id)sender
+{	
 	ViewingAngleT newAngle = [sender tag];
 	
 	[self setViewingAngle:newAngle];
@@ -736,9 +806,11 @@
 // Purpose:		Enlarge the scale of the current LDraw view.
 //
 //==============================================================================
-- (IBAction) zoomIn:(id)sender {
-	float currentZoom = [self zoomPercentage];
-	float newZoom = currentZoom * 2;
+- (IBAction) zoomIn:(id)sender
+{
+	float currentZoom	= [self zoomPercentage];
+	float newZoom		= currentZoom * 2;
+	
 	[self setZoomPercentage:newZoom];
 }
 
@@ -750,8 +822,9 @@
 //==============================================================================
 - (IBAction) zoomOut:(id)sender
 {
-	float currentZoom = [self zoomPercentage];
-	float newZoom = currentZoom / 2;
+	float currentZoom	= [self zoomPercentage];
+	float newZoom		= currentZoom / 2;
+	
 	[self setZoomPercentage:newZoom];
 	
 }//end zoomOut:
@@ -760,6 +833,12 @@
 #pragma mark -
 #pragma mark EVENTS
 #pragma mark -
+
+- (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
+{
+	NSLog(@"is current responder = %d", [[self window] firstResponder] == self);
+	return NO;
+}
 
 //========== becomeFirstResponder ==============================================
 //
@@ -810,8 +889,8 @@
 //				event occurs, such as a click or keypress.
 //
 //==============================================================================
-- (void) resetCursor {
-	
+- (void) resetCursor
+{	
 	//It seems -invalidateCursorRectsForView: only causes -resetCursorRects to 
 	// get called if there is currently a cursor in force. So we oblige it.
 	[self addCursorRect:[self visibleRect] cursor:[NSCursor arrowCursor]];
@@ -1003,83 +1082,87 @@
 - (void) nudgeKeyDown:(NSEvent *)theEvent
 {
 	NSString		*characters	= [theEvent characters];
-
-	[[self openGLContext] makeCurrentContext];
 	
-	if([characters length] > 0) {
+	@synchronized([self openGLContext])
+	{
+		[[self openGLContext] makeCurrentContext];
 		
-		unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
-		Vector4 screenNudge		= {0,0,0,1}; //nudge in screen coordinates
-		Vector4 modelNudge		= {0,0,0,1}; //screen nudge adjusted to model coordinates
-		Vector3 adjustedNudge	= {0,0,0}; //model nudge constrained to one axis.
-		
-		//By holding down the option key, we transcend the two-plane limitation 
-		// presented by the arrow keys. Option-presses mean movement along the 
-		// z-axis. Note that move "in" to the screen (up arrow, right arrow) 
-		// is a movement along the screen's negative z-axis.
-		BOOL	isZMovement		= ([theEvent modifierFlags] & NSAlternateKeyMask) != 0;
-		BOOL	isNudge			= NO;
-		
-		switch(firstCharacter) {
+		if([characters length] > 0)
+		{
+			unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
+			Vector4 screenNudge		= {0,0,0,1}; //nudge in screen coordinates
+			Vector4 modelNudge		= {0,0,0,1}; //screen nudge adjusted to model coordinates
+			Vector3 adjustedNudge	= {0,0,0}; //model nudge constrained to one axis.
 			
-			case NSUpArrowFunctionKey:
-				if(isZMovement == YES)
-					screenNudge.z = -1;
-				else
-					screenNudge.y = 1;
-				isNudge = YES;
-				break;
+			//By holding down the option key, we transcend the two-plane limitation 
+			// presented by the arrow keys. Option-presses mean movement along the 
+			// z-axis. Note that move "in" to the screen (up arrow, right arrow) 
+			// is a movement along the screen's negative z-axis.
+			BOOL	isZMovement		= ([theEvent modifierFlags] & NSAlternateKeyMask) != 0;
+			BOOL	isNudge			= NO;
+			
+			switch(firstCharacter) {
 				
-			case NSDownArrowFunctionKey:
-				if(isZMovement == YES)
-					screenNudge.z =  1;
-				else
-					screenNudge.y = -1;
-				isNudge = YES;
-				break;
+				case NSUpArrowFunctionKey:
+					if(isZMovement == YES)
+						screenNudge.z = -1;
+					else
+						screenNudge.y = 1;
+					isNudge = YES;
+					break;
+					
+				case NSDownArrowFunctionKey:
+					if(isZMovement == YES)
+						screenNudge.z =  1;
+					else
+						screenNudge.y = -1;
+					isNudge = YES;
+					break;
+					
+				case NSLeftArrowFunctionKey:
+					if(isZMovement == YES)
+						screenNudge.z =  1;
+					else
+						screenNudge.x = -1;
+					isNudge = YES;
+					break;
+					
+				case NSRightArrowFunctionKey:
+					if(isZMovement == YES)
+						screenNudge.z = -1;
+					else
+						screenNudge.x =  1;
+					isNudge = YES;
+					break;
+					
+				default:
+					break;
+			}
+			
+			//Convert this nudge into a meaningful movement based on the current 
+			// view orientation.
+			if(isNudge == YES) {
+				//Get the inverse of the current transformation matrix, we can 
+				// convert projection-coordinates back to the model coordinates they 
+				// are displaying.
+				Matrix4 inversed = [self getInverseMatrix];
 				
-			case NSLeftArrowFunctionKey:
-				if(isZMovement == YES)
-					screenNudge.z =  1;
-				else
-					screenNudge.x = -1;
-				isNudge = YES;
-				break;
+				//Now we will convert what appears to be the vertical and horizontal axes 
+				// into the actual model vectors they represent. We do this conversion 
+				// from screen to model coordinates by multiplying our screen points by 
+				// the modelview matrix inverse. That has the effect of "undoing" the 
+				// model matrix on the screen point, leaving us a model point.
+				V4MulPointByMatrix(&screenNudge, &inversed, &modelNudge);
 				
-			case NSRightArrowFunctionKey:
-				if(isZMovement == YES)
-					screenNudge.z = -1;
-				else
-					screenNudge.x =  1;
-				isNudge = YES;
-				break;
+				adjustedNudge = V3FromV4(&modelNudge);
+				V3IsolateGreatestComponent(&adjustedNudge);
 				
-			default:
-				break;
+				if(document != nil)
+					[document nudgeSelectionBy:adjustedNudge]; 
+			}
 		}
 		
-		//Convert this nudge into a meaningful movement based on the current 
-		// view orientation.
-		if(isNudge == YES) {
-			//Get the inverse of the current transformation matrix, we can 
-			// convert projection-coordinates back to the model coordinates they 
-			// are displaying.
-			Matrix4 inversed = [self getInverseMatrix];
-			
-			//Now we will convert what appears to be the vertical and horizontal axes 
-			// into the actual model vectors they represent. We do this conversion 
-			// from screen to model coordinates by multiplying our screen points by 
-			// the modelview matrix inverse. That has the effect of "undoing" the 
-			// model matrix on the screen point, leaving us a model point.
-			V4MulPointByMatrix(&screenNudge, &inversed, &modelNudge);
-			
-			adjustedNudge = V3FromV4(&modelNudge);
-			V3IsolateGreatestComponent(&adjustedNudge);
-			
-			if(document != nil)
-				[document nudgeSelectionBy:adjustedNudge]; 
-		}
-	}
+	}//end @synchronized
 	
 }//end nudgeKeyDown:
 
@@ -1228,51 +1311,55 @@
 	//Since there are multiple OpenGL rendering areas on the screen, we must 
 	// explicitly indicate that we are drawing into ourself. Weird yes, but 
 	// horrible things happen without this call.
-	[[self openGLContext] makeCurrentContext];
+	@synchronized([self openGLContext])
+	{
+		[[self openGLContext] makeCurrentContext];
 
-	//Find the mouse displacement from the last known mouse point.
-	NSPoint	newPoint		= [theEvent locationInWindow];
-	float	deltaX			=   [theEvent deltaX];
-	float	deltaY			= - [theEvent deltaY]; //Apple's delta is backwards, for some reason.
-	float	viewWidth		= NSWidth([self frame]);
-	float	viewHeight		= NSHeight([self frame]);
-	
-	//Get the percentage of the window we have swept over. Since half the window 
-	// represents 180 degrees of rotation, we will eventually multiply this 
-	// percentage by 180 to figure out how much to rotate.
-	float	percentDragX	= deltaX / viewWidth;
-	float	percentDragY	= deltaY / viewHeight;
-	
-	//Remember, dragging on y means rotating about x.
-	float	rotationAboutY	= + ( percentDragX * 180 );
-	float	rotationAboutX	= - ( percentDragY * 180 ); //multiply by -1,
-				// as we need to convert our drag into a proper rotation 
-				// direction. See notes in function header.
-	
-	//Get the current transformation matrix. By using its inverse, we can 
-	// convert projection-coordinates back to the model coordinates they 
-	// are displaying.
-	Matrix4 inversed = [self getInverseMatrix];
-	
-	//Now we will convert what appears to be the vertical and horizontal axes 
-	// into the actual model vectors they represent.
-	Vector4 vectorX = {1,0,0,1}; //unit vector i along x-axis.
-	Vector4 vectorY = {0,1,0,1}; //unit vector j along y-axis.
-	Vector4 transformedVectorX;
-	Vector4 transformedVectorY;
-	
-	//We do this conversion from screen to model coordinates by multiplying our 
-	// screen points by the modelview matrix inverse. That has the effect of 
-	// "undoing" the model matrix on the screen point, leaving us a model point.
-	V4MulPointByMatrix(&vectorX, &inversed, &transformedVectorX);
-	V4MulPointByMatrix(&vectorY, &inversed, &transformedVectorY);
-	
-	//Now rotate the model around the visual "up" and "down" directions.
-	glMatrixMode(GL_MODELVIEW);
-	glRotatef( rotationAboutY, transformedVectorY.x, transformedVectorY.y, transformedVectorY.z);
-	glRotatef( rotationAboutX, transformedVectorX.x, transformedVectorX.y, transformedVectorX.z);
-	
-	[self setNeedsDisplay: YES];
+		//Find the mouse displacement from the last known mouse point.
+		NSPoint	newPoint		= [theEvent locationInWindow];
+		float	deltaX			=   [theEvent deltaX];
+		float	deltaY			= - [theEvent deltaY]; //Apple's delta is backwards, for some reason.
+		float	viewWidth		= NSWidth([self frame]);
+		float	viewHeight		= NSHeight([self frame]);
+		
+		//Get the percentage of the window we have swept over. Since half the window 
+		// represents 180 degrees of rotation, we will eventually multiply this 
+		// percentage by 180 to figure out how much to rotate.
+		float	percentDragX	= deltaX / viewWidth;
+		float	percentDragY	= deltaY / viewHeight;
+		
+		//Remember, dragging on y means rotating about x.
+		float	rotationAboutY	= + ( percentDragX * 180 );
+		float	rotationAboutX	= - ( percentDragY * 180 ); //multiply by -1,
+					// as we need to convert our drag into a proper rotation 
+					// direction. See notes in function header.
+		
+		//Get the current transformation matrix. By using its inverse, we can 
+		// convert projection-coordinates back to the model coordinates they 
+		// are displaying.
+		Matrix4 inversed = [self getInverseMatrix];
+		
+		//Now we will convert what appears to be the vertical and horizontal axes 
+		// into the actual model vectors they represent.
+		Vector4 vectorX = {1,0,0,1}; //unit vector i along x-axis.
+		Vector4 vectorY = {0,1,0,1}; //unit vector j along y-axis.
+		Vector4 transformedVectorX;
+		Vector4 transformedVectorY;
+		
+		//We do this conversion from screen to model coordinates by multiplying our 
+		// screen points by the modelview matrix inverse. That has the effect of 
+		// "undoing" the model matrix on the screen point, leaving us a model point.
+		V4MulPointByMatrix(&vectorX, &inversed, &transformedVectorX);
+		V4MulPointByMatrix(&vectorY, &inversed, &transformedVectorY);
+		
+		//Now rotate the model around the visual "up" and "down" directions.
+		glMatrixMode(GL_MODELVIEW);
+		glRotatef( rotationAboutY, transformedVectorY.x, transformedVectorY.y, transformedVectorY.z);
+		glRotatef( rotationAboutX, transformedVectorX.x, transformedVectorX.y, transformedVectorX.z);
+		
+		[self setNeedsDisplay: YES];
+		
+	}
 	
 }//end rotationDragged
 
@@ -1299,8 +1386,8 @@
 //				our view on the point clicked.
 //
 //==============================================================================
-- (void) mouseCenterClick:(NSEvent*)theEvent {
-	
+- (void) mouseCenterClick:(NSEvent*)theEvent
+{	
 	NSPoint newCenter = [self convertPoint:[theEvent locationInWindow]
 								  fromView:nil ];
 	
@@ -1336,72 +1423,76 @@
 //==============================================================================
 - (void)mousePartSelection:(NSEvent *)theEvent
 {
-	LDrawDirective	*clickedDirective	= nil;
-	NSView			*referenceView		= nil;
-	NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
-	NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
-	GLuint			 nameBuffer[512]	= {0};
-	GLint			 viewport[4]		= {0};
-	int				 numberOfHits		= 0;
-	
-	//Prepare OpenGL to record hits in the viewing area. We need to feed it 
-	// a buffer which will be filled with the tags of things that got hit.
-	[[self openGLContext] makeCurrentContext];
-	glGetIntegerv(GL_VIEWPORT, viewport);
-	glSelectBuffer(512, nameBuffer);
-	glRenderMode(GL_SELECT); //switch to hit-testing mode.
+	@synchronized([self openGLContext])
 	{
-		//Prepare for recording names. These functions must be called 
-		// *after* switching to render mode.
-		glInitNames();
-		glPushName(UINT_MAX); //0 would be a valid choice, after all...
+		LDrawDirective	*clickedDirective	= nil;
+		NSView			*referenceView		= nil;
+		NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
+		NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
+		GLuint			 nameBuffer[512]	= {0};
+		GLint			 viewport[4]		= {0};
+		int				 numberOfHits		= 0;
 		
-		//Restrict our rendering area (and thus our hit-testing region) to 
-		// a very small rectangle around the mouse position.
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
+		[[self openGLContext] makeCurrentContext];
 		
-		glLoadIdentity();
+		//Prepare OpenGL to record hits in the viewing area. We need to feed it 
+		// a buffer which will be filled with the tags of things that got hit.
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		glSelectBuffer(512, nameBuffer);
+		glRenderMode(GL_SELECT); //switch to hit-testing mode.
+		{
+			//Prepare for recording names. These functions must be called 
+			// *after* switching to render mode.
+			glInitNames();
+			glPushName(UINT_MAX); //0 would be a valid choice, after all...
+			
+			//Restrict our rendering area (and thus our hit-testing region) to 
+			// a very small rectangle around the mouse position.
+			glMatrixMode(GL_PROJECTION);
+			glPushMatrix();
+			
+			glLoadIdentity();
+			
+				//Lastly, convert to viewport coordinates:
+			float pickX = viewClickedPoint.x - NSMinX(visibleRect);
+			float pickY = viewClickedPoint.y - NSMinY(visibleRect);
+			
+			gluPickMatrix(pickX,
+						  pickY,
+						  1, //width
+						  1, //height
+						  viewport);
+			
+			NSRect newFrame = [self frame];
+				//Now load the common viewing frame
+			[self makeProjection];
+			
+			glMatrixMode(GL_MODELVIEW);
+			[self->fileBeingDrawn draw:DRAW_HIT_TEST_MODE parentColor:glColor];
+			
+			//Restore original viewing matrix after mangling for the hit area.
+			glMatrixMode(GL_PROJECTION);
+			glPopMatrix();
+			
+			glFlush();
+			[[self openGLContext] flushBuffer];
+			
+			[self setNeedsDisplay:YES];
+		}
+		numberOfHits = glRenderMode(GL_RENDER);
 		
-			//Lastly, convert to viewport coordinates:
-		float pickX = viewClickedPoint.x - NSMinX(visibleRect);
-		float pickY = viewClickedPoint.y - NSMinY(visibleRect);
+		clickedDirective = [self getPartFromHits:nameBuffer hitCount:numberOfHits];
+		//Notify our delegate about this momentous event.
+		// It's okay to send nil; that means "deselect."
+		// We want to add this to the current selection if the shift key is down.
+		if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
+		{
+			[self->document LDrawGLView:self
+				 wantsToSelectDirective:clickedDirective
+				   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
+		}
 		
-		gluPickMatrix(pickX,
-					  pickY,
-					  1, //width
-					  1, //height
-					  viewport);
-		
-		NSRect newFrame = [self frame];
-			//Now load the common viewing frame
-		[self makeProjection];
-		
-		glMatrixMode(GL_MODELVIEW);
-		[self->fileBeingDrawn draw:DRAW_HIT_TEST_MODE parentColor:glColor];
-		
-		//Restore original viewing matrix after mangling for the hit area.
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		
-		glFlush();
-		[[self openGLContext] flushBuffer];
-		
-		[self setNeedsDisplay:YES];
 	}
-	numberOfHits = glRenderMode(GL_RENDER);
-	
-	clickedDirective = [self getPartFromHits:nameBuffer hitCount:numberOfHits];
-	//Notify our delegate about this momentous event.
-	// It's okay to send nil; that means "deselect."
-	// We want to add this to the current selection if the shift key is down.
-	if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
-	{
-		[self->document LDrawGLView:self
-			 wantsToSelectDirective:clickedDirective
-			   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
-	}
-	
 	
 }//end mousePartSelection:
 
@@ -1412,8 +1503,8 @@
 //				want to center the view on whatever we clicked on.
 //
 //==============================================================================
-- (void) mouseZoomClick:(NSEvent*)theEvent {
-	
+- (void) mouseZoomClick:(NSEvent*)theEvent
+{
 	ToolModeT	toolMode	= [ToolPalette toolMode];
 	float		currentZoom	= [self zoomPercentage];
 	float		newZoom		= 0;
@@ -1490,24 +1581,45 @@
 //==============================================================================
 - (void)reshape
 {
-	[[self openGLContext] makeCurrentContext];
+	@synchronized([self openGLContext])
+	{
+		[[self openGLContext] makeCurrentContext];
 
-	NSRect	visibleRect	= [self visibleRect];
-	NSRect	frame		= [self frame];
-	float	scaleFactor	= [self zoomPercentage] / 100;
-	
-	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
-	glLoadIdentity();
-	
-//	NSLog(@"GL view(0x%X) reshaping; frame %@", self, NSStringFromRect(frame));
+		NSRect	visibleRect	= [self visibleRect];
+		NSRect	frame		= [self frame];
+		float	scaleFactor	= [self zoomPercentage] / 100;
+		
+		glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
+		glLoadIdentity();
+		
+	//	NSLog(@"GL view(0x%X) reshaping; frame %@", self, NSStringFromRect(frame));
+		
+		//Make a new view based on the current viewable area
+		[self makeProjection];
 
-	//Make a new view based on the current viewable area
-	[self makeProjection];
-
-	glViewport(0,0, NSWidth(visibleRect) * scaleFactor, NSHeight(visibleRect) * scaleFactor );
+		glViewport(0,0, NSWidth(visibleRect) * scaleFactor, NSHeight(visibleRect) * scaleFactor );
+	}
 	
 }//end reshape
 
+
+//========== update ============================================================
+//
+// Purpose:		This method is called by the AppKit whenever our drawable area 
+//				changes somehow. Ordinarily, we wouldn't be concerned about what 
+//				happens here. However, calling -update is highly thread-unsafe, 
+//				so we guard the context with a mutex here so as to avoid truly 
+//				hideous system crashes.
+//
+//==============================================================================
+- (void) update
+{
+	@synchronized([self openGLContext])
+	{
+		[[self openGLContext] update];
+	}
+	
+}//end update
 
 #pragma mark -
 #pragma mark UTILITIES
@@ -1615,86 +1727,94 @@
 //				shrinks for small models and expands for large ones. Neat-o!
 //
 //==============================================================================
-- (void) resetFrameSize {
-	
-	if([self->fileBeingDrawn respondsToSelector:@selector(boundingBox3)] ) {
-		
-		//We do not want to apply this resizing to a raw GL view.
-		// It only makes sense for those in a scroll view. (The Part Browsers 
-		// have been moved to scrollviews now too in order to allow zooming.)
-		if([self enclosingScrollView] != nil){
-			
-			//Determine whether the canvas size needs to change.
-			Point3	origin			= {0,0,0};
-			NSPoint	centerPoint		= [self centerPoint];
-			Box3	newBounds		= [(id)fileBeingDrawn boundingBox3]; //cast to silence warning.
-			
-			if(V3EqualsBoxes(&newBounds, &InvalidBox) == NO) {
-				//
-				// Find bounds size, based on model dimensions.
-				//
+- (void) resetFrameSize
+{
+	if([self->fileBeingDrawn respondsToSelector:@selector(boundingBox3)] )
+	{
+		@synchronized([self openGLContext])
+		{
+			//We do not want to apply this resizing to a raw GL view.
+			// It only makes sense for those in a scroll view. (The Part Browsers 
+			// have been moved to scrollviews now too in order to allow zooming.)
+			if([self enclosingScrollView] != nil){
 				
-				float	distance1		= V3DistanceBetween2Points(&origin, &(newBounds.min) );
-				float	distance2		= V3DistanceBetween2Points(&origin, &(newBounds.max) );
-				float	newSize			= MAX(distance1, distance2) + 40; //40 is just to provide a margin.
-				NSSize	contentSize		= [[self enclosingScrollView] contentSize];
-				GLfloat	currentMatrix[16];
+				//Determine whether the canvas size needs to change.
+				Point3	origin			= {0,0,0};
+				NSPoint	centerPoint		= [self centerPoint];
+				Box3	newBounds		= InvalidBox; //cast to silence warning.
 				
-				contentSize = [self convertSize:contentSize fromView:[self enclosingScrollView]];
+				newBounds = [(id)fileBeingDrawn boundingBox3]; //cast to silence warning.
 				
-				//We have the canvas resizing set to a fairly large granularity, so 
-				// doesn't constantly change on people.
-				newSize = ceil(newSize / 384) * 384;
-				
-				//
-				// Reposition the Camera
-				//
-				
-				//As the size of the model changes, we must move the camera in and out 
-				// so as to view the entire model in the right perspective. Moving the 
-				// camera is equivalent to translating the modelview matrix. (That's what 
-				// gluLookAt does.) 
-				// Note:	glTranslatef() doesn't work here. If M is the current matrix, 
-				//			and T is the translation, it performs M = M x T. But we need 
-				//			M = T x M, because OpenGL uses transposed matrices.
-				//			Solution: set matrix manually. Is there a better one?
-				[[self openGLContext] makeCurrentContext];
-				glMatrixMode(GL_MODELVIEW);
-				glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
-				
-				//As cameraDistance approaches infinity, the view approximates an 
-				// orthographic projection. We want a fairly large number here to 
-				// produce a small, only slightly-noticable perspective.
-				self->cameraDistance = - (newSize) * CAMERA_DISTANCE_FACTOR;
-				currentMatrix[12] = 0; //reset the camera location. Positions 12-14 of 
-				currentMatrix[13] = 0; // the matrix hold the translation values.
-				currentMatrix[14] = cameraDistance;
-				glLoadMatrixf(currentMatrix); // It's easiest to set them directly.
-				
-				//
-				// Resize the Frame
-				//
-				
-				NSSize	oldFrameSize	= [self frame].size;
-//				NSSize	newFrameSize	= NSMakeSize( newSize*2, newSize*2 );
-				//Make the frame either just a little bit bigger than the size 
-				// of the model, or the same as the scroll view, whichever is larger.
-				NSSize	newFrameSize	= NSMakeSize( MAX(newSize*2, contentSize.width),
-													  MAX(newSize*2, contentSize.height) );
-				
-				//The canvas size changes will effectively be distributed equally on 
-				// all sides, because the model is always drawn in the center of the 
-				// canvas. So, our effective viewing center will only change by half 
-				// the size difference.
-				centerPoint.x += (newFrameSize.width  - oldFrameSize.width)/2;
-				centerPoint.y += (newFrameSize.height - oldFrameSize.height)/2;
-				
-				[self setFrameSize:newFrameSize];
-				[self scrollCenterToPoint:centerPoint]; //must preserve this; otherwise, viewing is funky.
-				
-				//NSLog(@"minimum (%f, %f, %f); maximum (%f, %f, %f)", newBounds.min.x, newBounds.min.y, newBounds.min.z, newBounds.max.x, newBounds.max.y, newBounds.max.z);
-			}//end valid bounds check
-		}//end boundable check
+				if(V3EqualsBoxes(&newBounds, &InvalidBox) == NO)
+				{
+					//
+					// Find bounds size, based on model dimensions.
+					//
+					
+					float	distance1		= V3DistanceBetween2Points(&origin, &(newBounds.min) );
+					float	distance2		= V3DistanceBetween2Points(&origin, &(newBounds.max) );
+					float	newSize			= MAX(distance1, distance2) + 40; //40 is just to provide a margin.
+					NSSize	contentSize		= [[self enclosingScrollView] contentSize];
+					GLfloat	currentMatrix[16];
+					
+					contentSize = [self convertSize:contentSize fromView:[self enclosingScrollView]];
+					
+					//We have the canvas resizing set to a fairly large granularity, so 
+					// doesn't constantly change on people.
+					newSize = ceil(newSize / 384) * 384;
+					
+					//
+					// Reposition the Camera
+					//
+					
+					[[self openGLContext] makeCurrentContext];
+					
+					//As the size of the model changes, we must move the camera in and out 
+					// so as to view the entire model in the right perspective. Moving the 
+					// camera is equivalent to translating the modelview matrix. (That's what 
+					// gluLookAt does.) 
+					// Note:	glTranslatef() doesn't work here. If M is the current matrix, 
+					//			and T is the translation, it performs M = M x T. But we need 
+					//			M = T x M, because OpenGL uses transposed matrices.
+					//			Solution: set matrix manually. Is there a better one?
+					glMatrixMode(GL_MODELVIEW);
+					glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
+					
+					//As cameraDistance approaches infinity, the view approximates an 
+					// orthographic projection. We want a fairly large number here to 
+					// produce a small, only slightly-noticable perspective.
+					self->cameraDistance = - (newSize) * CAMERA_DISTANCE_FACTOR;
+					currentMatrix[12] = 0; //reset the camera location. Positions 12-14 of 
+					currentMatrix[13] = 0; // the matrix hold the translation values.
+					currentMatrix[14] = cameraDistance;
+					glLoadMatrixf(currentMatrix); // It's easiest to set them directly.
+
+					//
+					// Resize the Frame
+					//
+					
+					NSSize	oldFrameSize	= [self frame].size;
+	//				NSSize	newFrameSize	= NSMakeSize( newSize*2, newSize*2 );
+					//Make the frame either just a little bit bigger than the size 
+					// of the model, or the same as the scroll view, whichever is larger.
+					NSSize	newFrameSize	= NSMakeSize( MAX(newSize*2, contentSize.width),
+														  MAX(newSize*2, contentSize.height) );
+					
+					//The canvas size changes will effectively be distributed equally on 
+					// all sides, because the model is always drawn in the center of the 
+					// canvas. So, our effective viewing center will only change by half 
+					// the size difference.
+					centerPoint.x += (newFrameSize.width  - oldFrameSize.width)/2;
+					centerPoint.y += (newFrameSize.height - oldFrameSize.height)/2;
+					
+					[self setFrameSize:newFrameSize];
+					[self scrollCenterToPoint:centerPoint]; //must preserve this; otherwise, viewing is funky.
+					
+					//NSLog(@"minimum (%f, %f, %f); maximum (%f, %f, %f)", newBounds.min.x, newBounds.min.y, newBounds.min.z, newBounds.max.x, newBounds.max.y, newBounds.max.z);
+					
+				}//end valid bounds check
+			}//end boundable check
+		}//end @synchonized
 	}
 	
 	[self setNeedsDisplay:YES];
@@ -1733,67 +1853,71 @@
 //				hit-detection. See -mouseUp:.
 //
 //==============================================================================
-- (void) makeProjection {
-	//Since there are multiple OpenGL rendering areas on the screen, we must 
-	// explicitly indicate that we are drawing into ourself. Weird yes, but 
-	// horrible things happen without this call.
-	[[self openGLContext] makeCurrentContext];
-	
+- (void) makeProjection
+{
 	NSRect	visibleRect		= [self visibleRect];
 	NSRect	frame			= [self frame];
 	float	fieldDepth		= 0;
-	NSRect	visibilityPlane	= NSZeroRect; //
+	NSRect	visibilityPlane	= NSZeroRect;
 	
-	//This is effectively equivalent to infinite field depth
-	fieldDepth = MAX(NSHeight(frame), NSWidth(frame));
+	//ULTRA-IMPORTANT NOTE: this method assumes that you have already made our 
+	// openGLContext the current context
 	
-		//Once upon a time, I had a feature called "infinite field depth," as 
-		// opposed to a depth that would clip the model. Eventually I concluded 
-		// this was a bad idea. But for future reference, the maximum fieldDepth 
-		// is about 1e6 (50,000 studs, >1300 ft; probably enough!); viewing 
-		// goes haywire with bigger numbers.
-	
-	float y = NSMinY(visibleRect);
-	if([self isFlipped] == YES)
-		y = NSHeight(frame) - y - NSHeight(visibleRect);
-	
-	//The projection plane is stated in model coordinates.
-	visibilityPlane.origin.x	= NSMinX(visibleRect) - NSWidth(frame)/2;
-	visibilityPlane.origin.y	= y - NSHeight(frame)/2;
-	visibilityPlane.size.width	= NSWidth(visibleRect);
-	visibilityPlane.size.height	= NSHeight(visibleRect);
-	
-	glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
-	
-	if(self->projectionMode == ProjectionModePerspective){
+	@synchronized([self openGLContext])
+	{
+		//This is effectively equivalent to infinite field depth
+		fieldDepth = MAX(NSHeight(frame), NSWidth(frame));
 		
-		//We want the model to appear "full size" at the origin. Since
-		// perspective viewing is defined by a frustum (truncated pyramid),
-		// we have to shrink the visibily plane--which is located on the 
-		// near clipping plane--in such a way that a slice of the frustum 
-		// through the origin will have the dimensions of the desired 
-		// visibility plane. (Remember, slices grow *bigger* as they go 
-		// deeper into the view. Since the origin is deeper, that means 
-		// we need a near visibility plane that is *smaller* than the 
-		// desired size at the origin.)
-		float visibleProportion = (float) (CAMERA_DISTANCE_FACTOR - 1) / CAMERA_DISTANCE_FACTOR;
-					//based on some trigonometry: cos viewingAngle = modelSize / 7*modelSize
+			//Once upon a time, I had a feature called "infinite field depth," as 
+			// opposed to a depth that would clip the model. Eventually I concluded 
+			// this was a bad idea. But for future reference, the maximum fieldDepth 
+			// is about 1e6 (50,000 studs, >1300 ft; probably enough!); viewing 
+			// goes haywire with bigger numbers.
 		
-		glFrustum(visibleProportion * NSMinX(visibilityPlane),	//left
-				  visibleProportion * NSMaxX(visibilityPlane),	//right
-				  visibleProportion * NSMinY(visibilityPlane),	//bottom
-				  visibleProportion * NSMaxY(visibilityPlane),	//top
-				  fabs(cameraDistance) - fieldDepth,	//near (closer points are clipped); distance from CAMERA LOCATION
-				  fabs(cameraDistance) + fieldDepth		//far (points beyond this are clipped); distance from CAMERA LOCATION
-				  );
-	}
-	else{
-		glOrtho(NSMinX(visibilityPlane),	//left
-				NSMaxX(visibilityPlane),	//right
-				NSMinY(visibilityPlane),	//bottom
-				NSMaxY(visibilityPlane),	//top
-				fabs(cameraDistance) - fieldDepth,		//near (points beyond these are clipped)
-				fabs(cameraDistance) + fieldDepth );	//far
+		float y = NSMinY(visibleRect);
+		if([self isFlipped] == YES)
+			y = NSHeight(frame) - y - NSHeight(visibleRect);
+		
+		//The projection plane is stated in model coordinates.
+		visibilityPlane.origin.x	= NSMinX(visibleRect) - NSWidth(frame)/2;
+		visibilityPlane.origin.y	= y - NSHeight(frame)/2;
+		visibilityPlane.size.width	= NSWidth(visibleRect);
+		visibilityPlane.size.height	= NSHeight(visibleRect);
+		
+		glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
+		
+		if(self->projectionMode == ProjectionModePerspective){
+			
+			//We want the model to appear "full size" at the origin. Since
+			// perspective viewing is defined by a frustum (truncated pyramid),
+			// we have to shrink the visibily plane--which is located on the 
+			// near clipping plane--in such a way that a slice of the frustum 
+			// through the origin will have the dimensions of the desired 
+			// visibility plane. (Remember, slices grow *bigger* as they go 
+			// deeper into the view. Since the origin is deeper, that means 
+			// we need a near visibility plane that is *smaller* than the 
+			// desired size at the origin.)
+			float visibleProportion = (float) (CAMERA_DISTANCE_FACTOR - 1) / CAMERA_DISTANCE_FACTOR;
+						//based on some trigonometry: cos viewingAngle = modelSize / 7*modelSize
+			
+			glFrustum(visibleProportion * NSMinX(visibilityPlane),	//left
+					  visibleProportion * NSMaxX(visibilityPlane),	//right
+					  visibleProportion * NSMinY(visibilityPlane),	//bottom
+					  visibleProportion * NSMaxY(visibilityPlane),	//top
+					  fabs(cameraDistance) - fieldDepth,	//near (closer points are clipped); distance from CAMERA LOCATION
+					  fabs(cameraDistance) + fieldDepth		//far (points beyond this are clipped); distance from CAMERA LOCATION
+					  );
+		}
+		else{
+			glOrtho(NSMinX(visibilityPlane),	//left
+					NSMaxX(visibilityPlane),	//right
+					NSMinY(visibilityPlane),	//bottom
+					NSMaxY(visibilityPlane),	//top
+					fabs(cameraDistance) - fieldDepth,		//near (points beyond these are clipped)
+					fabs(cameraDistance) + fieldDepth );	//far
+		}
+		
+		
 	}
 	
 }//end makeProjection

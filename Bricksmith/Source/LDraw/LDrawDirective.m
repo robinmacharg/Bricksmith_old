@@ -10,6 +10,7 @@
 #import "LDrawDirective.h"
 
 #import "LDrawContainer.h"
+#import "LDrawFile.h"
 #import "MacLDraw.h"
 	
 @implementation LDrawDirective
@@ -234,6 +235,36 @@
 }
 
 
+//========== enclosingFile =====================================================
+//
+// Purpose:		Returns the highest LDrawFile which contains this directive, or 
+//				nil if the directive is not in the hierarchy of an LDrawFile.
+//
+//==============================================================================
+- (LDrawFile *) enclosingFile
+{
+	NSArray	*ancestors			= [self ancestors];
+	id		 currentAncestor	= nil;
+	BOOL	 foundIt			= NO;
+	int		 counter			= 0;
+	
+	//loop through the ancestors looking for an LDrawFile.
+	for(counter = 0; counter < [ancestors count] && foundIt == NO; counter++)
+	{
+		currentAncestor = [ancestors objectAtIndex:0];
+		
+		if([currentAncestor isKindOfClass:[LDrawFile class]])
+			foundIt = YES;
+	}
+	
+	if(foundIt == YES)
+		return currentAncestor;
+	else
+		return nil;
+	
+}//end enclosingFile
+
+
 //========== setEnclosingDirective: ============================================
 //
 // Purpose:		Just about all directives can be nested inside another one, so 
@@ -253,6 +284,70 @@
 - (void) setSelected:(BOOL)flag {
 	self->isSelected = flag;
 }
+
+#pragma mark -
+#pragma mark <INSPECTABLE>
+#pragma mark -
+
+//========== snapshot ==========================================================
+//
+// Purpose:		Record the current state of our object in a way suitable for 
+//				undo/redo.
+//
+// Note:		Undo operations are stored on a *stack*, so the order of undo 
+//				registration in the code is the opposite from the order in 
+//				which the undo operations are executed.
+//
+//				Subclasses should only override this method to provide a custom 
+//				undo name, but even that can be placed just as well in 
+//				-registerUndoActions:.
+//
+//==============================================================================
+- (void) snapshot
+{
+	// ** Read code bottom-to-top ** //
+	
+	NSDocument		*currentDocument	= [[NSDocumentController sharedDocumentController] currentDocument];
+	NSUndoManager	*undoManager		= [currentDocument undoManager];
+	
+
+	//Now that all the undo actions have happened, post a notification that 
+	// the object has changed.
+	[[undoManager prepareWithInvocationTarget:[NSNotificationCenter defaultCenter]]
+			postNotificationName:LDrawDirectiveDidChangeNotification
+						  object:self];
+	
+	[self registerUndoActions:undoManager];
+	//Now issue the commands necessary to revert our object to current values.
+	
+	[[undoManager prepareWithInvocationTarget:self] snapshot];
+	//First thing to call is snapshot, so that redo commands are filled 
+	// with the values of the current state.
+}
+
+
+//========== lockForEditing ====================================================
+//
+// Purpose:		Provide thread-safety for this object during inspection.
+//
+//==============================================================================
+- (void) lockForEditing
+{
+	[[self enclosingFile] lockForEditing];
+}
+
+
+//========== unlockEditor ======================================================
+//
+// Purpose:		Provide thread-safety for this object during inspection.
+//
+//==============================================================================
+- (void) unlockEditor
+{
+	[[self enclosingFile] unlockEditor];
+}
+
+
 
 #pragma mark -
 #pragma mark UTILITIES
@@ -304,43 +399,6 @@
 	
 	//LDrawDirectives are fairly abstract, so all undoable attributes come 
 	// from subclasses.
-}
-
-
-//========== snapshot ==========================================================
-//
-// Purpose:		Record the current state of our object in a way suitable for 
-//				undo/redo.
-//
-// Note:		Undo operations are stored on a *stack*, so the order of undo 
-//				registration in the code is the opposite from the order in 
-//				which the undo operations are executed.
-//
-//				Subclasses should only override this method to provide a custom 
-//				undo name, but even that can be placed just as well in 
-//				-registerUndoActions:.
-//
-//==============================================================================
-- (void) snapshot
-{
-	// ** Read code bottom-to-top ** //
-	
-	NSDocument		*currentDocument	= [[NSDocumentController sharedDocumentController] currentDocument];
-	NSUndoManager	*undoManager		= [currentDocument undoManager];
-	
-
-	//Now that all the undo actions have happened, post a notification that 
-	// the object has changed.
-	[[undoManager prepareWithInvocationTarget:[NSNotificationCenter defaultCenter]]
-			postNotificationName:LDrawDirectiveDidChangeNotification
-						  object:self];
-	
-	[self registerUndoActions:undoManager];
-	//Now issue the commands necessary to revert our object to current values.
-	
-	[[undoManager prepareWithInvocationTarget:self] snapshot];
-	//First thing to call is snapshot, so that redo commands are filled 
-	// with the values of the current state.
 }
 
 

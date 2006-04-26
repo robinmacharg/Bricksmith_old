@@ -7,6 +7,12 @@
 //				Opens the document and manages its editor and viewer. This is 
 //				the central class of the application's user interface.
 //
+// Threading:	The LDrawFile encapsulated in this class is a shared resource. 
+//				We must take care not to edit it while it is being drawn in 
+//				another thread. As such, all the calls in the "Undoable 
+//				Activities" section are bracketed with the approriate locking 
+//				calls. (ANY edit of the document should be undoable.)
+//
 //  Created by Allen Smith on 2/14/05.
 //  Copyright (c) 2005. All rights reserved.
 //==============================================================================
@@ -746,60 +752,78 @@
 					returnCode:(int)returnCode
 				   contextInfo:(void *)contextInfo
 {
-	NSFileManager	*fileManager	= [NSFileManager defaultManager];
-	NSString		*folderName		= nil;
-	NSString		*filenameFormat	= NSLocalizedString(@"ExportedStepsFileFormat", nil);
-	NSString		*fileString		= nil;
-	NSData			*fileOutputData	= nil;
-	NSString		*outputName		= nil;
-	NSString		*outputPath		= nil;
-	LDrawFile		*fileCopy		= nil;
-	int				 counter		= 0;
+	NSFileManager	*fileManager		= [NSFileManager defaultManager];
+	NSString		*saveName			= nil;
+	NSString		*modelName			= nil;
+	NSString		*folderName			= nil;
+	NSString		*modelnameFormat	= NSLocalizedString(@"ExportedStepsFolderFormat", nil);
+	NSString		*filenameFormat		= NSLocalizedString(@"ExportedStepsFileFormat", nil);
+	NSString		*fileString			= nil;
+	NSData			*fileOutputData		= nil;
+	NSString		*outputName			= nil;
+	NSString		*outputPath			= nil;
+		
+	LDrawFile		*fileCopy			= nil;
 	
-	if(returnCode == NSOKButton){
+	int				 modelCounter		= 0;
+	int				 counter			= 0;
 	
+	if(returnCode == NSOKButton)
+	{
 		fileCopy	= [[self documentContents] copy];
-		folderName	= [savePanel filename];
+		saveName	= [savePanel filename];
 		
 		//If we got this far, we need to replace any prexisting file.
-		if([fileManager fileExistsAtPath:folderName isDirectory:NULL])
-			[fileManager removeFileAtPath:folderName handler:nil];
+		if([fileManager fileExistsAtPath:saveName isDirectory:NULL])
+			[fileManager removeFileAtPath:saveName handler:nil];
 		
-		[fileManager createDirectoryAtPath:folderName attributes:nil];
+		[fileManager createDirectoryAtPath:saveName attributes:nil];
 		
-		fileCopy = [[self documentContents] copy];
-		
-		//Move the active model to the top of the file. That way L3P will know to 
-		// render it!
-		LDrawMPDModel *activeModel = [fileCopy activeModel];
-		[activeModel retain];
-		[fileCopy removeDirective:activeModel];
-		[fileCopy insertDirective:activeModel atIndex:0];
-		[fileCopy setActiveModel:activeModel];
-		[activeModel release];
-		
-		//Write out each step!
-		for(counter = [[activeModel steps] count]-1; counter >= 0; counter--){
+		//Output all the steps for all the submodels.
+		for(modelCounter = 0; modelCounter < [[[self documentContents] submodels] count]; modelCounter++)
+		{
+			fileCopy = [[self documentContents] copy];
 			
-			fileString		= [fileCopy write];
-			fileOutputData	= [fileString dataUsingEncoding:NSUTF8StringEncoding];
+			//Move the target model to the top of the file. That way L3P will know to 
+			// render it!
+			LDrawMPDModel *currentModel = [[fileCopy submodels] objectAtIndex:modelCounter];
+			[currentModel retain];
+			[fileCopy removeDirective:currentModel];
+			[fileCopy insertDirective:currentModel atIndex:0];
+			[fileCopy setActiveModel:currentModel];
+			[currentModel release];
 			
-			outputName = [NSString stringWithFormat: filenameFormat, 
-													 [[fileCopy activeModel] modelName],
-													 counter+1 ];
-			outputPath = [folderName stringByAppendingPathComponent:outputName];
-			[fileManager createFileAtPath:outputPath
-								 contents:fileOutputData
-							   attributes:nil ];
+			//Make a new folder for the model's steps.
+			modelName	= [NSString stringWithFormat:modelnameFormat, [currentModel modelName]];
+			folderName	= [saveName stringByAppendingPathComponent:modelName];
 			
-			//Remove the step we just wrote, so that the next cycle won't 
-			// include it. We can safely do this because we are working with 
-			// a copy of the file!
-			[activeModel removeDirectiveAtIndex:counter];
+			[fileManager createDirectoryAtPath:folderName attributes:nil];
+			
+			//Write out each step!
+			for(counter = [[currentModel steps] count]-1; counter >= 0; counter--)
+			{
+				fileString		= [fileCopy write];
+				fileOutputData	= [fileString dataUsingEncoding:NSUTF8StringEncoding];
+				
+				outputName = [NSString stringWithFormat: filenameFormat, 
+														 [currentModel modelName],
+														 counter+1 ];
+				outputPath = [folderName stringByAppendingPathComponent:outputName];
+				[fileManager createFileAtPath:outputPath
+									 contents:fileOutputData
+								   attributes:nil ];
+				
+				//Remove the step we just wrote, so that the next cycle won't 
+				// include it. We can safely do this because we are working with 
+				// a copy of the file!
+				[currentModel removeDirectiveAtIndex:counter];
+			}
+			
+					
+			[fileCopy release];
+			
 		}
 		
-				
-		[fileCopy release];
 	}
 }//end exportStepsPanelDidEnd:returnCode:contextInfo:
 
@@ -1504,12 +1528,18 @@
 	NSUndoManager	*undoManager	= [self undoManager];
 	NSString		*undoString		= nil;
 	
-	[[undoManager prepareWithInvocationTarget:self]
-		deleteDirective:newDirective ];
+	[[self documentContents] lockForEditing];
+	{
+		[[undoManager prepareWithInvocationTarget:self]
+			deleteDirective:newDirective ];
+		
+		[parent insertDirective:newDirective atIndex:index];
+	}
+	[[self documentContents] unlockEditor];
 	
-	[parent insertDirective:newDirective atIndex:index];
 	[self updateInspector];
-}
+	
+}//end addDirective:toParent:atIndex:
 
 
 //========== deleteDirective: ==================================================
@@ -1525,14 +1555,20 @@
 	LDrawContainer	*parent			= [doomedDirective enclosingDirective];
 	int				 index			= [[parent subdirectives] indexOfObject:doomedDirective];
 	
-	[[undoManager prepareWithInvocationTarget:self]
-			addDirective:doomedDirective
-				toParent:parent
-				 atIndex:index ];
-	
-	[parent removeDirective:doomedDirective];
-	[self updateInspector];
-}
+	[[self documentContents] lockForEditing];
+	{
+		[[undoManager prepareWithInvocationTarget:self]
+				addDirective:doomedDirective
+					toParent:parent
+					 atIndex:index ];
+		
+		[parent removeDirective:doomedDirective];
+		[self updateInspector];
+	}
+	[[self documentContents] unlockEditor];
+
+}//end deleteDirective:
+
 
 //========== moveDirective:inDirection: ========================================
 //
@@ -1553,13 +1589,17 @@
 	opposite.y = -(moveVector.y);
 	opposite.z = -(moveVector.z);
 	
-	[[undoManager prepareWithInvocationTarget:self]
-			moveDirective: object
-			  inDirection: opposite ];
-	[undoManager setActionName:NSLocalizedString(@"UndoMove", nil)];
-	
-	//Do the move.
-	[object moveBy:moveVector];
+	[[self documentContents] lockForEditing];
+	{
+		[[self documentContents] unlockEditor];
+		[[undoManager prepareWithInvocationTarget:self]
+				moveDirective: object
+				  inDirection: opposite ];
+		[undoManager setActionName:NSLocalizedString(@"UndoMove", nil)];
+		
+		//Do the move.
+		[object moveBy:moveVector];
+	}
 	
 	//our part changed; notify!
 	[self updateInspector];
@@ -1612,7 +1652,11 @@
 	rotation.y = rotationAxis.y * degreesToRotate;
 	rotation.z = rotationAxis.z * degreesToRotate;
 	
-	[part rotateByDegrees:rotation centerPoint:rotationCenter];
+	[[self documentContents] lockForEditing];
+	{
+		[part rotateByDegrees:rotation centerPoint:rotationCenter];
+	}
+	[[self documentContents] unlockEditor];
 
 	
 	[self updateInspector];
@@ -1625,7 +1669,7 @@
 
 //========== setElement:toHidden: ==============================================
 //
-// Purpose:		Undo-aware call to change the hidden attribute of an element.
+// Purpose:		Undo-aware call to change the visibility attribute of an element.
 //
 //==============================================================================
 - (void) setElement:(LDrawDrawableElement *)element toHidden:(BOOL)hideFlag
@@ -1638,12 +1682,16 @@
 	else
 		actionName = NSLocalizedString(@"UndoShowPart", nil);
 	
-	[[undoManager prepareWithInvocationTarget:self]
-		setElement:element
-		  toHidden:(!hideFlag) ];
-	[undoManager setActionName:actionName];
-	
-	[element setHidden:hideFlag];
+	[[self documentContents] lockForEditing];
+	{
+		[[self documentContents] unlockEditor];
+		[[undoManager prepareWithInvocationTarget:self]
+			setElement:element
+			  toHidden:(!hideFlag) ];
+		[undoManager setActionName:actionName];
+		
+		[element setHidden:hideFlag];
+	}
 	[[NSNotificationCenter defaultCenter]
 					postNotificationName:LDrawDirectiveDidChangeNotification
 								  object:element];
@@ -1658,12 +1706,17 @@
 - (void) setObject:(id <LDrawColorable> )object toColor:(LDrawColorT)newColor
 {
 	NSUndoManager *undoManager = [self undoManager];
+	
 	[[undoManager prepareWithInvocationTarget:self]
-		setObject:object
-		  toColor:[object LDrawColor] ];
+												setObject:object
+												  toColor:[object LDrawColor] ];
 	[undoManager setActionName:NSLocalizedString(@"UndoColor", nil)];
 	
-	[object setLDrawColor:newColor];
+	[[self documentContents] lockForEditing];
+	{
+		[object setLDrawColor:newColor];
+	}
+	[[self documentContents] unlockEditor];
 	[self updateInspector];
 	[[NSNotificationCenter defaultCenter]
 					postNotificationName:LDrawDirectiveDidChangeNotification
@@ -1680,17 +1733,21 @@
 - (void) setTransformation:(TransformationComponents) newComponents
 				   forPart:(LDrawPart *)part
 {
-	NSUndoManager *undoManager = [self undoManager];
-	TransformationComponents currentComponents = [part transformationComponents];
+	NSUndoManager				*undoManager		= [self undoManager];
+	TransformationComponents	 currentComponents	= [part transformationComponents];
 	
-	[part setTransformationComponents:newComponents];
-	
-	//Be ready to restore the old components.
-	[[undoManager prepareWithInvocationTarget:self]
-			setTransformation:currentComponents
-					  forPart:part ];
-	
-	[undoManager setActionName:NSLocalizedString(@"UndoSnapToGrid", nil)];
+	[[self documentContents] lockForEditing];
+	{
+		[[self documentContents] unlockEditor];
+		[part setTransformationComponents:newComponents];
+		
+		//Be ready to restore the old components.
+		[[undoManager prepareWithInvocationTarget:self]
+				setTransformation:currentComponents
+						  forPart:part ];
+		
+		[undoManager setActionName:NSLocalizedString(@"UndoSnapToGrid", nil)];
+	}
 	[self updateInspector];
 }
 
@@ -2174,7 +2231,7 @@
 	// Later when the parent window finally flushes we re-enable updates
 	// so that everything hits the screen at once.
 		
-	[(LDrawDocumentWindow *)[self foremostWindow] disableUpdatesUntilFlush];
+//	[(LDrawDocumentWindow *)[self foremostWindow] disableUpdatesUntilFlush];
 	
 }//end splitViewWillResizeSubviews:
 

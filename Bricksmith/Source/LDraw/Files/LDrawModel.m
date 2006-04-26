@@ -663,8 +663,8 @@
 //				Then when drawing, we need not call glBegin() each time.
 //
 //==============================================================================
-- (void) optimize {
-
+- (void) optimize
+{
 	NSArray			*steps			= [self subdirectives];
 	LDrawStep		*firstStep		= 0;
 	NSArray			*directives		= nil;
@@ -680,9 +680,11 @@
 	//If there is more than one step in the model, then we shall assume that 
 	// it has either a) already been optimized or b) been created by the user.
 	// In either case, we don't want to call this method!
-	if([steps count] == 1) {
-		firstStep = [steps objectAtIndex:0];
-		directives = [firstStep subdirectives];
+	if([steps count] == 1) 
+	{
+		firstStep	= [steps objectAtIndex:0];
+		directives	= [firstStep subdirectives];
+		
 		//Sort out all the different types of directives into their own arrays.
 		for(counter = 0; counter < [directives count]; counter++) {
 			currentObject = [directives objectAtIndex:counter];

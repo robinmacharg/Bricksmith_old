@@ -39,10 +39,9 @@
 // Purpose:		Called in response to the conclusion of editing in the palette.
 //
 //==============================================================================
-- (IBAction)finishedEditing:(id)sender{
+- (void) commitChanges:(id)sender{
 
 	LDrawConditionalLine *representedObject = [self object];
-	[representedObject snapshot];
 	
 	Point3 vertex1				= [vertex1Form coordinateValue];
 	Point3 vertex2				= [vertex2Form coordinateValue];
@@ -54,7 +53,7 @@
 	[representedObject setConditionalVertex1:conditionalVertex1];
 	[representedObject setConditionalVertex2:conditionalVertex2];
 	
-	[super finishedEditing:sender];
+	[super commitChanges:sender];
 }
 
 //========== revert ============================================================
@@ -99,7 +98,7 @@
 	Point3 vertex1		= [[self object] vertex1];
 	
 	//If the values really did change, then update.
-	if(LDrawEqualPoints(formContents, vertex1) == NO)
+	if(V3EqualPoints(formContents, vertex1) == NO)
 		[self finishedEditing:sender];
 }
 
@@ -116,7 +115,7 @@
 	Point3 vertex2		= [[self object] vertex2];
 	
 	//If the values really did change, then update.
-	if(LDrawEqualPoints(formContents, vertex2) == NO)
+	if(V3EqualPoints(formContents, vertex2) == NO)
 		[self finishedEditing:sender];
 }
 
@@ -133,7 +132,7 @@
 	Point3 conditionalVertex1	= [[self object] conditionalVertex1];
 	
 	//If the values really did change, then update.
-	if(LDrawEqualPoints(formContents, conditionalVertex1) == NO)
+	if(V3EqualPoints(formContents, conditionalVertex1) == NO)
 		[self finishedEditing:sender];
 }
 
@@ -150,7 +149,7 @@
 	Point3 conditionalVertex2	= [[self object] conditionalVertex2];
 	
 	//If the values really did change, then update.
-	if(LDrawEqualPoints(formContents, conditionalVertex2) == NO)
+	if(V3EqualPoints(formContents, conditionalVertex2) == NO)
 		[self finishedEditing:sender];
 }
 

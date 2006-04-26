@@ -321,8 +321,8 @@
 //				display list if possible.
 //
 //==============================================================================
-- (void) optimize {
-
+- (void) optimize
+{
 	NSArray			*commandsInStep		= [self subdirectives];
 	int				 numberCommands		= [commandsInStep count];
 	id				 currentDirective	= nil;
@@ -332,8 +332,8 @@
 	int				 counter			= 0;
 	
 	//See if everything is the same color.
-	//Draw each element in the step.
-	for(counter = 0; counter < numberCommands; counter++){
+	for(counter = 0; counter < numberCommands; counter++)
+	{
 		currentDirective = [commandsInStep objectAtIndex:counter];
 		
 		if([currentDirective conformsToProtocol:@protocol(LDrawColorable)])
@@ -358,6 +358,7 @@
 	// We want them to be global to the application! Solution: we set up a 
 	// shared context in LDrawApplication.
 	if(		isColorOptimizable == YES
+//		&&	stepColor != LDrawCurrentColor
 		&&	numberCommands >= 4 )
 	{
 		if(stepColor == LDrawEdgeColor)

@@ -12,9 +12,11 @@
 #import "InspectionPart.h"
 
 #import "LDrawApplication.h"
+#import "LDrawFile.h"
 #import "LDrawPart.h"
 #import "PartLibrary.h"
 #import "FormCategory.h"
+#import "MacLDraw.h"
 
 @implementation InspectionPart
 
@@ -41,13 +43,12 @@
 // Purpose:		Called in response to the conclusion of editing in the palette.
 //
 //==============================================================================
-- (IBAction)finishedEditing:(id)sender{
+- (void) commitChanges:(id)sender{
 
 	LDrawPart					*representedObject = [self object];
 	TransformationComponents	 oldComponents = [representedObject transformationComponents];
 	TransformationComponents	 components = {0};
 	
-	[representedObject snapshot];
 	
 	[representedObject setDisplayName:[partNameField stringValue]];
 	
@@ -71,7 +72,7 @@
 	
 	[representedObject setTransformationComponents:components];
 	
-	[super finishedEditing:sender];
+	[super commitChanges:sender];
 }
 
 //========== revert ============================================================
@@ -177,6 +178,8 @@
 	
 	//Save out the current state.
 	[representedObject snapshot];
+	[[representedObject enclosingFile] lockForEditing];
+	
 
 	if(rotationType == rotationRelative){
 		Tuple3 additiveRotation;
@@ -199,7 +202,10 @@
 	}
 	
 	//Note that the part has changed.
-	[super finishedEditing:sender];
+	[[representedObject enclosingFile] unlockEditor];
+	[[NSNotificationCenter defaultCenter]
+			postNotificationName:LDrawDirectiveDidChangeNotification
+						  object:[self object]];
 	
 	//For a relative rotation, prepare for the next additive rotation by 
 	// resetting the rotations values to zero

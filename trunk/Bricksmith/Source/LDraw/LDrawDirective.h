@@ -12,8 +12,11 @@
 #import <OpenGL/GL.h>
 
 @class LDrawContainer;
+@class LDrawFile;
 
-@interface LDrawDirective : NSObject <NSCoding, NSCopying> {
+@protocol Inspectable;
+
+@interface LDrawDirective : NSObject <NSCoding, NSCopying, Inspectable> {
 
 	LDrawContainer *enclosingDirective; //LDraw files are a hierarchy.
 	BOOL			isSelected;
@@ -35,12 +38,17 @@
 //Accessors
 - (NSArray *)ancestors;
 - (LDrawContainer *) enclosingDirective;
+- (LDrawFile *) enclosingFile;
 - (void) setEnclosingDirective:(LDrawContainer *)newParent;
 - (void) setSelected:(BOOL)flag;
 
-//Utilities
-- (void) registerUndoActions:(NSUndoManager *)undoManager;
+//protocol Inspectable
 - (void) snapshot;
+- (void) lockForEditing;
+- (void) unlockEditor;
+
+//Utilities
 - (BOOL)isAncestorInList:(NSArray *)containers;
+- (void) registerUndoActions:(NSUndoManager *)undoManager;
 
 @end

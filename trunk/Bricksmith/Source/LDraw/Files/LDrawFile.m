@@ -9,6 +9,12 @@
 //				written out, the MPD commands are stripped if there is only 
 //				one model in the file.
 //
+// Threading:	An LDrawFile can be drawn by multiple threads simultaneously. 
+//				What we must not do is edit while drawing or draw while editing. 
+//				To prevent such unpleasantries, bracket any editing to this File 
+//				(or any descendant directives) with calls to -lockForEditing and 
+//				-unlockEditor.
+//
 //  Created by Allen Smith on 2/19/05.
 //  Copyright (c) 2005. All rights reserved.
 //==============================================================================
@@ -144,6 +150,8 @@
 						// case, the models in the file.
 
 	activeModel = nil;
+	drawCount	= 0;
+	editLock	= [[NSConditionLock alloc] initWithCondition:0];
 	
 	return self;
 }
@@ -214,12 +222,37 @@
 //========== draw ==============================================================
 //
 // Purpose:		Draw only the active model. The other submodels in an MPD file 
-//				are only meant to be seen when they are part of the active 
-//				submodel.
+//				are only meant to be seen when they are are referenced from the 
+//				active submodel.
+//
+// Threading:	Drawing and editing are mutually-exclusive tasks. However, 
+//				drawing and drawing are NOT exclusive. So, we maintain an lock 
+//				here which keeps track of the number of threads that are 
+//				currently drawing the File. The mutex is never locked DURING a 
+//				draw, so we can have as many simultaneous drawing threads as we 
+//				please. However, an editing task would request this lock with a 
+//				condition (draw count) of 0, and not unlock until editing is 
+//				complete. Thus, no draws can happen during that time.
 //
 //==============================================================================
-- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
+- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor
+{
+	//this is like calling the non-existent method
+	//			[editLock setCondition:([editLock condition] + 1)]
+	[editLock lockWhenCondition:(self->drawCount)];
+	self->drawCount += 1;
+	[editLock unlockWithCondition:(self->drawCount)]; //don't block multiple simultaneous draws!
+	
+	//
+	// Draw!
+	//	(only the active model.)
+	//
 	[activeModel draw:optionsMask parentColor:parentColor];
+	
+	//done drawing; decrement the lock's condition
+	[editLock lockWhenCondition:(self->drawCount)];
+	self->drawCount -= 1;
+	[editLock unlockWithCondition:(self->drawCount)];
 }
 
 //========== write =============================================================
@@ -255,6 +288,45 @@
 	return [written stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
+
+#pragma mark -
+
+//========== lockForEditing ====================================================
+//
+// Purpose:		Aquires a mutex lock to allow safe editing. Calling this method 
+//				will guarantee that no other thread draws or edits the file 
+//				while you are modifying it. Calls to this method must  be 
+//				subsequently balanced by a call to -unlockEditor.
+//
+//				If you are editing some subdirective buried deep down the file's 
+//				hierarchy, it is still your responsibility to call this method. 
+//				For performance reasons, it does NOT happen automatically!
+//
+//==============================================================================
+- (void) lockForEditing
+{
+	//aquire the lock once nobody is drawing the File. The condition on this lock 
+	// tracks the number of threads currently drawing the File. We don't want to 
+	// go modifying data at the same time someone else is trying to draw it!
+	[self->editLock lockWhenCondition:0];
+	
+}//end lockForEditing
+
+
+//========== unlockEditor ======================================================
+//
+// Purpose:		Releases the mutual-exclusion lock that prevents concurrent 
+//				drawing or editing. A call to this method must be balanced by a 
+//				preceeding call to -lockForEditing.
+//
+//==============================================================================
+- (void) unlockEditor
+{
+	//the condition tracks number of outstanding draws. We aren't a draw, and 
+	// can't aquire this lock unless there are no draws. So we stay at 0.
+	[self->editLock unlockWithCondition:0];
+	
+}//end unlockEditor
 
 #pragma mark -
 #pragma mark ACCESSORS
@@ -532,6 +604,7 @@
 {
 	[activeModel	release];
 	[filePath		release];
+	[editLock		release];
 	
 	[super dealloc];
 }

@@ -264,8 +264,8 @@
 	//glMatrixMode(GL_MODELVIEW); //unnecessary, we set the matrix mode at the beginning of drawing.
 	glPushMatrix();
 		glMultMatrixf(glTransformation);
-		if((optionsMask & DRAW_BOUNDS_ONLY) == 0){
-			
+		if((optionsMask & DRAW_BOUNDS_ONLY) == 0)
+		{
 			//Display lists only valid when not reversing normals.
 			if(		hasDisplayList == YES
 				&&	(optionsMask & DRAW_REVERSE_NORMALS) == 0)
@@ -1008,15 +1008,16 @@
 	// Obviously it would be better to optimize uncolored parts inside the 
 	// library, but alas, uncolored parts need to know about the current color 
 	// as they are drawn, which is anathema to optimization. Rats.
-	if(self->referenceName != nil && self->color != LDrawCurrentColor){
+	if(self->referenceName != nil && self->color != LDrawCurrentColor)
+	{
 		LDrawModel *referencedSubmodel	= [self referencedMPDSubmodel];
 		LDrawModel *modelToDraw			= [[LDrawApplication sharedPartLibrary] modelForPart:self];
 		
 		//Don't optimize MPD references. The user can change their referenced
 		// contents, and I don't want to have to keep track of invalidating 
 		// display lists when he does.
-		if(referencedSubmodel == nil && modelToDraw != nil){
-			
+		if(referencedSubmodel == nil && modelToDraw != nil)
+		{
 			if(self->hasDisplayList == NO)
 				self->displayListTag = glGenLists(1); //create new list name
 			//else
@@ -1027,6 +1028,7 @@
 			// independent of the transformation. So we shortcut part 
 			// drawing and do the model itself.
 			glNewList(displayListTag, GL_COMPILE);
+				glColor4fv(self->glColor); //set the color for this element.
 				[modelToDraw draw:DRAW_NO_OPTIONS parentColor:self->glColor];
 			glEndList();
 			

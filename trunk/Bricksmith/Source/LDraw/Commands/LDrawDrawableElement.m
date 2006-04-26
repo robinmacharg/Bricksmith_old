@@ -132,6 +132,7 @@
 			glColor4fv(parentColor); //restore the parent color.
 		}
 		else{
+//			glColor4fv(parentColor); //restore the parent color.
 			//Just draw; don't fool with colors. A significant portion of our 
 			// drawing code probably falls into this category.
 			[self drawElement:optionsMask parentColor:parentColor];

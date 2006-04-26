@@ -17,6 +17,8 @@
 @interface LDrawFile : LDrawContainer {
 	LDrawMPDModel		*activeModel;
 	NSString			*filePath;			//where this file came from on disk.
+	unsigned			 drawCount;			//number of threads currently drawing us
+	NSConditionLock		*editLock;
 }
 
 //Initialization
@@ -25,6 +27,10 @@
 + (LDrawFile *) parseFromFileContents:(NSString *) fileContents;
 + (NSArray *) parseModelsFromLines:(NSArray *) linesFromFile;
 - (id) initNew;
+
+//Directives
+- (void) lockForEditing;
+- (void) unlockEditor;
 
 //Accessors
 - (void) addSubmodel:(LDrawMPDModel *)newSubmodel;

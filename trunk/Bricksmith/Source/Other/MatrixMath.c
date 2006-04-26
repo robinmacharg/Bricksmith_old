@@ -210,7 +210,7 @@ Vector3 *V3Mul (Vector3 *a, Vector3 *b, Vector3 *result)
 }
 
 /* return the distance between two points */
-float V3DistanceBetween2Points(Point3 *a, Point3 *b)
+float V3DistanceBetween2Points(const Point3 *a, const Point3 *b)
 {
 	float dx = a->x - b->x;
 	float dy = a->y - b->y;

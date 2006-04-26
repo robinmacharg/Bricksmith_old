@@ -139,7 +139,7 @@ extern bool		V3EqualPoints(Point3 point1, Point3 point2);
 extern float	V3SquaredLength(Vector3 *);
 extern float	V3Length(Vector3 *);
 extern float	V3Dot(Vector3 *a, Vector3 *b);
-extern float	V3DistanceBetween2Points(Point3 *a, Point3 *b);
+extern float	V3DistanceBetween2Points(const Point3 *a, const Point3 *b);
 extern Vector3*	V3Normalize(Vector3 *);
 extern Vector3*	V3Scale(Vector3 *, float);
 extern Vector3*	V3Add(Vector3 *a, Vector3 *b, Vector3 *c);

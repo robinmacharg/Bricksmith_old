@@ -68,6 +68,7 @@ typedef enum {
 												// and here in -mouseUp: to handle such cases.
 	
 	//Drawing Environment
+	unsigned			 numberDrawRequests;	//how many threaded draws are piling up in the queue.
 	GLfloat				 cameraDistance;
 	LDrawColorT			 color;					//default color to draw parts if none is specified
 	GLfloat				 glColor[4];			//OpenGL equivalent of the LDrawColor.
@@ -141,5 +142,8 @@ typedef enum {
 - (void)	LDrawGLView:(LDrawGLView *)glView
  wantsToSelectDirective:(LDrawDirective *)directiveToSelect
    byExtendingSelection:(BOOL) shouldExtend;
-   
+
+- (void) LDrawGLViewWillBeginDrawing:(LDrawGLView *)glView;
+- (void) LDrawGLViewDidEndDrawing:(LDrawGLView *)glView;
+
 @end

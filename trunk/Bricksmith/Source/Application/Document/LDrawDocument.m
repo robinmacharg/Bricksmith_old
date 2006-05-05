@@ -278,9 +278,21 @@
 	if(fileContents == nil) //whoops. Not UTF-8. Try the Windows standby.
 		fileContents = [[NSString alloc] initWithData:data
 											 encoding:NSISOLatin1StringEncoding ];
+	if(fileContents == nil) //yikes. Not even Windows. MacRoman should do it.
+		fileContents = [[NSString alloc] initWithData:data
+											 encoding:NSMacOSRomanStringEncoding ];
 	
-	newFile = [LDrawFile parseFromFileContents:fileContents];
-	[self setDocumentContents:newFile];
+	//Parse the model.
+	// - optimizing models can result in OpenGL calls, so to be very safe we 
+	//   set a context and lock on it. We can't use any of the documents GL views 
+	//   because the Nib may not have been loaded yet.
+	@synchronized([LDrawApplication sharedOpenGLContext])
+	{
+		[[LDrawApplication sharedOpenGLContext] makeCurrentContext];
+	
+		newFile = [LDrawFile parseFromFileContents:fileContents];
+		[self setDocumentContents:newFile];
+	}
 	
 	[progressPanel close];
 	[fileContents release];

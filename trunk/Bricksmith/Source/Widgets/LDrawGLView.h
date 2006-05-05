@@ -81,6 +81,7 @@ typedef enum {
 }
 
 //Drawing
+- (void) drawThreaded:(id)sender;
 - (void) drawFocusRing;
 - (void) strokeInsideRect:(NSRect)rect thickness:(float)borderWidth;
 

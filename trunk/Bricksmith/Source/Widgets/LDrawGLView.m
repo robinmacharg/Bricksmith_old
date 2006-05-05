@@ -154,6 +154,8 @@
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //	glEnable(GL_LINE_SMOOTH); //makes lines transparent! Bad!
+//	glEnable(GL_POLYGON_SMOOTH); //what's the difference?
+	glLineWidth(1);
 	
 	//
 	// Define the lighting.
@@ -193,7 +195,6 @@
 	glEnable(GL_LIGHT0);
 	
 	glLightfv(GL_LIGHT0, GL_POSITION, position0);
-	glLineWidth(1);
 	
 	//Now that the light is positioned where we want it, we can restore the 
 	// correct viewing angle.
@@ -234,7 +235,17 @@
 //==============================================================================
 - (void) drawRect:(NSRect)rect
 {
-	[NSThread detachNewThreadSelector:@selector(drawThreaded:) toTarget:self withObject:nil];
+	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+	
+	//We have the option of doing multithreaded drawing, so all the actual 
+	// drawing code is in a thread-accessible method.
+	
+	//threading isn't working out well at all. So I have a threading preference, 
+	// which will be OFF by default in version 1.4 at least.
+	if([userDefaults boolForKey:@"UseThreads"] == YES)
+		[NSThread detachNewThreadSelector:@selector(drawThreaded:) toTarget:self withObject:nil];
+	else
+		[self drawThreaded:nil];
 }
 
 
@@ -833,12 +844,6 @@
 #pragma mark -
 #pragma mark EVENTS
 #pragma mark -
-
-- (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
-{
-	NSLog(@"is current responder = %d", [[self window] firstResponder] == self);
-	return NO;
-}
 
 //========== becomeFirstResponder ==============================================
 //

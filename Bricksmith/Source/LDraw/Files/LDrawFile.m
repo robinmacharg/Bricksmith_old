@@ -226,7 +226,7 @@
 //				active submodel.
 //
 // Threading:	Drawing and editing are mutually-exclusive tasks. However, 
-//				drawing and drawing are NOT exclusive. So, we maintain an lock 
+//				drawing and drawing are NOT exclusive. So, we maintain a lock 
 //				here which keeps track of the number of threads that are 
 //				currently drawing the File. The mutex is never locked DURING a 
 //				draw, so we can have as many simultaneous drawing threads as we 
@@ -239,7 +239,7 @@
 {
 	//this is like calling the non-existent method
 	//			[editLock setCondition:([editLock condition] + 1)]
-	[editLock lockWhenCondition:(self->drawCount)];
+	[editLock lock]; //lock unconditionally
 	self->drawCount += 1;
 	[editLock unlockWithCondition:(self->drawCount)]; //don't block multiple simultaneous draws!
 	
@@ -250,7 +250,7 @@
 	[activeModel draw:optionsMask parentColor:parentColor];
 	
 	//done drawing; decrement the lock's condition
-	[editLock lockWhenCondition:(self->drawCount)];
+	[editLock lock];
 	self->drawCount -= 1;
 	[editLock unlockWithCondition:(self->drawCount)];
 }

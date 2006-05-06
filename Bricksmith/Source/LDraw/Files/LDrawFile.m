@@ -79,7 +79,7 @@
 	if([models count] > 0)
 		[newFile setActiveModel:[models objectAtIndex:0]];
 	
-	return newFile;
+	return [newFile autorelease];
 }
 
 //========== parseModelsFromLines ==============================================

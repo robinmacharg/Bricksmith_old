@@ -135,7 +135,7 @@
 		NSLog(@" raised exception %@", [localException name]);
 	NS_ENDHANDLER
 	
-	return parsedQuadrilateral;
+	return [parsedQuadrilateral autorelease];
 }//end directiveWithString
 
 

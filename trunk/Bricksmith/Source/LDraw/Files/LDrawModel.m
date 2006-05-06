@@ -59,7 +59,7 @@
 {
 	LDrawModel *newModel = [[LDrawModel alloc] initWithLines:lines];
 	
-	return newModel;
+	return [newModel autorelease];
 }
 
 //========== init ==============================================================

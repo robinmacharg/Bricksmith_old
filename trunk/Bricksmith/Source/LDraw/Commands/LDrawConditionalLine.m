@@ -67,7 +67,7 @@
 										  remainder: &workingLine ];
 		//Only attempt to create the part if this is a valid line.
 		if([parsedField intValue] == 5){
-			parsedConditionalLine = [LDrawConditionalLine new];
+			parsedConditionalLine = [[LDrawConditionalLine new] autorelease];
 			
 			//Read in the color code.
 			// (color)

@@ -122,7 +122,7 @@
 		NSLog(@" raised exception %@", [localException name]);
 	NS_ENDHANDLER
 	
-	return parsedTriangle;
+	return [parsedTriangle autorelease];
 }//end triangleWithDirectiveText
 
 

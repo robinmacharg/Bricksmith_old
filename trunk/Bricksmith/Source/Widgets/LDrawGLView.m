@@ -1983,6 +1983,9 @@
 	
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
+	[autosaveName	release];
+	[fileBeingDrawn	release];
+
 	[super dealloc];
 }
 

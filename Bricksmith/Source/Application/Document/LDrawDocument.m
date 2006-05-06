@@ -312,11 +312,15 @@
 //==============================================================================
 - (BOOL)writeToFile:(NSString *)fileName ofType:(NSString *)docType
 {
+	BOOL success = NO;
+	
 	//do the actual writing.
-	[super writeToFile:fileName ofType:docType];
+	success = [super writeToFile:fileName ofType:docType];
 	
 	//track the path.
 	[[self documentContents] setPath:fileName];
+	
+	return success;
 	
 }//end writeToFile:ofType:
 

@@ -126,13 +126,18 @@
 		
 		//Draw, for goodness sake!
 		
-		if(color != LDrawCurrentColor){
+		if(self->color != LDrawCurrentColor){
 			glColor4fv(glColor); //set the color for this element.
 				[self drawElement:optionsMask parentColor:glColor];
-			glColor4fv(parentColor); //restore the parent color.
+			#if OPTIMIZE_STEPS
+				//restore the parent color. NO NEED. Each element does its own color now.
+				glColor4fv(parentColor);
+			#endif
 		}
 		else{
-//			glColor4fv(parentColor); //restore the parent color.
+			#if (OPTIMIZE_STEPS == 0)
+				glColor4fv(parentColor); //restore the parent color. OFF IF STEP-OPTIMIZING.
+			#endif
 			//Just draw; don't fool with colors. A significant portion of our 
 			// drawing code probably falls into this category.
 			[self drawElement:optionsMask parentColor:parentColor];

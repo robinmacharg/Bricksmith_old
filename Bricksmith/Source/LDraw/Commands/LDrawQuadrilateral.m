@@ -223,7 +223,8 @@
 		
 	//Have we already begun drawing somewhere upstream? If so, all we need to 
 	// do here is add the vertices.
-	if((optionsMask & DRAW_BEGUN) != 0) {
+	if((optionsMask & DRAW_BEGUN) != 0)
+	{
 		glNormal3f(normal.x * normalMultiplier,
 				   normal.y * normalMultiplier,
 				   normal.z * normalMultiplier );

@@ -259,19 +259,9 @@
 //==============================================================================
 - (BOOL)loadDataRepresentation:(NSData *)data ofType:(NSString *)aType
 {
-	AMSProgressPanel	*progressPanel	= [AMSProgressPanel progressPanel];
-	NSString			*openMessage	= nil;
 	NSString			*fileContents	= nil;
 	LDrawFile			*newFile		= nil;
 	
-	openMessage = [NSString stringWithFormat:	NSLocalizedString(@"OpeningFileX", nil), 
-												[self displayName] ];
-	
-	//This might take a while. Show that we're doing something!
-	[progressPanel setMessage:openMessage];
-	[progressPanel setIndeterminate:YES];
-	[progressPanel showProgressPanel];
-
 	//LDraw files are plain text.
 	fileContents = [[NSString alloc] initWithData:data
 										 encoding:NSUTF8StringEncoding ];
@@ -283,9 +273,9 @@
 											 encoding:NSMacOSRomanStringEncoding ];
 	
 	//Parse the model.
-	// - optimizing models can result in OpenGL calls, so to be very safe we 
-	//   set a context and lock on it. We can't use any of the documents GL views 
-	//   because the Nib may not have been loaded yet.
+	// - optimizing models can result in OpenGL calls, so to be ultra-safe we 
+	//   set a context and lock on it. We can't use any of the documents GL 
+	//   views because the Nib may not have been loaded yet.
 	@synchronized([LDrawApplication sharedOpenGLContext])
 	{
 		[[LDrawApplication sharedOpenGLContext] makeCurrentContext];
@@ -294,7 +284,6 @@
 		[self setDocumentContents:newFile];
 	}
 	
-	[progressPanel close];
 	[fileContents release];
 	
     return YES;
@@ -2328,8 +2317,8 @@
 //==============================================================================
 - (void)windowWillClose:(NSNotification *)notification
 {
-	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-	NSWindow *window = [notification object];
+	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
+	NSWindow		*window			= [notification object];
 	
 	[userDefaults setInteger:[partBrowserDrawer state]	forKey:PART_BROWSER_DRAWER_STATE];
 	[userDefaults setInteger:[fileContentsDrawer state]	forKey:FILE_CONTENTS_DRAWER_STATE];
@@ -2347,7 +2336,9 @@
 	}
 	
 	[self->bindingsController setContent:nil];
-}
+	
+}//end windowWillClose:
+
 
 #pragma mark -
 #pragma mark MENUS

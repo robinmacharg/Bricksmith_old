@@ -14,6 +14,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 #define DEBUG_DRAWING							0
+#define OPTIMIZE_STEPS							1
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -133,6 +134,7 @@
 #define DRAW_HIT_TEST_MODE						1 << 1
 #define DRAW_REVERSE_NORMALS					1 << 2
 #define DRAW_BOUNDS_ONLY						1 << 3
+#define DRAW_IN_IMMEDIATE_MODE					1 << 4 //not compiling a display list.
 
 //The tags used for mouse-click hit-testing are formed by: 
 // stepIndex * STEP_NAME_MULTIPLIER + partIndexInStep   (see LDrawDrawableElement)

@@ -44,10 +44,13 @@
 // Purpose:		Creates a part library with no parts loaded.
 //
 //==============================================================================
-- (id) init {
+- (id) init
+{
 	self = [super init];
 	
-	loadedFiles = [[NSMutableDictionary dictionaryWithCapacity:400] retain];
+	loadedFiles			= [[NSMutableDictionary dictionaryWithCapacity:400] retain];
+	fileDisplayLists	= [[NSMutableDictionary dictionaryWithCapacity:400] retain];
+	
 	[self setPartCatalog:[NSDictionary dictionary]];
 	
 	return self;
@@ -432,6 +435,71 @@
 	return model;
 	
 }//end modelFromNeighboringFileForPart:
+
+
+//========== retainDisplayListForPart:color: ===================================
+//
+// Purpose:		Returns the display list tag used to draw the given part. 
+//				Display lists are shared among multiple part instances of the 
+//				same name and color in order to reduce memory space.				
+//
+//==============================================================================
+- (int) retainDisplayListForPart:(LDrawPart *)part
+						   color:(LDrawColorT)color
+{
+	int			 displayListTag	= 0;
+	NSString	*referenceName	= [part referenceName];
+	NSString	*keyPath		= nil;
+	NSNumber	*listTag		= nil;
+	
+	if([referenceName length] > 0)
+	{
+		if(listTag != nil)
+			displayListTag = [listTag intValue];
+		else
+		{
+			keyPath = [NSString stringWithFormat:@"%@.%d.displayListTag", [part referenceName], color];
+			listTag = [self->fileDisplayLists valueForKeyPath:keyPath];
+		
+			GLfloat glColor[4]; //OpenGL equivalent of the LDrawColor.
+			LDrawModel *modelToDraw = [self modelForPart:part];
+			
+			rgbafForCode(color, glColor);
+
+			if(modelToDraw != nil)
+			{
+				displayListTag = glGenLists(1); //create new list name
+				
+					//Don't ask the part to draw itself, either. Parts modify the 
+					// transformation matrix, and we want our display list to be 
+					// independent of the transformation. So we shortcut part 
+					// drawing and do the model itself.
+				glNewList(displayListTag, GL_COMPILE);
+		//			glColor4fv(self->glColor); //set the color for this element.
+					[modelToDraw draw:DRAW_NO_OPTIONS parentColor:glColor];
+				glEndList();
+				
+				[self->fileDisplayLists setValue:[NSNumber numberWithInt:displayListTag]
+									  forKeyPath:keyPath];
+			}
+		}
+		
+	}
+	
+	
+	return displayListTag;
+	
+//	NSDictionary	*colorsForParts	= [self->fileDisplayLists objectForKey:partName];
+//	NSDictionary	*partWithColor	= nil;
+//	int				 displayListTag	= 0;
+//	
+//	if(colorsForParts != nil)
+//	{
+//		partWithColor = [colorsForParts objectForKey:[NSNumber numberWithInt:color];
+//		
+//		displayListTag = [partWithColor objectForKey:
+//	}
+}
 
 
 #pragma mark -

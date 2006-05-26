@@ -133,16 +133,24 @@
 //				so we need call glBegin only once for the entire step.
 //
 //==============================================================================
-- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
-
-	if(hasDisplayList == YES){
+- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor
+{
+	//step display lists are a thing of the past. It's better to display-optimize 
+	// the entire part at once rather than six zillion little mini-lists.
+	// see other comments in -[LDrawStep optimize]
+	if(hasDisplayList == YES)
+	{
 		if((optionsMask & DRAW_REVERSE_NORMALS) != 0)
 			glCallList(self->displayListInvertedNormalsTag);
 		else
 			glCallList(self->displayListTag);
-		glColor4fv(parentColor);
+			
+		#if OPTIMIZE_STEPS
+			glColor4fv(parentColor);
+		#endif
 	}
-	else {
+	else
+	{
 		NSArray			*commandsInStep		= [self subdirectives];
 		int				 numberCommands		= [commandsInStep count];
 		LDrawDirective	*currentDirective	= nil;
@@ -171,6 +179,10 @@
 		//close drawing if we started it.
 		if(stepFlavor != LDrawStepAnyDirectives)
 			glEnd();
+			
+		#if OPTIMIZE_STEPS
+			glColor4fv(parentColor);
+		#endif
 	}
 
 }
@@ -320,9 +332,22 @@
 // Purpose:		Makes this step run faster by compiling its contents into a 
 //				display list if possible.
 //
+// Notes:		This was a misguided optimization. It turns out to be preferable 
+//				to simply display-list the entire part at once. Interestingly, 
+//				this whole route caused nasty graphical glitches. Each vertex in 
+//				the list needs to have a pre-associated color. Optimizing steps 
+//				would only work assuming that each display list could be 
+//				associated with a color *on the fly.* But we can't do that; the 
+//				display list needs to have colors *cooked in.*
+//
+//				BUT! BUT! Optimizing steps also DRAMATICALLY reduces memory 
+//				requirements, which means that huge models are actually usable.
+//				So this is back in pending better ideas.
+//
 //==============================================================================
 - (void) optimize
 {
+#ifdef OPTIMIZE_STEPS
 	NSArray			*commandsInStep		= [self subdirectives];
 	int				 numberCommands		= [commandsInStep count];
 	id				 currentDirective	= nil;
@@ -358,7 +383,7 @@
 	// We want them to be global to the application! Solution: we set up a 
 	// shared context in LDrawApplication.
 	if(		isColorOptimizable == YES
-//		&&	stepColor != LDrawCurrentColor
+//		&&	(stepColor == LDrawCurrentColor || stepColor == LDrawEdgeColor)
 		&&	numberCommands >= 4 )
 	{
 		if(stepColor == LDrawEdgeColor)
@@ -398,7 +423,9 @@
 		self->hasDisplayList = YES;
 		
 	}//end if is optimizable
-}
+	
+#endif
+}//end optimize
 
 #pragma mark -
 #pragma mark DESTRUCTOR

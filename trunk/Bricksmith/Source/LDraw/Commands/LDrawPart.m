@@ -1002,7 +1002,8 @@
 //				punishment.
 //
 //==============================================================================
-- (void) optimize {
+- (void) optimize
+{
 
 	//Only optimize explicitly colored parts.
 	// Obviously it would be better to optimize uncolored parts inside the 
@@ -1011,29 +1012,59 @@
 	if(self->referenceName != nil && self->color != LDrawCurrentColor)
 	{
 		LDrawModel *referencedSubmodel	= [self referencedMPDSubmodel];
-		LDrawModel *modelToDraw			= [[LDrawApplication sharedPartLibrary] modelForPart:self];
-		
-		//Don't optimize MPD references. The user can change their referenced
-		// contents, and I don't want to have to keep track of invalidating 
-		// display lists when he does.
-		if(referencedSubmodel == nil && modelToDraw != nil)
-		{
-			if(self->hasDisplayList == NO)
-				self->displayListTag = glGenLists(1); //create new list name
-			//else
-				//recycle old list name.
+	
+		#if (OPTIMIZE_STEPS	== 0)
+			//Don't optimize MPD references. The user can change their referenced
+			// contents, and I don't want to have to keep track of invalidating 
+			// display lists when he does.
+			if(referencedSubmodel == nil)
+			{
+				
+				self->displayListTag = [[LDrawApplication sharedPartLibrary]
+														retainDisplayListForPart:self
+																		   color:self->color];
+				if(displayListTag != 0)
+					self->hasDisplayList = YES;
+			}
+			else
+			{
+				//blast.
+			}
 			
-			//Don't ask the part to draw itself, either. Parts modify the 
-			// transformation matrix, and we want our display list to be 
-			// independent of the transformation. So we shortcut part 
-			// drawing and do the model itself.
-			glNewList(displayListTag, GL_COMPILE);
-				glColor4fv(self->glColor); //set the color for this element.
-				[modelToDraw draw:DRAW_NO_OPTIONS parentColor:self->glColor];
-			glEndList();
+		#else
+			LDrawModel *modelToDraw			= [[LDrawApplication sharedPartLibrary] modelForPart:self];
 			
-			self->hasDisplayList = YES;
-		}
+			//Don't optimize MPD references. The user can change their referenced
+			// contents, and I don't want to have to keep track of invalidating 
+			// display lists when he does.
+			if(referencedSubmodel == nil && modelToDraw != nil)
+			{
+				if(self->hasDisplayList == NO)
+					self->displayListTag = glGenLists(1); //create new list name
+				//else
+					//recycle old list name.
+				
+				//Don't ask the part to draw itself, either. Parts modify the 
+				// transformation matrix, and we want our display list to be 
+				// independent of the transformation. So we shortcut part 
+				// drawing and do the model itself.
+				glNewList(displayListTag, GL_COMPILE);
+					glColor4fv(self->glColor); //set the color for this element.
+					[modelToDraw draw:DRAW_NO_OPTIONS parentColor:self->glColor];
+				glEndList();
+				
+				self->hasDisplayList = YES;
+			}
+			//we already have a refeneced MPD submodel
+			else
+			{
+				if(self->hasDisplayList == YES)
+				{
+					glDeleteLists(self->displayListTag, 1);
+					self->hasDisplayList = NO;
+				}
+			}
+		#endif
 	}
 	else
 		self->hasDisplayList = NO;

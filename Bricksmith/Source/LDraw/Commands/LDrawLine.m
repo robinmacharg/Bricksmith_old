@@ -179,13 +179,17 @@
 	//Have we already begun drawing somewhere upstream? If so, all we need to 
 	// do here is add the vertices.
 	if((optionsMask & DRAW_BEGUN) != 0) {
+		glNormal3f(0.0, -1.0, 0.0); //lines need normals! Who knew?
 		glVertex3f(vertex1.x, vertex1.y, vertex1.z);
+		glNormal3f(0.0, -1.0, 0.0);
 		glVertex3f(vertex2.x, vertex2.y, vertex2.z);
 	}
 	//Drawing not begun; we must start it explicitly.
 	else {
 		glBegin(GL_LINES);
+			glNormal3f(0.0, -1.0, 0.0);
 			glVertex3f(vertex1.x, vertex1.y, vertex1.z);
+			glNormal3f(0.0, -1.0, 0.0);
 			glVertex3f(vertex2.x, vertex2.y, vertex2.z);
 		glEnd();
 	}

@@ -114,5 +114,6 @@ typedef enum {
 + (NSString *) nameForLDrawColor:(LDrawColorT) colorCode;
 void rgbaForCode(LDrawColorT colorCode, UInt8 *colorArray);
 void rgbafForCode(LDrawColorT colorCode, GLfloat *colorArray);
+void complimentColor(GLfloat *originalColor, GLfloat *complimentColor);
 
 @end

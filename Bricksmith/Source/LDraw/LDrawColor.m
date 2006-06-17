@@ -684,4 +684,43 @@ void rgbaForCode(LDrawColorT colorCode, UInt8 *colorArray){
 	
 }//end rgbaForCode
 
+
+//========== complimentColor() =================================================
+//
+// Purpose:		Changes the given RGBA color into a "complimentary" color, which 
+//				stands out in the original color, but maintains the same hue.
+//
+//==============================================================================
+void complimentColor(GLfloat *originalColor, GLfloat *complimentColor)
+{
+	int		brightestIndex	= 0;
+	float	brightness		= 0.0;
+	
+	//Isolate the color's brightness -- that is, its biggest component
+	if(		originalColor[1] > originalColor[0]
+		&&	originalColor[1] > originalColor[2])
+		brightestIndex = 1;
+		
+	else if(	originalColor[2] > originalColor[0]
+			&&	originalColor[2] > originalColor[1])
+		brightestIndex = 2;
+	
+	brightness = originalColor[brightestIndex];
+	
+	//compliment dark colors with light ones and light colors with dark ones.
+	if(brightness > 0.5)
+	{
+		complimentColor[0] = originalColor[0] * 0.5;
+		complimentColor[1] = originalColor[1] * 0.5;
+		complimentColor[2] = originalColor[2] * 0.5;
+	}
+	else
+	{
+		complimentColor[0] = originalColor[0] * 1.5;
+		complimentColor[1] = originalColor[1] * 1.5;
+		complimentColor[2] = originalColor[2] * 1.5;
+	}
+	
+}//end complimentColor
+
 @end

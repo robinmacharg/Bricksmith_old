@@ -97,10 +97,12 @@
 //				actually draws the element.
 //
 //==============================================================================
-- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
+- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor
+{
 	//[super draw]; //does nothing anyway; don't call it.
 	
-	if(self->hidden == NO) {
+	if(self->hidden == NO)
+	{
 		//If the part is selected, we need to give some indication. We do this by 
 		// drawing it as a wireframe instead of a filled color. This setting also 
 		// conveniently applies to all referenced parts herein. 
@@ -126,21 +128,29 @@
 		
 		//Draw, for goodness sake!
 		
-		if(self->color != LDrawCurrentColor){
+		if(self->color == LDrawCurrentColor)
+		{
+			#if (OPTIMIZE_STEPS == 0)
+				glColor4fv(parentColor); //restore the parent color. OFF IF STEP-OPTIMIZING.
+			#endif
+			
+			//Just draw; don't fool with colors. A significant portion of our 
+			// drawing code probably falls into this category.
+			[self drawElement:optionsMask parentColor:parentColor];
+		}
+		else
+		{
+			#if (OPTIMIZE_STEPS == 0) //we don't HAVE the parent color when steps are optimized
+				if(self->color == LDrawEdgeColor)
+					complimentColor(parentColor, glColor);
+			#endif
+		
 			glColor4fv(glColor); //set the color for this element.
-				[self drawElement:optionsMask parentColor:glColor];
+			[self drawElement:optionsMask parentColor:glColor];
 			#if OPTIMIZE_STEPS
 				//restore the parent color. NO NEED. Each element does its own color now.
 				glColor4fv(parentColor);
 			#endif
-		}
-		else{
-			#if (OPTIMIZE_STEPS == 0)
-				glColor4fv(parentColor); //restore the parent color. OFF IF STEP-OPTIMIZING.
-			#endif
-			//Just draw; don't fool with colors. A significant portion of our 
-			// drawing code probably falls into this category.
-			[self drawElement:optionsMask parentColor:parentColor];
 		}
 			
 		//Done drawing a selected part? Then switch back to normal filled drawing.
@@ -220,8 +230,9 @@
 // Purpose:		Sets the color of this element.
 //
 //==============================================================================
--(void) setLDrawColor:(LDrawColorT)newColor{
-	color = newColor;
+-(void) setLDrawColor:(LDrawColorT)newColor
+{
+	self->color = newColor;
 	
 	//Look up the OpenGL color now so we don't have to whenever we draw.
 	rgbafForCode(color, glColor);

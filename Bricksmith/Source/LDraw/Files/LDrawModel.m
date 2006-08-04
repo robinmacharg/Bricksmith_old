@@ -675,6 +675,7 @@
 	LDrawStep		*quadrilaterals	= [LDrawStep emptyStepWithFlavor:LDrawStepQuadrilaterals];
 	LDrawStep		*everythingElse	= [LDrawStep emptyStepWithFlavor:LDrawStepAnyDirectives];
 	
+	int				 directiveCount	= 0;
 	int				 counter		= 0;
 	
 	//If there is more than one step in the model, then we shall assume that 
@@ -682,11 +683,13 @@
 	// In either case, we don't want to call this method!
 	if([steps count] == 1) 
 	{
-		firstStep	= [steps objectAtIndex:0];
-		directives	= [firstStep subdirectives];
+		firstStep		= [steps objectAtIndex:0];
+		directives		= [firstStep subdirectives];
+		directiveCount	= [directives count];
 		
 		//Sort out all the different types of directives into their own arrays.
-		for(counter = 0; counter < [directives count]; counter++) {
+		for(counter = 0; counter < directiveCount; counter++)
+		{
 			currentObject = [directives objectAtIndex:counter];
 			if([currentObject isMemberOfClass:[LDrawLine class]])
 				[lines addDirective:currentObject];

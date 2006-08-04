@@ -5,6 +5,7 @@
                 addCommentClicked = id; 
                 addConditionalClicked = id; 
                 addLineClicked = id; 
+                addMinifigure = id; 
                 addModelClicked = id; 
                 addPartClicked = id; 
                 addQuadrilateralClicked = id; 

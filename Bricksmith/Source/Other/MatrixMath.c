@@ -72,6 +72,14 @@ Vector3 *V3New(float x, float y, float z)
 	return(v);
 }
 
+/* create, initialize, and return a new vector */
+Vector3 V3Make(float x, float y, float z)
+{
+	Vector3 v;
+	v.x = x;  v.y = y;  v.z = z;
+	return(v);
+}
+
 /* create, initialize, and return a duplicate vector */
 Vector3 *V3Duplicate(Vector3 *a)
 {

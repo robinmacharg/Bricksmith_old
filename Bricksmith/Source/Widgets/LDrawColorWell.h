@@ -11,12 +11,22 @@
 
 #import "LDrawColor.h"
 
-@interface LDrawColorWell : NSButton {
+@interface LDrawColorWell : NSButton <LDrawColorable>
+{
 	LDrawColorT colorCode;
 }
 
+//Active color well
++ (LDrawColorWell *) activeColorWell;
++ (void) setActiveColorWell:(LDrawColorWell *)newWell;
+
 //Accessors
 - (LDrawColorT) colorCode;
+-(LDrawColorT) LDrawColor;
 - (void) setColorCode:(LDrawColorT) newColorCode;
+- (void) setLDrawColor:(LDrawColorT)newColor;
+
+//Actions
+- (void) changeLDrawColorWell:(id)sender;
 
 @end

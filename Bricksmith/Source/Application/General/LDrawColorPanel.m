@@ -14,6 +14,7 @@
 #import "LDrawColor.h"
 #import "LDrawColorBar.h"
 #import "LDrawColorCell.h"
+#import "LDrawColorWell.h"
 #import "MacLDraw.h"
 #import "StringCategory.h"
 
@@ -63,7 +64,9 @@ LDrawColorPanel *sharedColorPanel = nil;
 // Purpose:		Brings the LDraw color panel to life.
 //
 //==============================================================================
-- (id) init {
+- (id) init
+{
+	id oldself = [super init];
 
 	[NSBundle loadNibNamed:@"ColorPanel" owner:self];
 	
@@ -86,10 +89,15 @@ LDrawColorPanel *sharedColorPanel = nil;
 	updatingToReflectFile = NO;
 	
 	[self setDelegate:self];
+	[self setWorksWhenModal:YES];
+	[self setLevel:NSStatusWindowLevel];
+	[self setBecomesKeyOnlyIfNeeded:YES];
+	
+	[oldself release];
 	
 	return self;
 	
-}
+}//end init
 
 #pragma mark -
 #pragma mark ACCESSORS
@@ -176,6 +184,69 @@ LDrawColorPanel *sharedColorPanel = nil;
 #pragma mark -
 #pragma mark ACTIONS
 #pragma mark -
+
+//========== orderOut: =========================================================
+//
+// Purpose:		The color panel is being closed. If there is an active color 
+//				well, it needs to deactivate.
+//
+//==============================================================================
+- (void)orderOut:(id)sender
+{
+	//deactivate active color well.
+	if([LDrawColorWell activeColorWell] != nil)
+		[LDrawColorWell setActiveColorWell:nil];
+	
+	[super orderOut:sender];
+	
+}//end orderOut:
+
+
+//========== sendAction ========================================================
+//
+// Purpose:		Dispatches the change-color action as appropriate. If there is 
+//				an active color well, it will be the sole recipient of the color 
+//				change. Otherwise, a nil-targeted -changeLDrawColor: message 
+//				will be dispatched.
+//
+//==============================================================================
+- (void) sendAction
+{
+	LDrawColorWell *activeColorWell = [LDrawColorWell activeColorWell];
+
+	if(activeColorWell != nil)
+	{
+		//we have an active color well, so it is the only one whose color should 
+		// change.
+		[activeColorWell changeLDrawColorWell:self];
+	}
+	else
+	{
+		//Well, our color has changed. Presumably, somebody wants to update a 
+		// part color in response to this momentous event. But who knows who? So 
+		// we just send this message toddling along, and let whoever want it get 
+		// it.
+		//
+		//But--if this notification is coming in response to selecting a 
+		// different part in the file, then our color did not *really* change; 
+		// we are just displaying a new one. In that case, we don't want any 
+		// parts changing colors.
+		if(updatingToReflectFile == NO)
+		{
+			[NSApp sendAction:@selector(changeLDrawColor:)
+						   to:nil //just send it somewhere!
+						 from:self]; //it's from us (we'll be the sender)
+			
+		}
+		
+		//Clients that are tracking the global color state always need to know 
+		// about the current color, though!
+		[[NSNotificationCenter defaultCenter]
+							postNotificationName:LDrawColorDidChangeNotification
+										  object:[NSNumber numberWithInt:[self LDrawColor]] ];
+	}
+
+}//end sendAction
 
 
 //========== searchFieldChanged: ===============================================
@@ -416,31 +487,10 @@ LDrawColorPanel *sharedColorPanel = nil;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
 	//Update internal information.
-	[colorBar setLDrawColor:[self LDrawColor]];
+	[self->colorBar setLDrawColor:[self LDrawColor]];
 	
+	[self sendAction];
 	
-	//Well, our color has changed. Presumably, somebody wants to update a part 
-	// color in response to this momentous event. But who knows who? So we just 
-	// send this message toddling along, and let whoever want it get it.
-	//
-	//But--if this notification is coming in response to selecting a different 
-	// part in the file, then our color did not *really* change; we 
-	// are just displaying a new one. In that case, we don't want any parts 
-	// changing colors.
-	if(updatingToReflectFile == NO)
-	{
-		[NSApp sendAction:@selector(changeLDrawColor:)
-					   to:nil //just send it somewhere!
-					 from:self]; //it's from us (we'll be the sender)
-					 
-	}
-	
-	//Clients that are tracking the global color state always need to know 
-	// about the current color, though!
-	[[NSNotificationCenter defaultCenter]
-						postNotificationName:LDrawColorDidChangeNotification
-									  object:[NSNumber numberWithInt:[self LDrawColor]] ];
-
 }//end tableViewSelectionDidChange:
 
 

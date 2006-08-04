@@ -20,8 +20,22 @@
 #import "PartLibrary.h"
 #import "PreferencesDialogController.h"
 #import "ToolPalette.h"
+#import "TransformerIntMinus1.h"
 
 @implementation LDrawApplication
+
+//---------- initialize ----------------------------------------------[static]--
+//
+// Purpose:		Load things that need to be loaded *extremely* early in startup.
+//
+//------------------------------------------------------------------------------
++ (void) initialize
+{
+	TransformerIntMinus1 *minus1Transformer = [[[TransformerIntMinus1 alloc] init] autorelease];
+	
+	[NSValueTransformer setValueTransformer:minus1Transformer
+									forName:@"TransformerIntMinus1" ];
+}//end initialize
 
 #pragma mark -
 #pragma mark ACTIONS

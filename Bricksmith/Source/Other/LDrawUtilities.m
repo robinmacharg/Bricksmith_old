@@ -133,19 +133,21 @@
 	NSString		*fieldContents			= nil;
 	
 	//First, remove any heading whitespace.
-	partialDirective = [partialDirective stringByTrimmingCharactersInSet:whitespaceCharacterSet];
+	partialDirective		= [partialDirective stringByTrimmingCharactersInSet:whitespaceCharacterSet];
 	//Find the beginning of the next field separation
-	rangeOfNextWhiteSpace = [partialDirective rangeOfCharacterFromSet:whitespaceCharacterSet];
+	rangeOfNextWhiteSpace	= [partialDirective rangeOfCharacterFromSet:whitespaceCharacterSet];
 	
 	//The text between the beginning and the next field separator is the first 
 	// field (what we are after).
-	if(rangeOfNextWhiteSpace.location != NSNotFound){
+	if(rangeOfNextWhiteSpace.location != NSNotFound)
+	{
 		fieldContents = [partialDirective substringToIndex:rangeOfNextWhiteSpace.location];
 		//See if they want the rest of the line, sans the field we just parsed.
 		if(remainder != NULL)
 			*remainder = [partialDirective substringFromIndex:rangeOfNextWhiteSpace.location];
 	}
-	else{
+	else
+	{
 		//There was no subsequent field separator; we must be at the end of the line.
 		fieldContents = partialDirective;
 		if(remainder != NULL)
@@ -154,6 +156,30 @@
 	
 	return fieldContents;
 }//end readNextField
+
+
+//========== stringFromFile: ===================================================
+//
+// Purpose:		Reads the contents of the file at the given path into a string. 
+//				We try a few different encodings.
+//
+//==============================================================================
++ (NSString *) stringFromFile:(NSString *)path
+{
+	NSData *fileData = [NSData dataWithContentsOfFile:path];
+	NSString *fileString = nil;
+	
+	//try UTF-8 first, because it's so nice.
+	fileString = [[NSString alloc] initWithData:fileData
+									   encoding:NSUTF8StringEncoding];
+	
+	//uh-oh. Maybe Windows Latin?
+	if(fileString == nil)
+		fileString = [[NSString alloc] initWithData:fileData
+										   encoding:NSISOLatin1StringEncoding];
+	return [fileString autorelease];
+	
+}//end stringFromFile
 
 
 //========== updateNameForMovedPart: ===========================================

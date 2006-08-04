@@ -133,6 +133,7 @@ extern const TransformationComponents	IdentityComponents;
 extern float	det2x2( float, float, float, float);
 
 extern Vector3*	V3New(float x, float y, float z);
+extern Vector3	V3Make(float x, float y, float z);
 extern Vector3*	V3Duplicate(Vector3 *a);
 extern Vector3	V3FromV4(Vector4 *originalVector);
 extern bool		V3EqualPoints(Point3 point1, Point3 point2);

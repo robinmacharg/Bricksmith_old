@@ -21,6 +21,7 @@
 #import "LDrawFile.h"
 
 #import "LDrawMPDModel.h"
+#import "LDrawUtilities.h"
 #import "MacLDraw.h"
 #import "StringCategory.h"
 
@@ -49,7 +50,7 @@
 //==============================================================================
 + (LDrawFile *) fileFromContentsAtPath:(NSString *)path
 {
-	NSString	*fileContents	= [LDrawFile stringFromFile:path];
+	NSString	*fileContents	= [LDrawUtilities stringFromFile:path];
 	LDrawFile	*parsedFile		= nil;
 	
 	if(fileContents != nil)
@@ -565,30 +566,6 @@
 			postNotificationName:LDrawFileDidChangeNotification
 						  object:self];
 }
-
-
-//========== stringFromFile ====================================================
-//
-// Purpose:		Reads the contents of the file at the given path into a string. 
-//				We try a few different encodings.
-//
-//==============================================================================
-+ (NSString *) stringFromFile:(NSString *)path
-{
-	NSData *fileData = [NSData dataWithContentsOfFile:path];
-	NSString *fileString = nil;
-	
-	//try UTF-8 first, because it's so nice.
-	fileString = [[NSString alloc] initWithData:fileData
-									   encoding:NSUTF8StringEncoding];
-	
-	//uh-oh. Maybe Windows Latin?
-	if(fileString == nil)
-		fileString = [[NSString alloc] initWithData:fileData
-										   encoding:NSISOLatin1StringEncoding];
-	return [fileString autorelease];
-	
-}//end stringFromFile
 
 
 #pragma mark -

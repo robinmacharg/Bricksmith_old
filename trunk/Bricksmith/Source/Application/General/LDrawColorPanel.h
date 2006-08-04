@@ -14,7 +14,8 @@
 @class LDrawColorBar;
 
 
-@interface LDrawColorPanel : NSPanel <LDrawColorable> {
+@interface LDrawColorPanel : NSPanel <LDrawColorable>
+{
 	IBOutlet	LDrawColorPanel		*colorPanel;
 	IBOutlet	LDrawColorBar		*colorBar;
 	IBOutlet	NSTableView			*colorTable;
@@ -37,6 +38,7 @@
 - (void) setLDrawColor:(LDrawColorT)newColor;
 
 //Actions
+- (void) sendAction;
 - (IBAction) searchFieldChanged:(id)sender;
 - (void) updateSelectionWithObjects:(NSArray *)selectedObjects;
 

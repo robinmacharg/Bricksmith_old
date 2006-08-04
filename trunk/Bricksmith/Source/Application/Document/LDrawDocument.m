@@ -45,6 +45,7 @@
 #import "LDrawGLView.h"
 #import "LDrawUtilities.h"
 #import "MacLDraw.h"
+#import "MinifigureDialogController.h"
 #import "PartBrowserDataSource.h"
 #import "PartChooserPanel.h"
 #import "PartReport.h"
@@ -1478,6 +1479,24 @@
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAddComment", nil)];
 }//end addCommentClicked:
+
+
+//========== addMinifigure: ====================================================
+//
+// Purpose:		Create a new minifigure with the amazing Minifigure Generator 
+//				and add it to the model.
+//
+//==============================================================================
+- (void) addMinifigure:(id)sender
+{
+	MinifigureDialogController	*minifigDialog	= [MinifigureDialogController new];
+	int							 result			= NSCancelButton;
+	
+	result = [minifigDialog runModal];
+	if(result == NSOKButton)
+		[self addModel:[minifigDialog minifigure]];
+	
+}//end addMinifigure:
 
 
 //========== modelSelected: ====================================================

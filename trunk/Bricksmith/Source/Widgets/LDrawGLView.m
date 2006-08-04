@@ -54,10 +54,12 @@
 //				unpacked from the Nib in which it's stored.
 //
 //==============================================================================
-- (void) awakeFromNib {
+- (void) awakeFromNib
+{
 	id		superview	= [self superview];
 	NSRect	visibleRect	= [self visibleRect];
 	NSRect	frame		= [self frame];
+	
 	if([superview isKindOfClass:[NSClipView class]]){
 		//Center the view inside its scrollers.
 		[self scrollCenterToPoint:NSMakePoint( NSWidth(frame)/2, NSHeight(frame)/2 )];
@@ -823,6 +825,9 @@ void setupLight(GLenum light)
 //==============================================================================
 - (void) setLDrawDirective:(LDrawDirective *) newFile
 {
+	NSPoint scrollCenter	= [self centerPoint];
+	BOOL	firstDirective	= (self->fileBeingDrawn == nil);
+	
 	//we lock around the drawing context in case the current directive is being 
 	// drawn right now. We certainly wouldn't want to release what we're drawing!
 	@synchronized([self openGLContext])
@@ -839,7 +844,9 @@ void setupLight(GLenum light)
 							  object:self ];
 		[self resetFrameSize];
 		frame = [self frame]; //now that it's been changed above.
-		[self scrollCenterToPoint:NSMakePoint(NSWidth(frame)/2, NSHeight(frame)/2 )];
+		if(firstDirective == YES)
+			[self scrollCenterToPoint:NSMakePoint(NSWidth(frame)/2, NSHeight(frame)/2 )];
+//		[self scrollCenterToPoint:scrollCenter];
 		[self setNeedsDisplay:YES];
 
 		//Register for important notifications.

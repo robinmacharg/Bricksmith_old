@@ -45,6 +45,5 @@
 //Utilities
 - (void) optimize;
 - (void) setNeedsDisplay;
-+ (NSString *) stringFromFile:(NSString *)path;
 
 @end

@@ -50,6 +50,8 @@
 
 @implementation MLCadIni
 
+static MLCadIni *sharedIniFile = nil;
+
 #pragma mark -
 #pragma mark INITIALIZATION
 #pragma mark -
@@ -63,12 +65,25 @@
 //------------------------------------------------------------------------------
 + (MLCadIni *) iniFile
 {
-	MLCadIni	*mlcadini	= [MLCadIni new];
-	NSString	*filePath	= [MLCadIni preferredPath];
+	MLCadIni	*mlcadini	= nil;
+	NSString	*filePath	= nil;
 	
-	[mlcadini parseFromPath:filePath];
+	//only parse MLCad.ini once; future invocations will just reuse the shared 
+	// object.
+	if(sharedIniFile == nil)
+	{
+		mlcadini	= [MLCadIni new];
+		filePath	= [MLCadIni preferredPath];
+		
+		[mlcadini parseFromPath:filePath];
+		
+		sharedIniFile = mlcadini;
+	}
+	else
+		mlcadini = sharedIniFile;
 	
-	return [mlcadini autorelease];
+	return mlcadini;
+	
 }//end iniFile
 
 //========== init ==============================================================

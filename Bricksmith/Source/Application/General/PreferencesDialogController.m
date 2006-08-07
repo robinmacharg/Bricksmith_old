@@ -602,6 +602,12 @@ PreferencesDialogController *preferencesDialog = nil;
 	[initialDefaults setObject:[NSNumber numberWithInt:LDrawBlue]		forKey:MINIFIGURE_COLOR_LEG_LEFT];
 	[initialDefaults setObject:[NSNumber numberWithInt:LDrawBlack]		forKey:MINIFIGURE_COLOR_LEG_LEFT_ACCESSORY];
 	
+	[initialDefaults setObject:[NSNumber numberWithFloat:4.0]			forKey:MINIFIGURE_HEAD_ELEVATION];
+	
+	//OpenGL viewer settings -- see -restoreConfiguration in LDrawGLView.
+	[initialDefaults setObject:[NSNumber numberWithInt:ViewingAngleFront]			forKey:[LDRAW_GL_VIEW_ANGLE			stringByAppendingString:@" MinifigureGeneratorView"]];
+	[initialDefaults setObject:[NSNumber numberWithInt:ProjectionModeOrthographic]	forKey:[LDRAW_GL_VIEW_PROJECTION	stringByAppendingString:@" MinifigureGeneratorView"]];
+	
 	//
 	// COMMIT!
 	//

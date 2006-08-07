@@ -1189,6 +1189,22 @@ void setupLight(GLenum light)
 }//end resetCursorRects
 
 
+//========== worksWhenModal ====================================================
+//
+// Purpose:		Due to buggy or at least undocumented behavior in Cocoa, this 
+//				method must be implemented in order for objects of this class to 
+//				be the target of menu actions when the instance resides in a 
+//				modal dialog.
+//
+//				This was discovered experimentally by some enterprising soul on 
+//				Cocoa-dev.
+//
+//==============================================================================
+- (BOOL) worksWhenModal
+{
+	return YES;
+}
+
 #pragma mark -
 
 //========== keyDown: ==========================================================

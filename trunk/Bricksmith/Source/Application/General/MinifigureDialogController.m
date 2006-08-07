@@ -31,6 +31,25 @@
 //
 //}
 
+//========== awakeFromNib ======================================================
+//
+// Purpose:		Brings the Minifigure Generator dialog onscreen.
+//
+//==============================================================================
+- (void) awakeFromNib
+{
+	[self->minifigurePreview setAcceptsFirstResponder:NO];
+	[self->minifigurePreview setZoomPercentage:125];
+	
+	[minifigurePreview	setAutosaveName:@"MinifigureGeneratorView"];
+	[minifigurePreview	restoreConfiguration];
+	
+}//end awakeFromNib
+
+#pragma mark -
+#pragma mark INITIALIZATION
+#pragma mark -
+
 //========== doMinifigureGenerator =============================================
 //
 // Purpose:		Brings the Minifigure Generator dialog onscreen.
@@ -109,14 +128,15 @@
 //==============================================================================
 - (void) setHasHat:(BOOL)flag						{hasHat = flag;						}
 - (void) setHasNeckAccessory:(BOOL)flag				{hasNeckAccessory = flag;			}
+- (void) setHasHips:(BOOL)flag						{hasHips = flag;					}
 - (void) setHasRightArm:(BOOL)flag					{hasRightArm = flag;				}
 - (void) setHasRightHand:(BOOL)flag					{hasRightHand = flag;				}
 - (void) setHasRightHandAccessory:(BOOL)flag		{hasRightHandAccessory = flag;		}
+- (void) setHasRightLeg:(BOOL)flag					{hasRightLeg = flag;				}
+- (void) setHasRightLegAccessory:(BOOL)flag			{hasRightLegAccessory = flag;		}
 - (void) setHasLeftArm:(BOOL)flag					{hasLeftArm = flag;					}
 - (void) setHasLeftHand:(BOOL)flag					{hasLeftHand = flag;				}
 - (void) setHasLeftHandAccessory:(BOOL)flag			{hasLeftHandAccessory = flag;		}
-- (void) setHasRightLeg:(BOOL)flag					{hasRightLeg = flag;				}
-- (void) setHasRightLegAccessory:(BOOL)flag			{hasRightLegAccessory = flag;		}
 - (void) setHasLeftLeg:(BOOL)flag					{hasLeftLeg = flag;					}
 - (void) setHasLeftLegAccessory:(BOOL)flag			{hasLeftLegAccessory = flag;		}
 
@@ -136,16 +156,16 @@
 - (void) setAngleOfHat:(float)angle					{angleOfHat					= angle; }
 - (void) setAngleOfHead:(float)angle				{angleOfHead				= angle; }
 - (void) setAngleOfNeck:(float)angle				{angleOfNeck				= angle; }
-- (void) setAngleOfArmLeft:(float)angle				{angleOfArmLeft				= angle; }
-- (void) setAngleOfArmRight:(float)angle			{angleOfArmRight			= angle; }
-- (void) setAngleOfHandLeft:(float)angle			{angleOfHandLeft			= angle; }
-- (void) setAngleOfHandLeftAccessory:(float)angle	{angleOfHandLeftAccessory	= angle; }
-- (void) setAngleOfHandRight:(float)angle			{angleOfHandRight			= angle; }
-- (void) setAngleOfHandRightAccessory:(float)angle	{angleOfHandRightAccessory	= angle; }
-- (void) setAngleOfLegLeft:(float)angle				{angleOfLegLeft				= angle; }
-- (void) setAngleOfLegLeftAccessory:(float)angle	{angleOfLegLeftAccessory	= angle; }
-- (void) setAngleOfLegRight:(float)angle			{angleOfLegRight			= angle; }
-- (void) setAngleOfLegRightAccessory:(float)angle	{angleOfLegRightAccessory	= angle; }
+- (void) setAngleOfRightArm:(float)angle			{angleOfRightArm			= angle; }
+- (void) setAngleOfRightHand:(float)angle			{angleOfRightHand			= angle; }
+- (void) setAngleOfRightHandAccessory:(float)angle	{angleOfRightHandAccessory	= angle; }
+- (void) setAngleOfRightLeg:(float)angle			{angleOfRightLeg			= angle; }
+- (void) setAngleOfRightLegAccessory:(float)angle	{angleOfRightLegAccessory	= angle; }
+- (void) setAngleOfLeftArm:(float)angle				{angleOfLeftArm				= angle; }
+- (void) setAngleOfLeftHand:(float)angle			{angleOfLeftHand			= angle; }
+- (void) setAngleOfLeftHandAccessory:(float)angle	{angleOfLeftHandAccessory	= angle; }
+- (void) setAngleOfLeftLeg:(float)angle				{angleOfLeftLeg				= angle; }
+- (void) setAngleOfLeftLegAccessory:(float)angle	{angleOfLeftLegAccessory	= angle; }
 
 //========== setMinifigureName: ================================================
 //
@@ -158,7 +178,10 @@
 	[self->minifigureName release];
 	
 	minifigureName = newName;
-}
+	
+	[self->minifigure setModelName:newName];
+	
+}//end setMinifigureName:
 
 #pragma mark -
 #pragma mark ACTIONS
@@ -235,104 +258,215 @@
 {
 	LDrawMPDModel	*newMinifigure	= [LDrawMPDModel newModel];
 	LDrawStep		*firstStep		= [[newMinifigure steps] objectAtIndex:0];
-
+	
+	[newMinifigure setModelName:self->minifigureName];
+	
 	//create the parts based on the current selections
 	LDrawPart	*hat				= [[[hatsController					selectedObjects] objectAtIndex:0] copy];
 	LDrawPart	*head				= [[[headsController				selectedObjects] objectAtIndex:0] copy];
 	LDrawPart	*neck				= [[[necksController				selectedObjects] objectAtIndex:0] copy];
 	LDrawPart	*torso				= [[[torsosController				selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*armLeft			= [[[leftArmsController				selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*armRight			= [[[rightArmsController			selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*handLeft			= [[[leftHandsController			selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*handLeftAccessory	= [[[leftHandAccessoriesController	selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*handRight			= [[[rightHandsController			selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*handRightAccessory	= [[[rightHandAccessoriesController	selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*leftArm			= [[[leftArmsController				selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*leftHand			= [[[leftHandsController			selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*leftHandAccessory	= [[[leftHandAccessoriesController	selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*rightArm			= [[[rightArmsController			selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*rightHand			= [[[rightHandsController			selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*rightHandAccessory	= [[[rightHandAccessoriesController	selectedObjects] objectAtIndex:0] copy];
 	LDrawPart	*hips				= [[[hipsController					selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*legLeft			= [[[leftLegsController				selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*legLeftAccessory	= [[[leftLegAccessoriesController	selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*legRight			= [[[rightLegsController			selectedObjects] objectAtIndex:0] copy];
-	LDrawPart	*legRightAccessory	= [[[rightLegAccessoriesController	selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*leftLeg			= [[[leftLegsController				selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*leftLegAccessory	= [[[leftLegAccessoriesController	selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*rightLeg			= [[[rightLegsController			selectedObjects] objectAtIndex:0] copy];
+	LDrawPart	*rightLegAccessory	= [[[rightLegAccessoriesController	selectedObjects] objectAtIndex:0] copy];
 	
 	//Assign the colors
 	[hat				setLDrawColor:[self->hatsColorWell					LDrawColor]];
 	[head				setLDrawColor:[self->headsColorWell					LDrawColor]];
 	[neck				setLDrawColor:[self->necksColorWell					LDrawColor]];
 	[torso				setLDrawColor:[self->torsosColorWell				LDrawColor]];
-	[armLeft			setLDrawColor:[self->leftArmsColorWell				LDrawColor]];
-	[armRight			setLDrawColor:[self->rightArmsColorWell				LDrawColor]];
-	[handLeft			setLDrawColor:[self->leftHandsColorWell				LDrawColor]];
-	[handLeftAccessory	setLDrawColor:[self->leftHandAccessoriesColorWell	LDrawColor]];
-	[handRight			setLDrawColor:[self->rightHandsColorWell			LDrawColor]];
-	[handRightAccessory	setLDrawColor:[self->rightHandAccessoriesColorWell	LDrawColor]];
+	[leftArm			setLDrawColor:[self->leftArmsColorWell				LDrawColor]];
+	[leftHand			setLDrawColor:[self->leftHandsColorWell				LDrawColor]];
+	[leftHandAccessory	setLDrawColor:[self->leftHandAccessoriesColorWell	LDrawColor]];
+	[rightArm			setLDrawColor:[self->rightArmsColorWell				LDrawColor]];
+	[rightHand			setLDrawColor:[self->rightHandsColorWell			LDrawColor]];
+	[rightHandAccessory	setLDrawColor:[self->rightHandAccessoriesColorWell	LDrawColor]];
 	[hips				setLDrawColor:[self->hipsColorWell					LDrawColor]];
-	[legLeft			setLDrawColor:[self->leftLegsColorWell				LDrawColor]];
-	[legLeftAccessory	setLDrawColor:[self->leftLegAccessoriesColorWell	LDrawColor]];
-	[legRight			setLDrawColor:[self->rightLegsColorWell				LDrawColor]];
-	[legRightAccessory	setLDrawColor:[self->rightLegAccessoriesColorWell	LDrawColor]];
+	[leftLeg			setLDrawColor:[self->leftLegsColorWell				LDrawColor]];
+	[leftLegAccessory	setLDrawColor:[self->leftLegAccessoriesColorWell	LDrawColor]];
+	[rightLeg			setLDrawColor:[self->rightLegsColorWell				LDrawColor]];
+	[rightLegAccessory	setLDrawColor:[self->rightLegAccessoriesColorWell	LDrawColor]];
 	
-	NSLog(@"%@", [torso browsingDescription]);
-	NSLog(@" %d", [torsosController selectionIndex]);
+	///////////////////////////////////////
+	//
+	//	Do Positioning
+	//
+	///////////////////////////////////////
+
+	//---------- head pieces ---------------------------------------------------
 	
-	//---------- Do Positioning ------------------------------------------------
+	// * hat
+	[self rotateByDegrees:V3Make(0, angleOfHat, 0)	parts:hat, nil];
 	
+	// * head
+	[self rotateByDegrees:V3Make(0, angleOfHead, 0)	parts:hat, head, nil];
+	[self moveBy:V3Make(  0, -24,   0)				parts:hat, head, nil];
+	
+	// * neck accessory
+	[self rotateByDegrees:V3Make(0, angleOfNeck, 0)	parts:neck, nil];
+	
+	//move up for neck accessory
+	if(hasNeckAccessory == YES)
+	{
+		[self moveBy:V3Make(  0, -headElevation, 0)	parts:hat, head, nil];
+	}
+	
+	//---------- right arm pieces ----------------------------------------------
+	
+	// * position the right accessory in the hand
+	
+	[self rotateByDegrees:V3Make(0, angleOfRightHandAccessory, 0)
+					parts:rightHandAccessory, nil];
+	if(hasRightHand == YES)
+	{
+		// 15 degrees to fit the hand at 0 degrees
+		[self rotateByDegrees:V3Make(15, 0, 0)
+						parts:rightHandAccessory, nil];
+		[self moveBy:V3Make(  0,   0, -10) parts:rightHandAccessory, nil];
+	}
+	else
+	{
+		//fit skeleton arm
+		[self moveBy:V3Make( -6,   0, -29.5) parts:rightHandAccessory, nil];
+	}
+	
+	
+	// * position the right hand in the right arm
+	if(hasRightHand == YES)	//don't do this if using the skeleton arm.
+	{
+		//		- apply hand rotation
+		[self rotateByDegrees:V3Make(0, 0, angleOfRightHand)
+						parts:rightHand, rightHandAccessory, nil];
+		
+		//		-- rotate hand to match arm socket
+		[self rotateByDegrees:V3Make(45, 0, 0)
+						parts:rightHand, rightHandAccessory, nil];
+		
+		//		-- move hand into arm
+		[self moveBy:V3Make( -5,  19, -10) parts:rightHand, rightHandAccessory, nil];
+	}
+	
+	
+	// * position the right arm in the torso
+	
+	//		-- apply arm rotation
+	//			negative so it matches how the circular slider looks.
+	[self rotateByDegrees:V3Make(-angleOfRightArm, 0, 0)
+					parts:rightArm, rightHand, rightHandAccessory, nil];
+	
+	//		-- rotate arm to match torso
+	//			this value is derived from a little trig on the torso surface.
+	[self rotateByDegrees:V3Make(0, 0, 9.791)
+					parts:rightArm, rightHand, rightHandAccessory, nil];
+	
+	//		-- move arm into torso
+	[self moveBy:V3Make(-15.4,  8, 0) parts:rightArm, rightHand, rightHandAccessory, nil];
+	
+	
+	//---------- left arm pieces -----------------------------------------------
 	
 	// * position the left accessory in the hand
 	
-	// 15 degrees to fit the hand at 0 degrees
-	[handLeftAccessory	rotateByDegrees:V3Make(15, angleOfHandLeftAccessory, 0)
-							centerPoint:V3Make(0,0,0) ];
-	[handLeftAccessory	moveBy:V3Make(  0,   0, -10)];
+	[self rotateByDegrees:V3Make(0, angleOfLeftHandAccessory, 0)
+					parts:leftHandAccessory, nil];
+	if(hasLeftHand == YES)
+	{
+		// 15 degrees to fit the hand at 0 degrees
+		[self rotateByDegrees:V3Make(15, 0, 0)
+						parts:leftHandAccessory, nil];
+		[self moveBy:V3Make(  0,   0, -10) parts:leftHandAccessory, nil];
+	}
+	else
+	{
+		//fit skeleton arm
+		[self moveBy:V3Make(  6,   0, -29.5) parts:leftHandAccessory, nil];
+	}
 	
 	
 	// * position the left hand in the left arm
-	
-	//		- apply hand rotation
-	[self rotateByDegrees:V3Make(0, 0, angleOfHandLeft)
-					parts:handLeft, handLeftAccessory, nil];
-	
-	//		-- rotate hand to match arm socket
-	[self rotateByDegrees:V3Make(45, 0, 0)
-					parts:handLeft, handLeftAccessory, nil];
+	if(hasLeftHand == YES)	//don't do this if using the skeleton arm.
+	{
+		//		- apply hand rotation
+		[self rotateByDegrees:V3Make(0, 0, angleOfLeftHand)
+						parts:leftHand, leftHandAccessory, nil];
+		
+		//		-- rotate hand to match arm socket
+		[self rotateByDegrees:V3Make(45, 0, 0)
+						parts:leftHand, leftHandAccessory, nil];
 
-	//		-- move hand into arm
-	[self moveBy:V3Make(  5,  19, -10) parts:handLeft, handLeftAccessory, nil];
+		//		-- move hand into arm
+		[self moveBy:V3Make(  5,  19, -10) parts:leftHand, leftHandAccessory, nil];
+	}
 	
 
 	// * position the left arm in the torso
 	
 	//		-- apply arm rotation
 	//			negative so it matches how the circular slider looks.
-	[self rotateByDegrees:V3Make(-angleOfArmLeft, 0, 0)
-					parts:armLeft, handLeft, handLeftAccessory, nil];
+	[self rotateByDegrees:V3Make(-angleOfLeftArm, 0, 0)
+					parts:leftArm, leftHand, leftHandAccessory, nil];
 					
 	//		-- rotate arm to match torso
 	//			this value is derived from a little trig on the torso surface.
 	[self rotateByDegrees:V3Make(0, 0, -9.791)
-					parts:armLeft, handLeft, handLeftAccessory, nil];
+					parts:leftArm, leftHand, leftHandAccessory, nil];
 					
 	//		-- move arm into torso
-	[self moveBy:V3Make(15.4,  8, 0) parts:armLeft, handLeft, handLeftAccessory, nil];
+	[self moveBy:V3Make(15.4,  8, 0) parts:leftArm, leftHand, leftHandAccessory, nil];
 	
 	
-	[hat				moveBy:V3Make(  0, -24,   0)];
-	[head				moveBy:V3Make(  0, -24,   0)];
+	//---------- Legs ----------------------------------------------------------
+	
 	[hips				moveBy:V3Make(  0,  32,   0)];
-	[legLeft			moveBy:V3Make(  0,  44,   0)];
-	[legRight			moveBy:V3Make(  0,  44,   0)];
-	[legLeftAccessory	moveBy:V3Make(  0,  44,   1)]; //accessory "origin" is same as legs'
-	[legRightAccessory	moveBy:V3Make(  0,  44,   1)];
+	
+	//---------- right leg pieces ----------------------------------------------
+	
+	// * position the right accessory on the foot
+	
+	// leg accessories' origins take them to their inserted position, which is 
+	// counter to the behavior of the rest of MLCad.ini, where the parts' origins
+	// are the rotation centerpoint of the part.
+	[rightLegAccessory	moveBy:V3Make(  0,  0,   -1)];
+	[rightLegAccessory rotateByDegrees:V3Make(0, angleOfRightLegAccessory, 0)
+						   centerPoint:V3Make(-10, 28, -1) ]; //center of the foot.
+	
+	// * position the right leg on the hips
+	[self rotateByDegrees:V3Make(-angleOfRightLeg, 0, 0)	parts:rightLegAccessory, rightLeg, nil];
+	[self moveBy:V3Make(  0,  44,   0)					parts:rightLegAccessory, rightLeg, nil];
+	
+	//---------- left leg pieces ----------------------------------------------
+	
+	// * position the left accessory on the foot
+	
+	// leg accessories' origins take them to their inserted position, which is 
+	// counter to the behavior of the rest of MLCad.ini, where the parts' origins
+	// are the rotation centerpoint of the part.
+	[leftLegAccessory	moveBy:V3Make(  0,  0,   -1)];
+	[leftLegAccessory rotateByDegrees:V3Make(0, angleOfLeftLegAccessory, 0)
+						   centerPoint:V3Make(10, 28, -1) ]; //center of the foot.
+	
+	// * position the left leg on the hips
+	[self rotateByDegrees:V3Make(-angleOfLeftLeg, 0, 0)	parts:leftLegAccessory, leftLeg, nil];
+	[self moveBy:V3Make(  0,  44,   0)					parts:leftLegAccessory, leftLeg, nil];
 	
 	
 	
-	//move up for neck accessory
-	if(hasNeckAccessory == YES)
-	{
-		[hat			moveBy:V3Make(  0, -headElevation, 0)];
-		[head			moveBy:V3Make(  0, -headElevation, 0)];
-	}
 	
-	//---------- Add everything to the model -----------------------------------
-/*	
+	///////////////////////////////////////
+	//
+	//	Create the Model
+	//
+	///////////////////////////////////////
+	
+	
 	if(hasHat == YES)
 		[firstStep addDirective:hat];
 	
@@ -342,61 +476,61 @@
 	if(hasNeckAccessory == YES)
 		[firstStep addDirective:neck];
 	
-*/	
 //	if(hasTorso == YES)
 		[firstStep addDirective:torso];
 		
 	if(hasLeftArm == YES)
-		[firstStep addDirective:armLeft];
+		[firstStep addDirective:leftArm];
 		
 	if(hasLeftHand == YES)
-		[firstStep addDirective:handLeft];
+		[firstStep addDirective:leftHand];
 	
 	if(hasLeftHandAccessory == YES)
-		[firstStep addDirective:handLeftAccessory];
-/*	
+		[firstStep addDirective:leftHandAccessory];
 	if(hasRightArm == YES)
-		[firstStep addDirective:armRight];
+		[firstStep addDirective:rightArm];
 		
 	if(hasRightHand == YES)
-		[firstStep addDirective:handRight];
+		[firstStep addDirective:rightHand];
 	
 	if(hasRightHandAccessory == YES)
-		[firstStep addDirective:handRightAccessory];
+		[firstStep addDirective:rightHandAccessory];
 	
-//	if(hasYES == YES)
+	if(hasHips == YES)
 		[firstStep addDirective:hips];
 	
 	if(hasLeftLeg == YES)
-		[firstStep addDirective:legLeft];
+		[firstStep addDirective:leftLeg];
 	
 	if(hasLeftLegAccessory == YES)
-		[firstStep addDirective:legLeftAccessory];
+		[firstStep addDirective:leftLegAccessory];
 	
 	if(hasRightLeg == YES)
-		[firstStep addDirective:legRight];
+		[firstStep addDirective:rightLeg];
 	
 	if(hasRightLegAccessory == YES)
-		[firstStep addDirective:legRightAccessory];
-*/	
+		[firstStep addDirective:rightLegAccessory];
+	
+	//this is it! We've got a minifigure!
 	[self setMinifigure:newMinifigure];
+	
 	
 	//Free memory
 	[hat				release];
 	[head				release];
 	[neck				release];
 	[torso				release];
-	[armLeft			release];
-	[armRight			release];
-	[handLeft			release];
-	[handLeftAccessory	release];
-	[handRight			release];
-	[handRightAccessory	release];
+	[leftArm			release];
+	[leftHand			release];
+	[leftHandAccessory	release];
+	[rightArm			release];
+	[rightHand			release];
+	[rightHandAccessory	release];
 	[hips				release];
-	[legLeft			release];
-	[legLeftAccessory	release];
-	[legRight			release];
-	[legRightAccessory	release];
+	[leftLeg			release];
+	[leftLegAccessory	release];
+	[rightLeg			release];
+	[rightLegAccessory	release];
 
 }//end generateMinifigure
 
@@ -494,6 +628,7 @@
 	
 	[self setHasHat:					[userDefaults boolForKey:MINIFIGURE_HAS_HAT]];
 	[self setHasNeckAccessory:			[userDefaults boolForKey:MINIFIGURE_HAS_NECK]];
+	[self setHasHips:					[userDefaults boolForKey:MINIFIGURE_HAS_HIPS]];
 	[self setHasRightArm:				[userDefaults boolForKey:MINIFIGURE_HAS_ARM_RIGHT]];
 	[self setHasRightHand:				[userDefaults boolForKey:MINIFIGURE_HAS_HAND_RIGHT]];
 	[self setHasRightHandAccessory:		[userDefaults boolForKey:MINIFIGURE_HAS_HAND_RIGHT_ACCESSORY]];
@@ -510,16 +645,16 @@
 	[self setAngleOfHat:				[userDefaults floatForKey:MINIFIGURE_ANGLE_HAT]];
 	[self setAngleOfHead:				[userDefaults floatForKey:MINIFIGURE_ANGLE_HEAD]];
 	[self setAngleOfNeck:				[userDefaults floatForKey:MINIFIGURE_ANGLE_NECK]];
-	[self setAngleOfArmLeft:			[userDefaults floatForKey:MINIFIGURE_ANGLE_ARM_LEFT]];
-	[self setAngleOfArmRight:			[userDefaults floatForKey:MINIFIGURE_ANGLE_ARM_RIGHT]];
-	[self setAngleOfHandLeft:			[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_LEFT]];
-	[self setAngleOfHandLeftAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_LEFT_ACCESSORY]];
-	[self setAngleOfHandRight:			[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_RIGHT]];
-	[self setAngleOfHandRightAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_RIGHT_ACCESSORY]];
-	[self setAngleOfLegLeft:			[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_LEFT]];
-	[self setAngleOfLegLeftAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_LEFT_ACCESSORY]];
-	[self setAngleOfLegRight:			[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_RIGHT]];
-	[self setAngleOfLegRightAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_RIGHT_ACCESSORY]];
+	[self setAngleOfLeftArm:			[userDefaults floatForKey:MINIFIGURE_ANGLE_ARM_LEFT]];
+	[self setAngleOfRightArm:			[userDefaults floatForKey:MINIFIGURE_ANGLE_ARM_RIGHT]];
+	[self setAngleOfLeftHand:			[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_LEFT]];
+	[self setAngleOfLeftHandAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_LEFT_ACCESSORY]];
+	[self setAngleOfRightHand:			[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_RIGHT]];
+	[self setAngleOfRightHandAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_HAND_RIGHT_ACCESSORY]];
+	[self setAngleOfLeftLeg:			[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_LEFT]];
+	[self setAngleOfLeftLegAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_LEFT_ACCESSORY]];
+	[self setAngleOfRightLeg:			[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_RIGHT]];
+	[self setAngleOfRightLegAccessory:	[userDefaults floatForKey:MINIFIGURE_ANGLE_LEG_RIGHT_ACCESSORY]];
 	
 	[hatsColorWell					setLDrawColor:[userDefaults integerForKey:MINIFIGURE_COLOR_HAT]];
 	[headsColorWell					setLDrawColor:[userDefaults integerForKey:MINIFIGURE_COLOR_HEAD]];
@@ -598,6 +733,7 @@
 	
 	[userDefaults setBool:self->hasHat						forKey:MINIFIGURE_HAS_HAT];
 	[userDefaults setBool:self->hasNeckAccessory			forKey:MINIFIGURE_HAS_NECK];
+	[userDefaults setBool:self->hasHips						forKey:MINIFIGURE_HAS_HIPS];
 	[userDefaults setBool:self->hasRightArm					forKey:MINIFIGURE_HAS_ARM_RIGHT];
 	[userDefaults setBool:self->hasRightHand				forKey:MINIFIGURE_HAS_HAND_RIGHT];
 	[userDefaults setBool:self->hasRightHandAccessory		forKey:MINIFIGURE_HAS_HAND_RIGHT_ACCESSORY];
@@ -614,16 +750,16 @@
 	[userDefaults setFloat:self->angleOfHat					forKey:MINIFIGURE_ANGLE_HAT];
 	[userDefaults setFloat:self->angleOfHead				forKey:MINIFIGURE_ANGLE_HEAD];
 	[userDefaults setFloat:self->angleOfNeck				forKey:MINIFIGURE_ANGLE_NECK];
-	[userDefaults setFloat:self->angleOfArmLeft				forKey:MINIFIGURE_ANGLE_ARM_LEFT];
-	[userDefaults setFloat:self->angleOfArmRight			forKey:MINIFIGURE_ANGLE_ARM_RIGHT];
-	[userDefaults setFloat:self->angleOfHandLeft			forKey:MINIFIGURE_ANGLE_HAND_LEFT];
-	[userDefaults setFloat:self->angleOfHandLeftAccessory	forKey:MINIFIGURE_ANGLE_HAND_LEFT_ACCESSORY];
-	[userDefaults setFloat:self->angleOfHandRight			forKey:MINIFIGURE_ANGLE_HAND_RIGHT];
-	[userDefaults setFloat:self->angleOfHandRightAccessory	forKey:MINIFIGURE_ANGLE_HAND_RIGHT_ACCESSORY];
-	[userDefaults setFloat:self->angleOfLegLeft				forKey:MINIFIGURE_ANGLE_LEG_LEFT];
-	[userDefaults setFloat:self->angleOfLegLeftAccessory	forKey:MINIFIGURE_ANGLE_LEG_LEFT_ACCESSORY];
-	[userDefaults setFloat:self->angleOfLegRight			forKey:MINIFIGURE_ANGLE_LEG_RIGHT];
-	[userDefaults setFloat:self->angleOfLegRightAccessory	forKey:MINIFIGURE_ANGLE_LEG_RIGHT_ACCESSORY];
+	[userDefaults setFloat:self->angleOfLeftArm				forKey:MINIFIGURE_ANGLE_ARM_LEFT];
+	[userDefaults setFloat:self->angleOfRightArm			forKey:MINIFIGURE_ANGLE_ARM_RIGHT];
+	[userDefaults setFloat:self->angleOfLeftHand			forKey:MINIFIGURE_ANGLE_HAND_LEFT];
+	[userDefaults setFloat:self->angleOfLeftHandAccessory	forKey:MINIFIGURE_ANGLE_HAND_LEFT_ACCESSORY];
+	[userDefaults setFloat:self->angleOfRightHand			forKey:MINIFIGURE_ANGLE_HAND_RIGHT];
+	[userDefaults setFloat:self->angleOfRightHandAccessory	forKey:MINIFIGURE_ANGLE_HAND_RIGHT_ACCESSORY];
+	[userDefaults setFloat:self->angleOfLeftLeg				forKey:MINIFIGURE_ANGLE_LEG_LEFT];
+	[userDefaults setFloat:self->angleOfLeftLegAccessory	forKey:MINIFIGURE_ANGLE_LEG_LEFT_ACCESSORY];
+	[userDefaults setFloat:self->angleOfRightLeg			forKey:MINIFIGURE_ANGLE_LEG_RIGHT];
+	[userDefaults setFloat:self->angleOfRightLegAccessory	forKey:MINIFIGURE_ANGLE_LEG_RIGHT_ACCESSORY];
 	
 	[userDefaults setInteger:[hatsColorWell					LDrawColor]	forKey:MINIFIGURE_COLOR_HAT];
 	[userDefaults setInteger:[headsColorWell				LDrawColor]	forKey:MINIFIGURE_COLOR_HEAD];

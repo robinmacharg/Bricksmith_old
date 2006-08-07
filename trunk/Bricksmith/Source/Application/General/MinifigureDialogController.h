@@ -25,14 +25,15 @@
 	
 	BOOL		hasHat;
 	BOOL		hasNeckAccessory;
+	BOOL		hasHips;
 	BOOL		hasRightArm;
 	BOOL		hasRightHand;
 	BOOL		hasRightHandAccessory;
+	BOOL		hasRightLeg;
+	BOOL		hasRightLegAccessory;
 	BOOL		hasLeftArm;
 	BOOL		hasLeftHand;
 	BOOL		hasLeftHandAccessory;
-	BOOL		hasRightLeg;
-	BOOL		hasRightLegAccessory;
 	BOOL		hasLeftLeg;
 	BOOL		hasLeftLegAccessory;
 	
@@ -41,16 +42,16 @@
 	float		angleOfHat;
 	float		angleOfHead;
 	float		angleOfNeck;
-	float		angleOfArmLeft;
-	float		angleOfArmRight;
-	float		angleOfHandLeft;
-	float		angleOfHandLeftAccessory;
-	float		angleOfHandRight;
-	float		angleOfHandRightAccessory;
-	float		angleOfLegLeft;
-	float		angleOfLegLeftAccessory;
-	float		angleOfLegRight;
-	float		angleOfLegRightAccessory;
+	float		angleOfRightArm;
+	float		angleOfRightHand;
+	float		angleOfRightHandAccessory;
+	float		angleOfRightLeg;
+	float		angleOfRightLegAccessory;
+	float		angleOfLeftArm;
+	float		angleOfLeftHand;
+	float		angleOfLeftHandAccessory;
+	float		angleOfLeftLeg;
+	float		angleOfLeftLegAccessory;
 	
 	//top-level objects
 	
@@ -100,14 +101,15 @@
 - (void) setMinifigure:(LDrawMPDModel *)newMinifigure;
 - (void) setHasHat:(BOOL)flag;
 - (void) setHasNeckAccessory:(BOOL)flag;
+- (void) setHasHips:(BOOL)flag;
 - (void) setHasRightArm:(BOOL)flag;
 - (void) setHasRightHand:(BOOL)flag;
 - (void) setHasRightHandAccessory:(BOOL)flag;
+- (void) setHasRightLeg:(BOOL)flag;
+- (void) setHasRightLegAccessory:(BOOL)flag;
 - (void) setHasLeftArm:(BOOL)flag;
 - (void) setHasLeftHand:(BOOL)flag;
 - (void) setHasLeftHandAccessory:(BOOL)flag;
-- (void) setHasRightLeg:(BOOL)flag;
-- (void) setHasRightLegAccessory:(BOOL)flag;
 - (void) setHasLeftLeg:(BOOL)flag;
 - (void) setHasLeftLegAccessory:(BOOL)flag;
 
@@ -116,16 +118,16 @@
 - (void) setAngleOfHat:(float)angle;
 - (void) setAngleOfHead:(float)angle;
 - (void) setAngleOfNeck:(float)angle;
-- (void) setAngleOfArmLeft:(float)angle;
-- (void) setAngleOfArmRight:(float)angle;
-- (void) setAngleOfHandLeft:(float)angle;
-- (void) setAngleOfHandLeftAccessory:(float)angle;
-- (void) setAngleOfHandRight:(float)angle;
-- (void) setAngleOfHandRightAccessory:(float)angle;
-- (void) setAngleOfLegLeft:(float)angle;
-- (void) setAngleOfLegLeftAccessory:(float)angle;
-- (void) setAngleOfLegRight:(float)angle;
-- (void) setAngleOfLegRightAccessory:(float)angle;
+- (void) setAngleOfRightArm:(float)angle;
+- (void) setAngleOfRightHand:(float)angle;
+- (void) setAngleOfRightHandAccessory:(float)angle;
+- (void) setAngleOfRightLeg:(float)angle;
+- (void) setAngleOfRightLegAccessory:(float)angle;
+- (void) setAngleOfLeftArm:(float)angle;
+- (void) setAngleOfLeftHand:(float)angle;
+- (void) setAngleOfLeftHandAccessory:(float)angle;
+- (void) setAngleOfLeftLeg:(float)angle;
+- (void) setAngleOfLeftLegAccessory:(float)angle;
 
 - (void) setMinifigureName:(NSString *)newName;
 

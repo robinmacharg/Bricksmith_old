@@ -13,6 +13,7 @@
 
 #import "LDrawColor.h"
 #import "MatrixMath.h"
+#import "RotationPanel.h"
 
 @class DocumentToolbarController;
 @class ExtendedSplitView;
@@ -76,13 +77,19 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) setGridSpacingMode:(gridSpacingModeT)newMode;
 - (void) setLastSelectedPart:(LDrawPart *)newPart;
 
-//Actions
-- (void) changeLDrawColor:(id)sender;
+//Activities
+- (void) moveSelectionBy:(Vector3) movementVector;
 - (void) nudgeSelectionBy:(Vector3) nudgeVector;
 - (void) rotateSelectionAround:(Vector3)rotationAxis;
+- (void) rotateSelection:(Tuple3)rotation mode:(RotationModeT)mode fixedCenter:(Point3 *)fixedCenter;
 - (void) selectDirective:(LDrawDirective *)directiveToSelect byExtendingSelection:(BOOL)shouldExtend;
 - (void) setSelectionToHidden:(BOOL)hideFlag;
 - (void) setZoomPercentage:(float)newPercentage;
+
+//Actions
+- (void) changeLDrawColor:(id)sender;
+- (void) panelMoveParts:(id)sender;
+- (void) panelRotateParts:(id)sender;
 
 // - miscellaneous
 - (void) doMissingPiecesCheck:(id)sender;
@@ -96,6 +103,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (IBAction) paste:(id)sender;
 - (IBAction) delete:(id)sender;
 - (IBAction) duplicate:(id)sender;
+- (IBAction) orderFrontRotationPanel:(id)sender;
 
 // - Tools menu
 - (IBAction) showInspector:(id)sender;
@@ -135,7 +143,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) addDirective:(LDrawDirective *)newDirective toParent:(LDrawContainer * )parent atIndex:(int)index;
 - (void) deleteDirective:(LDrawDirective *)doomedDirective;
 - (void) moveDirective:(LDrawDrawableElement *)object inDirection:(Vector3)moveVector;
-- (void) rotatePart:(LDrawPart *)part aroundPoint:(Point3)rotationCenter onAxis:(Vector3)rotationAxis byDegrees:(float)degreesToRotate;
+- (void) rotatePart:(LDrawPart *)part byDegrees:(Tuple3)rotationDegrees aroundPoint:(Point3)rotationCenter;
 - (void) setElement:(LDrawDrawableElement *)element toHidden:(BOOL)hideFlag;
 - (void) setObject:(id <LDrawColorable> )object toColor:(LDrawColorT)newColor;
 - (void) setTransformation:(TransformationComponents) newComponents forPart:(LDrawPart *)part;

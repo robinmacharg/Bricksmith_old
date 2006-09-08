@@ -151,10 +151,10 @@
 
 #define LDRAW_DIRECTORY_NAME					@"LDraw"
 
-#define PRIMITIVES_DIRECTORY_NAME				@"p"
+#define PRIMITIVES_DIRECTORY_NAME				@"P"
 	#define PRIMITIVES_48_DIRECTORY_NAME		@"48"
 
-#define PARTS_DIRECTORY_NAME					@"parts"
+#define PARTS_DIRECTORY_NAME					@"PARTS" //match case of LDraw.org Unix package.
 	#define SUBPARTS_DIRECTORY_NAME				@"s"
 
 #define UNOFFICIAL_DIRECTORY_NAME				@"Unofficial"

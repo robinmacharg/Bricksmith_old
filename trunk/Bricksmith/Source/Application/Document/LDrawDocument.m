@@ -46,10 +46,12 @@
 #import "LDrawUtilities.h"
 #import "MacLDraw.h"
 #import "MinifigureDialogController.h"
+#import "MovePanel.h"
 #import "PartBrowserDataSource.h"
 #import "PartChooserPanel.h"
 #import "PartReport.h"
 #import "PieceCountPanel.h"
+#import "RotationPanel.h"
 #import "UserDefaultsCategory.h"
 
 @implementation LDrawDocument
@@ -419,8 +421,281 @@
 }
 
 #pragma mark -
+#pragma mark ACTIVITIES
+#pragma mark -
+//These are *high-level* calls to modify the structure of the model. They call 
+// down to appropriate low-level calls (in the "Undoable Activities" section).
+
+
+//========== moveSelectionBy: ==================================================
+//
+// Purpose:		Moves all selected (and moveable) directives in the direction 
+//				indicated by movementVector.
+//
+//==============================================================================
+- (void) moveSelectionBy:(Vector3) movementVector
+{
+	NSArray			*selectedObjects	= [self selectedObjects];
+	NSMutableArray	*nudgables			= [NSMutableArray array];
+	LDrawDirective	*currentObject		= nil;
+	int				 counter			= 0;
+	
+	//find the nudgable items
+	for(counter = 0; counter < [selectedObjects count]; counter++)
+	{
+		currentObject = [selectedObjects objectAtIndex:counter];
+		
+		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
+			[self moveDirective: (LDrawDrawableElement*)currentObject
+					inDirection: movementVector];
+	}
+	
+}//end moveSelectionBy:
+
+
+//========== nudgeSelectionBy: =================================================
+//
+// Purpose:		Nudges all selected (and nudgeable) directives in the direction 
+//				indicated by nudgeVector, which should be normalized. The exact 
+//				amount nudged is dependent on the directives themselves, but we 
+//				give them our best estimate based on the grid granularity.
+//
+//==============================================================================
+- (void) nudgeSelectionBy:(Vector3) nudgeVector
+{
+	NSUserDefaults			*userDefaults		= [NSUserDefaults standardUserDefaults];
+	NSArray					*selectedObjects	= [self selectedObjects];
+	LDrawDrawableElement	*firstNudgable		= nil;
+	id						 currentObject		= nil;
+	float					 nudgeMagnitude		= 0;
+	int						 counter			= 0;
+	
+	//Determine magnitude of nudge.
+	switch([self gridSpacingMode]) {
+		case gridModeFine:
+			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_FINE];
+			break;
+		case gridModeMedium:
+			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_MEDIUM];
+			break;
+		case gridModeCoarse:
+			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_COARSE];
+			break;
+	}
+	
+	V3Normalize(&nudgeVector); //normalize just in case someone didn't get the message!
+	nudgeVector.x *= nudgeMagnitude;
+	nudgeVector.y *= nudgeMagnitude;
+	nudgeVector.z *= nudgeMagnitude;
+	
+	//find the first selected item that can acutally be moved.
+	for(counter = 0; counter < [selectedObjects count] && firstNudgable == nil; counter++)
+	{
+		currentObject = [selectedObjects objectAtIndex:counter];
+		
+		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
+			firstNudgable = currentObject;
+	}
+	
+	if(firstNudgable != nil)
+	{
+		//compute the absolute movement for the relative nudge. The actual 
+		// movement for a nudge is dependent on the axis along which the 
+		// nudge is occuring (because Lego follows different vertical and 
+		// horizontal scales). But we must move all selected parts by the 
+		// SAME AMOUNT, otherwise they would get oriented all over the place.
+		nudgeVector = [firstNudgable displacementForNudge:nudgeVector];
+		
+		[self moveSelectionBy:nudgeVector];
+	}
+}//end nudgeSelectionBy:
+
+
+//========== rotateSelectionAround: ============================================
+//
+// Purpose:		Rotates all selected parts in a clockwise direction around the 
+//				specified axis. The rotationAxis should be either 
+//				+/- i, +/- j or +/- k.
+//
+//				This method is used by the rotate toolbar methods. It chooses 
+//				the actual number of degrees based on the current grid mode.
+//
+//==============================================================================
+- (void) rotateSelectionAround:(Vector3)rotationAxis
+{
+	NSArray			*selectedObjects	= [self selectedObjects]; //array of LDrawDirectives.
+	id				 currentObject		= nil;
+	Box3			 selectionBounds	= [LDrawUtilities boundingBox3ForDirectives:selectedObjects];
+	RotationModeT	 rotationMode		= RotateAroundSelectionCenter;
+	Tuple3			 rotation			= {0};
+	Point3			 rotationCenter		= {0};
+	float			 degreesToRotate	= 0;
+	int				 counter			= 0;
+	
+	//Determine magnitude of nudge.
+	switch([self gridSpacingMode])
+	{
+		case gridModeFine:
+			degreesToRotate = GRID_ROTATION_FINE;	//15 degrees
+			break;
+		case gridModeMedium:
+			degreesToRotate = GRID_ROTATION_MEDIUM;	//45 degrees
+			break;
+		case gridModeCoarse:
+			degreesToRotate = GRID_ROTATION_COARSE;	//90 degrees
+			break;
+	}
+	
+	V3Normalize(&rotationAxis); //normalize just in case someone didn't get the message!
+	
+	
+	rotation.x = rotationAxis.x * degreesToRotate;
+	rotation.y = rotationAxis.y * degreesToRotate;
+	rotation.z = rotationAxis.z * degreesToRotate;
+	
+	
+	//Just one part selected; rotate around that part's origin. That is 
+	// presumably what the part's author intended to be the rotation point.
+	if([selectedObjects count] == 1){
+		rotationMode = RotateAroundPartPositions;
+	}
+	//More than one part selected. We now must make a "best guess" about 
+	// what to rotate around. So we will go with the center of the bounding 
+	// box of the selection.
+	else
+		rotationMode = RotateAroundSelectionCenter;
+	
+	
+	[self rotateSelection:rotation mode:rotationMode fixedCenter:NULL];
+	
+}//end rotateSelectionAround
+
+
+//========== rotateSelection:mode:fixedCenter: =================================
+//
+// Purpose:		Rotates the selected parts according to the specified mode.
+//
+// Parameters:	rotation	= degrees x,y,z to rotate
+//				mode		= how to derive the rotation centerpoint
+//				fixedCenter	= explicit centerpoint, or NULL if mode not equal to 
+//							  RotateAroundFixedPoint
+//
+//==============================================================================
+- (void) rotateSelection:(Tuple3)rotation
+					mode:(RotationModeT)mode
+			 fixedCenter:(Point3 *)fixedCenter
+{
+	NSArray			*selectedObjects	= [self selectedObjects]; //array of LDrawDirectives.
+	id				 currentObject		= nil;
+	Box3			 selectionBounds	= [LDrawUtilities boundingBox3ForDirectives:selectedObjects];
+	Point3			 rotationCenter		= {0};
+	float			 degreesToRotate	= 0;
+	int				 counter			= 0;
+	
+	if(mode == RotateAroundSelectionCenter)
+	{
+		rotationCenter = V3Midpoint(&selectionBounds.min, &selectionBounds.max);
+	}
+	else if(mode == RotateAroundFixedPoint)
+	{
+		if(fixedCenter != NULL)
+			rotationCenter = *fixedCenter;
+	}
+	
+	
+	//rotate everything that can be rotated. That would be parts and only parts.
+	for(counter = 0; counter < [selectedObjects count]; counter++)
+	{
+		currentObject = [selectedObjects objectAtIndex:counter];
+		
+		if([currentObject isKindOfClass:[LDrawPart class]])
+		{
+			if(mode == RotateAroundPartPositions)
+				rotationCenter = [currentObject position];
+		
+			[self rotatePart:currentObject
+				   byDegrees:rotation
+				 aroundPoint:rotationCenter ];
+		}
+	}
+}//end rotateSelection:mode:fixedCenter:
+
+
+//========== selectDirective:byExtendingSelection: =============================
+//
+// Purpose:		Selects the specified directive.
+//				Pass nil to mean deselect.
+//
+//==============================================================================
+- (void) selectDirective:(LDrawDirective *) directiveToSelect
+	byExtendingSelection:(BOOL) shouldExtend
+{
+	NSArray			*ancestors			= [directiveToSelect ancestors];
+	LDrawDirective	*currentAncestor	= nil;
+	int				 indexToSelect		= 0;
+	int				 counter			= 0;
+	
+	if(directiveToSelect == nil)
+		[fileContentsOutline deselectAll:nil];
+	else {
+		//Expand the hierarchy all the way down to the directive we are about to 
+		// select.
+		for(counter = 0; counter < [ancestors count]; counter++)
+			[fileContentsOutline expandItem:[ancestors objectAtIndex:counter]];
+		
+		//Now we can safely select the directive. It is guaranteed to be visible, 
+		// since we expanded all its ancestors.
+		indexToSelect = [fileContentsOutline rowForItem:directiveToSelect];
+		
+		//If we are doing multiple selection (shift-click), we want to deselect 
+		// already-selected parts.
+		if(		[[fileContentsOutline selectedRowIndexes] containsIndex:indexToSelect]
+			&&	shouldExtend == YES )
+			[fileContentsOutline deselectRow:indexToSelect];
+		else
+			[fileContentsOutline selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
+							 byExtendingSelection:shouldExtend];
+		
+		[fileContentsOutline scrollRowToVisible:indexToSelect];
+	}
+	
+}//end selectDirective:byExtendingSelection:
+
+
+//========== setSelectionToHidden: =============================================
+//
+// Purpose:		Hides or shows all the hideable selected elements.
+//
+//==============================================================================
+- (void) setSelectionToHidden:(BOOL)hideFlag
+{
+	NSArray			*selectedObjects	= [self selectedObjects];
+	id				 currentObject		= nil;
+	int				 counter			= 0;
+	
+	for(counter = 0; counter < [selectedObjects count]; counter++){
+		currentObject = [selectedObjects objectAtIndex:counter];
+		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
+			[self setElement:currentObject toHidden:hideFlag]; //undoable hook.
+	}
+}//end setSelectionToHidden:
+
+
+//========== setZoomPercentage: ================================================
+//
+// Purpose:		Zooms the selected LDraw view to the specified percentage.
+//
+//==============================================================================
+- (void) setZoomPercentage:(float)newPercentage {
+	[mostRecentLDrawView setZoomPercentage:newPercentage];
+}
+
+
+#pragma mark -
 #pragma mark ACTIONS
 #pragma mark -
+//traditional -(void)action:(id)sender type action methods.
+// Generally called directly by User Interface controls.
 
 
 //========== changeLDrawColor: =================================================
@@ -451,197 +726,51 @@
 }
 
 
-//========== nudgeSelectionBy: =================================================
+//========== panelMoveParts: ===================================================
 //
-// Purpose:		Nudges all selected (and nudgeable) directives in the direction 
-//				indicated by nudgeVector, which should be normalized. The exact 
-//				amount nudged is dependent on the directives themselves, but we 
-//				give them our best estimate based on the grid granularity.
+// Purpose:		The move panel wants to move parts.
+//
+// Parameters:	sender = MovePanel generating the move request.
 //
 //==============================================================================
-- (void) nudgeSelectionBy:(Vector3) nudgeVector
+- (void) panelMoveParts:(id)sender
 {
-	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
-	NSArray			*selectedObjects	= [self selectedObjects];
-	NSMutableArray	*nudgables			= [NSMutableArray array];
-	LDrawDirective	*currentObject		= nil;
-	float			 nudgeMagnitude		= 0;
-	int				 counter			= 0;
+	Vector3			movement		= [sender movementVector];
 	
-	//Determine magnitude of nudge.
-	switch([self gridSpacingMode]) {
-		case gridModeFine:
-			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_FINE];
-			break;
-		case gridModeMedium:
-			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_MEDIUM];
-			break;
-		case gridModeCoarse:
-			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_COARSE];
-			break;
-	}
+	NSLog(@"move");
 	
-	V3Normalize(&nudgeVector); //normalize just in case someone didn't get the message!
-	nudgeVector.x *= nudgeMagnitude;
-	nudgeVector.y *= nudgeMagnitude;
-	nudgeVector.z *= nudgeMagnitude;
+	[self moveSelectionBy:movement];
 	
-	//find the nudgable items
-	for(counter = 0; counter < [selectedObjects count]; counter++){
-		currentObject = [selectedObjects objectAtIndex:counter];
-		
-		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
-			[nudgables addObject:currentObject];
-	}
-	
-	if([nudgables count] > 0)
-	{
-		//compute the absolute movement for the relative nudge. The actual 
-		// movement for a nudge is dependent on the axis along which the 
-		// nudge is occuring (because Lego follows different vertical and 
-		// horizontal scales). But we must move all selected parts by the 
-		// SAME AMOUNT, otherwise they would get oriented all over the place.
-		nudgeVector = [[nudgables objectAtIndex:0] displacementForNudge:nudgeVector];
-		
-		//nudge everything that can be nudged.
-		for(counter = 0; counter < [nudgables count]; counter++)
-		{
-			currentObject = [nudgables objectAtIndex:counter];
-			
-			[self moveDirective: (LDrawDrawableElement*)currentObject
-					inDirection: nudgeVector];
-		}
-	}
-}//end nudgeSelectionBy:
+}//end panelMoveParts
 
 
-//========== rotateSelectionAround: ============================================
+//========== panelRotateParts: =================================================
 //
-// Purpose:		Rotates all selected parts in a clockwise direction around the 
-//				specified axis. The rotationAxis should be either 
-//				+/- i, +/- j or +/- k.
+// Purpose:		The rotation panel wants to rotate! It's up to us to interrogate 
+//				the rotation panel to figure out how exactly this rotation is 
+//				supposed to be done.
+//
+// Parameters:	sender = RotationPanel generating the rotation request.
 //
 //==============================================================================
-- (void) rotateSelectionAround:(Vector3)rotationAxis {
-
-	NSArray			*selectedObjects	= [self selectedObjects]; //array of LDrawDirectives.
-	id				 currentObject		= nil;
-	Box3			 selectionBounds	= [LDrawUtilities boundingBox3ForDirectives:selectedObjects];
-	Point3			 rotationCenter		= {0};
-	float			 degreesToRotate	= 0;
-	int				 counter			= 0;
-	
-	//Determine magnitude of nudge.
-	switch([self gridSpacingMode]) {
-		case gridModeFine:
-			degreesToRotate = GRID_ROTATION_FINE;	//15 degrees
-			break;
-		case gridModeMedium:
-			degreesToRotate = GRID_ROTATION_MEDIUM;	//45 degrees
-			break;
-		case gridModeCoarse:
-			degreesToRotate = GRID_ROTATION_COARSE;	//90 degrees
-			break;
-	}
-	
-	V3Normalize(&rotationAxis); //normalize just in case someone didn't get the message!
-	
-	
-	//Just one part selected; rotate around that part's origin. That is 
-	// presumably what the part's author intended to be the rotation point.
-	if([selectedObjects count] == 1){
-		currentObject = [selectedObjects objectAtIndex:0];
-		if([currentObject isKindOfClass:[LDrawPart class]])
-			rotationCenter = [currentObject position];
-	}
-	//More than one part selected. We now must make a "best guess" about 
-	// what to rotate around. So we will go with the center of the bounding 
-	// box of the selection.
-	else
-		rotationCenter = V3Midpoint(&selectionBounds.min, &selectionBounds.max);
-	
-	
-	//rotate everything that can be rotated. That would be parts and only parts.
-	for(counter = 0; counter < [selectedObjects count]; counter++){
-		currentObject = [selectedObjects objectAtIndex:counter];
-		
-		if([currentObject isKindOfClass:[LDrawPart class]])
-			[self rotatePart:currentObject
-				 aroundPoint:rotationCenter
-					  onAxis:rotationAxis
-				   byDegrees:degreesToRotate];
-	}
-}//end rotateSelectionAround
-
-
-//========== selectDirective:byExtendingSelection: =============================
-//
-// Purpose:		Selects the specified directive.
-//				Pass nil to mean deselect.
-//
-//==============================================================================
-- (void) selectDirective:(LDrawDirective *) directiveToSelect
-	byExtendingSelection:(BOOL) shouldExtend
+- (void) panelRotateParts:(id)sender
 {
-	NSArray			*ancestors			= [directiveToSelect ancestors];
-	LDrawDirective	*currentAncestor	= nil;
-	int				 indexToSelect		= 0;
-	int				 counter			= 0;
+	Tuple3			angles			= [sender angles];
+	RotationModeT	rotationMode	= [sender rotationMode];
+	Point3			centerPoint		= [sender fixedPoint];
 	
-	if(directiveToSelect == nil)
-		[fileContentsOutline deselectAll:nil];
-	else {
-		//Expand the hierarchy all the way down to the directive we are about to 
-		// select.
-		for(counter = 0; counter < [ancestors count]; counter++)
-			[fileContentsOutline expandItem:[ancestors objectAtIndex:counter]];
-		
-		//Now we can safely select the directive. It is guaranteed to be visible, 
-		// since we expanded all its ancestors.
-		indexToSelect = [fileContentsOutline rowForItem:directiveToSelect];
-		//If we are doing multiple selection (shift-click), we want to deselect 
-		// already-selected parts.
-		if(		[[fileContentsOutline selectedRowIndexes] containsIndex:indexToSelect]
-				&&	shouldExtend == YES )
-			[fileContentsOutline deselectRow:indexToSelect];
-		else
-			[fileContentsOutline selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
-							 byExtendingSelection:shouldExtend];
-		[fileContentsOutline scrollRowToVisible:indexToSelect];
-	}
+	//the center may not be valid, but that will get taken care of by the 
+	// rotation mode.
 	
-}//end selectDirective:byExtendingSelection:
-
-
-//========== setSelectionToHidden: =============================================
-//
-// Purpose:		Hides or shows all the hideable selected elements.
-//
-//==============================================================================
-- (void) setSelectionToHidden:(BOOL)hideFlag {
-	NSArray			*selectedObjects	= [self selectedObjects];
-	id				 currentObject		= nil;
-	int				 counter			= 0;
+	[self rotateSelection:angles
+					 mode:rotationMode
+			  fixedCenter:&centerPoint];
 	
-	for(counter = 0; counter < [selectedObjects count]; counter++){
-		currentObject = [selectedObjects objectAtIndex:counter];
-		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
-			[self setElement:currentObject toHidden:hideFlag]; //undoable hook.
-	}
-}//end setSelectionToHidden:
-
-
-//========== setZoomPercentage: ================================================
-//
-// Purpose:		Zooms the selected LDraw view to the specified percentage.
-//
-//==============================================================================
-- (void) setZoomPercentage:(float)newPercentage {
-	[mostRecentLDrawView setZoomPercentage:newPercentage];
-}
+}//end panelRotateParts
 
 
 #pragma mark -
+
 
 //========== doMissingPiecesCheck: =============================================
 //
@@ -970,6 +1099,35 @@
 	[undoManager setActionName:NSLocalizedString(@"UndoDuplicate", nil)];
 }
 
+
+//========== orderFrontMovePanel: ==============================================
+//
+// Purpose:		Opens the advanced rotation panel that provides fine part 
+//				rotation controls.
+//
+//==============================================================================
+- (IBAction) orderFrontMovePanel:(id)sender
+{
+	MovePanel *panel = [MovePanel movePanel];
+	
+	[panel makeKeyAndOrderFront:self];
+
+}//end orderFrontMovePanel:
+
+
+//========== orderFrontRotationPanel: ==========================================
+//
+// Purpose:		Opens the advanced rotation panel that provides fine part 
+//				rotation controls.
+//
+//==============================================================================
+- (IBAction) orderFrontRotationPanel:(id)sender
+{
+	RotationPanel *panel = [RotationPanel rotationPanel];
+	
+	[panel makeKeyAndOrderFront:self];
+
+}//end openRotationPanel:
 
 #pragma mark -
 #pragma mark Tools Menu
@@ -1520,6 +1678,10 @@
 #pragma mark -
 #pragma mark UNDOABLE ACTIVITIES
 #pragma mark -
+//these are *low-level* calls which provide support for the Undo architecture.
+// all of these are wrapped by high-level calls, which are all application-level 
+// code should ever need to use.
+
 
 //========== addDirective:toParent: ============================================
 //
@@ -1656,29 +1818,25 @@
 //
 //==============================================================================
 - (void) rotatePart:(LDrawPart *)part
+		  byDegrees:(Tuple3)rotationDegrees
 		aroundPoint:(Point3)rotationCenter
-			 onAxis:(Vector3)rotationAxis
-		  byDegrees:(float)degreesToRotate
 {
 
-	NSUndoManager	*undoManager	= [self undoManager];
-	Tuple3			 rotation		= {0};
+	NSUndoManager	*undoManager		= [self undoManager];
+	Tuple3			 oppositeRotation	= rotationDegrees;
+	
+	V3Negate(&oppositeRotation);
 	
 	[[undoManager prepareWithInvocationTarget:self]
 			rotatePart: part
-		   aroundPoint:rotationCenter
-				onAxis: rotationAxis
-			 byDegrees: -degreesToRotate ]; //undo: rotate backwards
+			 byDegrees: oppositeRotation
+		   aroundPoint: rotationCenter  ]; //undo: rotate backwards
 	[undoManager setActionName:NSLocalizedString(@"UndoRotate", nil)];
 	
 	
-	rotation.x = rotationAxis.x * degreesToRotate;
-	rotation.y = rotationAxis.y * degreesToRotate;
-	rotation.z = rotationAxis.z * degreesToRotate;
-	
 	[[self documentContents] lockForEditing];
 	{
-		[part rotateByDegrees:rotation centerPoint:rotationCenter];
+		[part rotateByDegrees:rotationDegrees centerPoint:rotationCenter];
 	}
 	[[self documentContents] unlockEditor];
 

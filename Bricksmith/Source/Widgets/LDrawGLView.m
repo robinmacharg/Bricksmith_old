@@ -1227,7 +1227,8 @@ void setupLight(GLenum light)
 	
 		unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
 
-		switch(firstCharacter) {
+		switch(firstCharacter)
+		{
 			
 			case NSUpArrowFunctionKey:
 			case NSDownArrowFunctionKey:
@@ -1241,6 +1242,25 @@ void setupLight(GLenum light)
 				[NSApp sendAction:@selector(delete:)
 							   to:nil //just send it somewhere!
 							 from:self];
+			case 'x':
+				[self->document rotateSelectionAround:V3Make(1,0,0)];
+				break;
+			case 'X':
+				[self->document rotateSelectionAround:V3Make(-1,0,0)];
+				break;
+			case 'y':
+				[self->document rotateSelectionAround:V3Make(0,1,0)];
+				break;
+			case 'Y':
+				[self->document rotateSelectionAround:V3Make(0,-1,0)];
+				break;
+			case 'z':
+				[self->document rotateSelectionAround:V3Make(0,0,1)];
+				break;
+			case 'Z':
+				[self->document rotateSelectionAround:V3Make(0,0,-1)];
+				break;
+				
 			default:
 				break;
 		}

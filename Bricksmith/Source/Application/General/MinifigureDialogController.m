@@ -39,7 +39,7 @@
 - (void) awakeFromNib
 {
 	[self->minifigurePreview setAcceptsFirstResponder:NO];
-	[self->minifigurePreview setZoomPercentage:125];
+	[self->minifigurePreview setZoomPercentage:180];
 	
 	[minifigurePreview	setAutosaveName:@"MinifigureGeneratorView"];
 	[minifigurePreview	restoreConfiguration];
@@ -434,7 +434,7 @@
 	// leg accessories' origins take them to their inserted position, which is 
 	// counter to the behavior of the rest of MLCad.ini, where the parts' origins
 	// are the rotation centerpoint of the part.
-	[rightLegAccessory	moveBy:V3Make(  0,  0,   -1)];
+//	[rightLegAccessory	moveBy:V3Make(  0,  0,   -1)];
 	[rightLegAccessory rotateByDegrees:V3Make(0, angleOfRightLegAccessory, 0)
 						   centerPoint:V3Make(-10, 28, -1) ]; //center of the foot.
 	
@@ -449,7 +449,7 @@
 	// leg accessories' origins take them to their inserted position, which is 
 	// counter to the behavior of the rest of MLCad.ini, where the parts' origins
 	// are the rotation centerpoint of the part.
-	[leftLegAccessory	moveBy:V3Make(  0,  0,   -1)];
+//	[leftLegAccessory	moveBy:V3Make(  0,  0,   -1)];
 	[leftLegAccessory rotateByDegrees:V3Make(0, angleOfLeftLegAccessory, 0)
 						   centerPoint:V3Make(10, 28, -1) ]; //center of the foot.
 	

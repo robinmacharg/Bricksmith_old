@@ -17,6 +17,8 @@
                 exportSteps = id; 
                 gridGranularityMenuChanged = id; 
                 hideParts = id; 
+                orderFrontMovePanel = id; 
+                orderFrontRotationPanel = id; 
                 showColors = id; 
                 showDimensions = id; 
                 showParts = id; 

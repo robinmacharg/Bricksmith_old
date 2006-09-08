@@ -11,17 +11,17 @@
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>382</integer>
+				<integer>373</integer>
 			</dict>
 			<key>NSClassesKeys</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>315</integer>
+				<integer>306</integer>
 			</dict>
 			<key>NSClassesValues</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>316</integer>
+				<integer>307</integer>
 			</dict>
 			<key>NSConnections</key>
 			<dict>
@@ -41,34 +41,34 @@
 			<key>NSNamesKeys</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>278</integer>
+				<integer>274</integer>
 			</dict>
 			<key>NSNamesValues</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>279</integer>
+				<integer>275</integer>
 			</dict>
 			<key>NSNextOid</key>
 			<integer>156</integer>
 			<key>NSObjectsKeys</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>275</integer>
+				<integer>271</integer>
 			</dict>
 			<key>NSObjectsValues</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>277</integer>
+				<integer>273</integer>
 			</dict>
 			<key>NSOidsKeys</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>317</integer>
+				<integer>308</integer>
 			</dict>
 			<key>NSOidsValues</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>318</integer>
+				<integer>309</integer>
 			</dict>
 			<key>NSRoot</key>
 			<dict>
@@ -175,7 +175,15 @@
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>135</integer>
+					<integer>134</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>239</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>241</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -232,14 +240,6 @@
 				<dict>
 					<key>CF$UID</key>
 					<integer>269</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>271</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>273</integer>
 				</dict>
 			</array>
 		</dict>
@@ -550,7 +550,7 @@
 		</dict>
 		<string>Your LDraw parts folder may be downloaded from www.ldraw.org.
 
-The LDraw folder contains the folders "P" and "Parts."</string>
+The LDraw folder contains the folders "P" and "PARTS."</string>
 		<dict>
 			<key>$class</key>
 			<dict>
@@ -780,17 +780,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSClassName</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>240</integer>
+				<integer>237</integer>
 			</dict>
 			<key>NSExtension</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>241</integer>
+				<integer>50</integer>
 			</dict>
 			<key>NSFrameSize</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>239</integer>
+				<integer>236</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -800,7 +800,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSSubviews</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>136</integer>
+				<integer>135</integer>
 			</dict>
 		</dict>
 		<string>{{354, 178}, {118, 32}}</string>
@@ -1041,7 +1041,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>134</integer>
+				<integer>133</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -1063,7 +1063,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSExtension</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>133</integer>
+				<integer>50</integer>
 			</dict>
 			<key>NSFrameSize</key>
 			<dict>
@@ -2001,7 +2001,6 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NS.string</key>
 			<string>NSView</string>
 		</dict>
-		<string>NSResponder</string>
 		<string>stylesContentView</string>
 		<dict>
 			<key>$class</key>
@@ -2017,7 +2016,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>242</integer>
+				<integer>238</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -2035,11 +2034,11 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>137</integer>
+					<integer>136</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>141</integer>
+					<integer>140</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -2047,7 +2046,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>153</integer>
+					<integer>152</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -2055,47 +2054,47 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>159</integer>
+					<integer>158</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>164</integer>
+					<integer>163</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>168</integer>
+					<integer>167</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>176</integer>
+					<integer>174</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>199</integer>
+					<integer>197</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>203</integer>
+					<integer>201</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>207</integer>
+					<integer>205</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>222</integer>
+					<integer>220</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>227</integer>
+					<integer>225</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>231</integer>
+					<integer>228</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>235</integer>
+					<integer>232</integer>
 				</dict>
 			</array>
 		</dict>
@@ -2108,14 +2107,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>139</integer>
+				<integer>138</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>138</integer>
+				<integer>137</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -2147,12 +2146,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>140</integer>
+				<integer>139</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>137</integer>
+				<integer>136</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2165,12 +2164,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				<integer>42</integer>
 			</dict>
 		</dict>
-		<string>This is the path to the folder containing the LDraw part definitions. It should contain the folders "P" and "Parts." You may download these files from www.ldraw.org.</string>
+		<string>This is the path to the folder containing the LDraw part definitions. It should contain the folders "P" and "PARTS." You may download these files from www.ldraw.org.</string>
 		<dict>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>152</integer>
+				<integer>151</integer>
 			</dict>
 			<key>NSBorderType</key>
 			<integer>3</integer>
@@ -2179,7 +2178,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>145</integer>
+				<integer>144</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -2189,12 +2188,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSOffsets</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>146</integer>
+				<integer>145</integer>
 			</dict>
 			<key>NSSubviews</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>142</integer>
+				<integer>141</integer>
 			</dict>
 			<key>NSSuperview</key>
 			<dict>
@@ -2204,7 +2203,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSTitleCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>147</integer>
+				<integer>146</integer>
 			</dict>
 			<key>NSTitlePosition</key>
 			<integer>0</integer>
@@ -2221,7 +2220,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>143</integer>
+					<integer>142</integer>
 				</dict>
 			</array>
 		</dict>
@@ -2234,17 +2233,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>144</integer>
+				<integer>143</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>141</integer>
+				<integer>140</integer>
 			</dict>
 			<key>NSSuperview</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>141</integer>
+				<integer>140</integer>
 			</dict>
 		</dict>
 		<string>{{2, 2}, {125, 1}}</string>
@@ -2259,7 +2258,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSBackgroundColor</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>149</integer>
+				<integer>148</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>67239424</integer>
@@ -2268,7 +2267,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>148</integer>
+				<integer>147</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2296,12 +2295,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSColor</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>151</integer>
+				<integer>150</integer>
 			</dict>
 			<key>NSColorName</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>150</integer>
+				<integer>149</integer>
 			</dict>
 			<key>NSColorSpace</key>
 			<integer>6</integer>
@@ -2340,14 +2339,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>155</integer>
+				<integer>154</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>154</integer>
+				<integer>153</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -2379,17 +2378,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>156</integer>
+				<integer>155</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>153</integer>
+				<integer>152</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>157</integer>
+				<integer>156</integer>
 			</dict>
 			<key>NSTextColor</key>
 			<dict>
@@ -2407,7 +2406,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSName</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>158</integer>
+				<integer>157</integer>
 			</dict>
 			<key>NSSize</key>
 			<real>13</real>
@@ -2424,14 +2423,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>161</integer>
+				<integer>160</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>160</integer>
+				<integer>159</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -2454,7 +2453,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSBackgroundColor</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>149</integer>
+				<integer>148</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>-1804468671</integer>
@@ -2468,7 +2467,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>159</integer>
+				<integer>158</integer>
 			</dict>
 			<key>NSDrawsBackground</key>
 			<true/>
@@ -2480,7 +2479,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSTextColor</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>162</integer>
+				<integer>161</integer>
 			</dict>
 		</dict>
 		<dict>
@@ -2502,7 +2501,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSColorName</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>163</integer>
+				<integer>162</integer>
 			</dict>
 			<key>NSColorSpace</key>
 			<integer>6</integer>
@@ -2517,14 +2516,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>166</integer>
+				<integer>165</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>165</integer>
+				<integer>164</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -2556,17 +2555,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>167</integer>
+				<integer>166</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>164</integer>
+				<integer>163</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>157</integer>
+				<integer>156</integer>
 			</dict>
 			<key>NSTextColor</key>
 			<dict>
@@ -2579,7 +2578,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>152</integer>
+				<integer>151</integer>
 			</dict>
 			<key>NSBorderType</key>
 			<integer>3</integer>
@@ -2588,7 +2587,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>172</integer>
+				<integer>171</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -2598,12 +2597,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSOffsets</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>173</integer>
+				<integer>172</integer>
 			</dict>
 			<key>NSSubviews</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>169</integer>
+				<integer>168</integer>
 			</dict>
 			<key>NSSuperview</key>
 			<dict>
@@ -2613,7 +2612,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSTitleCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>174</integer>
+				<integer>173</integer>
 			</dict>
 			<key>NSTitlePosition</key>
 			<integer>0</integer>
@@ -2630,7 +2629,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>170</integer>
+					<integer>169</integer>
 				</dict>
 			</array>
 		</dict>
@@ -2643,17 +2642,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>171</integer>
+				<integer>170</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>168</integer>
+				<integer>167</integer>
 			</dict>
 			<key>NSSuperview</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>168</integer>
+				<integer>167</integer>
 			</dict>
 		</dict>
 		<string>{{2, 2}, {125, 1}}</string>
@@ -2668,7 +2667,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSBackgroundColor</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>149</integer>
+				<integer>148</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>67239424</integer>
@@ -2677,7 +2676,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>175</integer>
+				<integer>147</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2690,12 +2689,11 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				<integer>42</integer>
 			</dict>
 		</dict>
-		<string>Box</string>
 		<dict>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>198</integer>
+				<integer>196</integer>
 			</dict>
 			<key>NSBackgroundColor</key>
 			<dict>
@@ -2705,22 +2703,22 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCellBackgroundColor</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>151</integer>
+				<integer>150</integer>
 			</dict>
 			<key>NSCellClass</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>194</integer>
+				<integer>192</integer>
 			</dict>
 			<key>NSCellSize</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>192</integer>
+				<integer>190</integer>
 			</dict>
 			<key>NSCells</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>178</integer>
+				<integer>176</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
@@ -2732,12 +2730,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>177</integer>
+				<integer>175</integer>
 			</dict>
 			<key>NSIntercellSpacing</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>193</integer>
+				<integer>191</integer>
 			</dict>
 			<key>NSMatrixFlags</key>
 			<integer>67633152</integer>
@@ -2753,7 +2751,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSProtoCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>195</integer>
+				<integer>193</integer>
 			</dict>
 			<key>NSSelectedCol</key>
 			<integer>-1</integer>
@@ -2776,15 +2774,15 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>179</integer>
+					<integer>177</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>185</integer>
+					<integer>183</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>189</integer>
+					<integer>187</integer>
 				</dict>
 			</array>
 		</dict>
@@ -2792,7 +2790,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>184</integer>
+				<integer>182</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>343014977</integer>
@@ -2801,12 +2799,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>180</integer>
+				<integer>178</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>176</integer>
+				<integer>174</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2816,7 +2814,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSTitleCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>181</integer>
+				<integer>179</integer>
 			</dict>
 			<key>NSTitleWidth</key>
 			<real>59</real>
@@ -2834,7 +2832,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>183</integer>
+				<integer>181</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>67239424</integer>
@@ -2843,7 +2841,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>182</integer>
+				<integer>180</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2876,7 +2874,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>184</integer>
+				<integer>182</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>343014977</integer>
@@ -2885,12 +2883,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>186</integer>
+				<integer>184</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>176</integer>
+				<integer>174</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2902,7 +2900,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSTitleCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>187</integer>
+				<integer>185</integer>
 			</dict>
 			<key>NSTitleWidth</key>
 			<real>59</real>
@@ -2920,7 +2918,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>183</integer>
+				<integer>181</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>67239424</integer>
@@ -2929,7 +2927,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>188</integer>
+				<integer>186</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2942,7 +2940,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>184</integer>
+				<integer>182</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>343014977</integer>
@@ -2956,7 +2954,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>176</integer>
+				<integer>174</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -2968,7 +2966,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSTitleCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>190</integer>
+				<integer>188</integer>
 			</dict>
 			<key>NSTitleWidth</key>
 			<real>59</real>
@@ -2977,7 +2975,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>183</integer>
+				<integer>181</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>67239424</integer>
@@ -2986,7 +2984,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>191</integer>
+				<integer>189</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -3002,7 +3000,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>184</integer>
+				<integer>182</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>343014976</integer>
@@ -3021,7 +3019,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSTitleCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>196</integer>
+				<integer>194</integer>
 			</dict>
 			<key>NSTitleWidth</key>
 			<real>59</real>
@@ -3030,7 +3028,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>183</integer>
+				<integer>181</integer>
 			</dict>
 			<key>NSCellFlags</key>
 			<integer>67239424</integer>
@@ -3039,7 +3037,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>197</integer>
+				<integer>195</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -3071,14 +3069,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>201</integer>
+				<integer>199</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>200</integer>
+				<integer>198</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -3110,12 +3108,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>202</integer>
+				<integer>200</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>199</integer>
+				<integer>197</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -3138,14 +3136,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>205</integer>
+				<integer>203</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>204</integer>
+				<integer>202</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -3177,12 +3175,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>206</integer>
+				<integer>204</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>203</integer>
+				<integer>201</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
@@ -3200,17 +3198,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>221</integer>
+				<integer>219</integer>
 			</dict>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>215</integer>
+				<integer>213</integer>
 			</dict>
 			<key>NSDragTypes</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>208</integer>
+				<integer>206</integer>
 			</dict>
 			<key>NSEditable</key>
 			<true/>
@@ -3219,7 +3217,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>214</integer>
+				<integer>212</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -3242,6 +3240,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<array>
 				<dict>
 					<key>CF$UID</key>
+					<integer>207</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>208</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
 					<integer>209</integer>
 				</dict>
 				<dict>
@@ -3251,14 +3257,6 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				<dict>
 					<key>CF$UID</key>
 					<integer>211</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>212</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>213</integer>
 				</dict>
 			</array>
 		</dict>
@@ -3272,7 +3270,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>220</integer>
+				<integer>218</integer>
 			</dict>
 			<key>NSAlign</key>
 			<integer>0</integer>
@@ -3285,7 +3283,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>216</integer>
+				<integer>214</integer>
 			</dict>
 			<key>NSScale</key>
 			<integer>0</integer>
@@ -3296,17 +3294,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>219</integer>
+				<integer>217</integer>
 			</dict>
 			<key>NSClassName</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>217</integer>
+				<integer>215</integer>
 			</dict>
 			<key>NSResourceName</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>218</integer>
+				<integer>216</integer>
 			</dict>
 		</dict>
 		<string>NSImage</string>
@@ -3353,14 +3351,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>224</integer>
+				<integer>222</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>223</integer>
+				<integer>221</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -3392,17 +3390,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>225</integer>
+				<integer>223</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>222</integer>
+				<integer>220</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>226</integer>
+				<integer>224</integer>
 			</dict>
 			<key>NSTextColor</key>
 			<dict>
@@ -3436,14 +3434,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>229</integer>
+				<integer>227</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>228</integer>
+				<integer>226</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -3475,17 +3473,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>230</integer>
+				<integer>223</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>227</integer>
+				<integer>225</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>226</integer>
+				<integer>224</integer>
 			</dict>
 			<key>NSTextColor</key>
 			<dict>
@@ -3493,7 +3491,6 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				<integer>42</integer>
 			</dict>
 		</dict>
-		<string>20</string>
 		<dict>
 			<key>$class</key>
 			<dict>
@@ -3503,14 +3500,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>233</integer>
+				<integer>230</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>232</integer>
+				<integer>229</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -3542,17 +3539,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>234</integer>
+				<integer>231</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>231</integer>
+				<integer>228</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>226</integer>
+				<integer>224</integer>
 			</dict>
 			<key>NSTextColor</key>
 			<dict>
@@ -3570,14 +3567,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSCell</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>237</integer>
+				<integer>234</integer>
 			</dict>
 			<key>NSEnabled</key>
 			<true/>
 			<key>NSFrame</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>236</integer>
+				<integer>233</integer>
 			</dict>
 			<key>NSNextResponder</key>
 			<dict>
@@ -3609,17 +3606,17 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSContents</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>238</integer>
+				<integer>235</integer>
 			</dict>
 			<key>NSControlView</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>235</integer>
+				<integer>232</integer>
 			</dict>
 			<key>NSSupport</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>226</integer>
+				<integer>224</integer>
 			</dict>
 			<key>NSTextColor</key>
 			<dict>
@@ -3638,7 +3635,6 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NS.string</key>
 			<string>NSView</string>
 		</dict>
-		<string>NSResponder</string>
 		<string>ldrawContentView</string>
 		<dict>
 			<key>$class</key>
@@ -3649,12 +3645,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSDestination</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>159</integer>
+				<integer>158</integer>
 			</dict>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>244</integer>
+				<integer>240</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3677,12 +3673,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>246</integer>
+				<integer>242</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>159</integer>
+				<integer>158</integer>
 			</dict>
 		</dict>
 		<string>pathTextFieldChanged:</string>
@@ -3700,7 +3696,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>248</integer>
+				<integer>244</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3723,7 +3719,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>250</integer>
+				<integer>246</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3746,7 +3742,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>252</integer>
+				<integer>248</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3769,7 +3765,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>254</integer>
+				<integer>250</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3792,7 +3788,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>256</integer>
+				<integer>252</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3815,7 +3811,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>258</integer>
+				<integer>254</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3838,7 +3834,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>260</integer>
+				<integer>256</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3861,7 +3857,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>262</integer>
+				<integer>258</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3884,7 +3880,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>264</integer>
+				<integer>260</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3907,7 +3903,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>266</integer>
+				<integer>262</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3930,7 +3926,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>268</integer>
+				<integer>264</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3953,7 +3949,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>270</integer>
+				<integer>266</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3971,12 +3967,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSDestination</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>176</integer>
+				<integer>174</integer>
 			</dict>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>272</integer>
+				<integer>268</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
@@ -3999,12 +3995,12 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>NSLabel</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>274</integer>
+				<integer>270</integer>
 			</dict>
 			<key>NSSource</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>176</integer>
+				<integer>174</integer>
 			</dict>
 		</dict>
 		<string>gridSpacingChanged:</string>
@@ -4012,149 +4008,13 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>276</integer>
+				<integer>272</integer>
 			</dict>
 			<key>NS.objects</key>
 			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>170</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>95</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>176</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>199</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>185</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>118</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>235</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>207</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>141</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>67</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>127</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>28</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>54</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>143</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>74</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>227</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>91</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>189</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>86</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>231</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>122</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>203</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>11</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>108</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>164</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>104</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>99</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>222</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>30</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>179</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>16</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>168</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>80</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>153</integer>
+					<integer>225</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4162,15 +4022,151 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>137</integer>
+					<integer>163</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>159</integer>
+					<integer>104</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>228</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>205</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>169</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>118</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>158</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>122</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>136</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>86</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>54</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>80</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>167</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>99</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>197</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>95</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>201</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>11</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>177</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>152</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>183</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>28</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>16</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>108</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>232</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>174</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>127</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>142</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>91</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>30</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>67</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>140</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
 					<integer>113</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>220</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>187</integer>
 				</dict>
 			</array>
 		</dict>
@@ -4187,13 +4183,21 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>276</integer>
+				<integer>272</integer>
 			</dict>
 			<key>NS.objects</key>
 			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>168</integer>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4209,7 +4213,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>176</integer>
+					<integer>167</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4218,6 +4222,26 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				<dict>
 					<key>CF$UID</key>
 					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4226,46 +4250,6 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				<dict>
 					<key>CF$UID</key>
 					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>74</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>2</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>141</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>2</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>74</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>176</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4289,7 +4273,7 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>74</integer>
+					<integer>174</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4297,23 +4281,15 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>74</integer>
+					<integer>174</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>74</integer>
+					<integer>2</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>28</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>176</integer>
+					<integer>2</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4321,18 +4297,6 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>74</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
 					<integer>74</integer>
 				</dict>
 				<dict>
@@ -4346,6 +4310,38 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				<dict>
 					<key>CF$UID</key>
 					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>140</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>28</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>174</integer>
 				</dict>
 			</array>
 		</dict>
@@ -4353,133 +4349,13 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>276</integer>
+				<integer>272</integer>
 			</dict>
 			<key>NS.objects</key>
 			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>170</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>95</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>176</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>199</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>118</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>235</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>67</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>141</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>127</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>28</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>54</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>143</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>74</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>227</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>91</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>231</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>86</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>122</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>203</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>11</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>108</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>164</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>104</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>99</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>222</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>30</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>2</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>168</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>80</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>153</integer>
+					<integer>225</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
@@ -4487,15 +4363,135 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>137</integer>
+					<integer>163</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>159</integer>
+					<integer>228</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>104</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>2</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>169</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>118</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>158</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>122</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>136</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>86</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>54</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>80</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>167</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>99</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>152</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>197</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>201</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>11</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>95</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>28</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>174</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>108</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>232</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>127</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>142</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>91</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>30</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>67</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>140</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
 					<integer>113</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>220</integer>
 				</dict>
 			</array>
 		</dict>
@@ -4503,10 +4499,26 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 			<key>$class</key>
 			<dict>
 				<key>CF$UID</key>
-				<integer>276</integer>
+				<integer>272</integer>
 			</dict>
 			<key>NS.objects</key>
 			<array>
+				<dict>
+					<key>CF$UID</key>
+					<integer>276</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>277</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>278</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>279</integer>
+				</dict>
 				<dict>
 					<key>CF$UID</key>
 					<integer>280</integer>
@@ -4561,6 +4573,14 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
+					<integer>277</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>283</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
 					<integer>293</integer>
 				</dict>
 				<dict>
@@ -4597,6 +4617,18 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
+					<integer>282</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>278</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>286</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
 					<integer>302</integer>
 				</dict>
 				<dict>
@@ -4611,22 +4643,334 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 					<key>CF$UID</key>
 					<integer>305</integer>
 				</dict>
+			</array>
+		</dict>
+		<string>NSTextField1111111</string>
+		<string>NSTextField2</string>
+		<string>NSTextField21</string>
+		<string>NSTextField11111111</string>
+		<string>NSTextField2111</string>
+		<dict>
+			<key>$class</key>
+			<dict>
+				<key>CF$UID</key>
+				<integer>6</integer>
+			</dict>
+			<key>NS.string</key>
+			<string>File's Owner</string>
+		</dict>
+		<string>NSView</string>
+		<string>NSTextField22</string>
+		<string>NSTextField</string>
+		<string>221</string>
+		<string>NSTextField1</string>
+		<string>21</string>
+		<string>NSButton</string>
+		<string>2</string>
+		<string>Styles</string>
+		<string>NSBox11</string>
+		<string>211</string>
+		<string>NSTextField23</string>
+		<string>Preferences</string>
+		<string>NSTextField211</string>
+		<string>LDraw</string>
+		<string>Choose Dialog view</string>
+		<string>NSForm1</string>
+		<string>2111</string>
+		<string>NSTextField1111112</string>
+		<string>NSTextField221</string>
+		<string>NSButton1</string>
+		<string>NSBox1</string>
+		<string>22</string>
+		<string>NSTextField111111</string>
+		<dict>
+			<key>$class</key>
+			<dict>
+				<key>CF$UID</key>
+				<integer>272</integer>
+			</dict>
+			<key>NS.objects</key>
+			<array/>
+		</dict>
+		<dict>
+			<key>$class</key>
+			<dict>
+				<key>CF$UID</key>
+				<integer>272</integer>
+			</dict>
+			<key>NS.objects</key>
+			<array/>
+		</dict>
+		<dict>
+			<key>$class</key>
+			<dict>
+				<key>CF$UID</key>
+				<integer>272</integer>
+			</dict>
+			<key>NS.objects</key>
+			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>306</integer>
+					<integer>25</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>307</integer>
+					<integer>267</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>308</integer>
+					<integer>67</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>309</integer>
+					<integer>28</integer>
 				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>163</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>249</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>232</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>118</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>73</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>177</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>239</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>66</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>245</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>74</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>140</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>269</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>255</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>76</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>187</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>127</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>11</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>55</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>205</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>158</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>2</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>142</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>113</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>30</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>152</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>257</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>169</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>91</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>243</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>10</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>174</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>134</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>263</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>108</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>197</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>201</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>80</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>259</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>183</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>95</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>54</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>104</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>99</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>228</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>251</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>261</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>167</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>16</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>265</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>86</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>27</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>122</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>220</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>225</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>53</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>136</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>247</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>253</integer>
+				</dict>
+				<dict>
+					<key>CF$UID</key>
+					<integer>241</integer>
+				</dict>
+			</array>
+		</dict>
+		<dict>
+			<key>$class</key>
+			<dict>
+				<key>CF$UID</key>
+				<integer>272</integer>
+			</dict>
+			<key>NS.objects</key>
+			<array>
 				<dict>
 					<key>CF$UID</key>
 					<integer>310</integer>
@@ -4647,339 +4991,22 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 					<key>CF$UID</key>
 					<integer>314</integer>
 				</dict>
-			</array>
-		</dict>
-		<string>NSView</string>
-		<string>NSTextField211</string>
-		<string>NSForm1</string>
-		<string>NSTextField22</string>
-		<string>NSTextField22</string>
-		<string>NSTextField1111112</string>
-		<string>LDraw</string>
-		<string>NSButton1</string>
-		<string>NSBox1</string>
-		<string>NSTextField221</string>
-		<string>Choose Dialog view</string>
-		<string>NSButton</string>
-		<string>NSView</string>
-		<string>Styles</string>
-		<string>NSTextField1111111</string>
-		<string>NSTextField21</string>
-		<string>NSTextField11111111</string>
-		<string>21</string>
-		<string>221</string>
-		<string>NSTextField23</string>
-		<string>Preferences</string>
-		<string>2111</string>
-		<string>NSTextField21</string>
-		<string>NSTextField2111</string>
-		<string>211</string>
-		<string>NSTextField111111</string>
-		<string>NSTextField1</string>
-		<dict>
-			<key>$class</key>
-			<dict>
-				<key>CF$UID</key>
-				<integer>6</integer>
-			</dict>
-			<key>NS.string</key>
-			<string>File's Owner</string>
-		</dict>
-		<string>NSBox11</string>
-		<string>2</string>
-		<string>NSTextField2</string>
-		<string>NSTextField2</string>
-		<string>NSTextField1</string>
-		<string>NSTextField</string>
-		<string>22</string>
-		<dict>
-			<key>$class</key>
-			<dict>
-				<key>CF$UID</key>
-				<integer>276</integer>
-			</dict>
-			<key>NS.objects</key>
-			<array/>
-		</dict>
-		<dict>
-			<key>$class</key>
-			<dict>
-				<key>CF$UID</key>
-				<integer>276</integer>
-			</dict>
-			<key>NS.objects</key>
-			<array/>
-		</dict>
-		<dict>
-			<key>$class</key>
-			<dict>
-				<key>CF$UID</key>
-				<integer>276</integer>
-			</dict>
-			<key>NS.objects</key>
-			<array>
 				<dict>
 					<key>CF$UID</key>
-					<integer>99</integer>
+					<integer>315</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>170</integer>
+					<integer>316</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>231</integer>
+					<integer>317</integer>
 				</dict>
 				<dict>
 					<key>CF$UID</key>
-					<integer>95</integer>
+					<integer>318</integer>
 				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>10</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>108</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>2</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>91</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>143</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>179</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>53</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>257</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>137</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>267</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>207</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>54</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>55</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>253</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>203</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>76</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>227</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>259</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>269</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>164</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>141</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>222</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>86</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>247</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>263</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>135</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>271</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>185</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>67</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>28</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>80</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>113</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>159</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>104</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>235</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>73</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>118</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>189</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>273</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>153</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>66</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>249</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>11</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>122</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>255</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>25</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>168</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>30</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>243</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>251</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>261</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>16</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>265</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>127</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>74</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>199</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>27</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>176</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>245</integer>
-				</dict>
-			</array>
-		</dict>
-		<dict>
-			<key>$class</key>
-			<dict>
-				<key>CF$UID</key>
-				<integer>276</integer>
-			</dict>
-			<key>NS.objects</key>
-			<array>
 				<dict>
 					<key>CF$UID</key>
 					<integer>319</integer>
@@ -5196,106 +5223,70 @@ The LDraw folder contains the folders "P" and "Parts."</string>
 					<key>CF$UID</key>
 					<integer>372</integer>
 				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>373</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>374</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>375</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>376</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>377</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>378</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>379</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>380</integer>
-				</dict>
-				<dict>
-					<key>CF$UID</key>
-					<integer>381</integer>
-				</dict>
 			</array>
 		</dict>
-		<integer>73</integer>
-		<integer>138</integer>
-		<integer>152</integer>
-		<integer>72</integer>
-		<integer>23</integer>
-		<integer>75</integer>
-		<integer>1</integer>
-		<integer>71</integer>
-		<integer>80</integer>
-		<integer>142</integer>
-		<integer>86</integer>
-		<integer>116</integer>
-		<integer>82</integer>
-		<integer>132</integer>
-		<integer>149</integer>
-		<integer>84</integer>
-		<integer>76</integer>
-		<integer>114</integer>
-		<integer>147</integer>
-		<integer>68</integer>
-		<integer>151</integer>
-		<integer>117</integer>
-		<integer>133</integer>
-		<integer>136</integer>
-		<integer>78</integer>
-		<integer>150</integer>
-		<integer>70</integer>
-		<integer>111</integer>
-		<integer>130</integer>
-		<integer>89</integer>
+		<integer>54</integer>
 		<integer>154</integer>
-		<integer>143</integer>
 		<integer>79</integer>
 		<integer>59</integer>
-		<integer>69</integer>
-		<integer>126</integer>
-		<integer>94</integer>
-		<integer>74</integer>
+		<integer>136</integer>
+		<integer>114</integer>
 		<integer>153</integer>
-		<integer>88</integer>
 		<integer>127</integer>
-		<integer>144</integer>
-		<integer>155</integer>
-		<integer>83</integer>
+		<integer>88</integer>
+		<integer>142</integer>
+		<integer>108</integer>
 		<integer>87</integer>
 		<integer>112</integer>
-		<integer>10</integer>
-		<integer>128</integer>
-		<integer>115</integer>
-		<integer>54</integer>
-		<integer>137</integer>
-		<integer>60</integer>
-		<integer>108</integer>
-		<integer>113</integer>
-		<integer>118</integer>
-		<integer>7</integer>
-		<integer>131</integer>
-		<integer>129</integer>
 		<integer>63</integer>
-		<integer>146</integer>
-		<integer>62</integer>
+		<integer>78</integer>
+		<integer>155</integer>
+		<integer>117</integer>
+		<integer>68</integer>
+		<integer>144</integer>
+		<integer>129</integer>
+		<integer>10</integer>
+		<integer>76</integer>
+		<integer>149</integer>
+		<integer>94</integer>
+		<integer>1</integer>
+		<integer>80</integer>
+		<integer>126</integer>
+		<integer>60</integer>
+		<integer>83</integer>
+		<integer>118</integer>
+		<integer>138</integer>
+		<integer>71</integer>
+		<integer>111</integer>
+		<integer>23</integer>
 		<integer>141</integer>
+		<integer>89</integer>
+		<integer>132</integer>
+		<integer>75</integer>
+		<integer>146</integer>
+		<integer>147</integer>
+		<integer>69</integer>
+		<integer>130</integer>
+		<integer>143</integer>
+		<integer>72</integer>
+		<integer>84</integer>
+		<integer>74</integer>
+		<integer>73</integer>
+		<integer>152</integer>
+		<integer>115</integer>
+		<integer>131</integer>
+		<integer>137</integer>
+		<integer>7</integer>
+		<integer>133</integer>
+		<integer>70</integer>
+		<integer>62</integer>
+		<integer>128</integer>
+		<integer>150</integer>
+		<integer>151</integer>
+		<integer>86</integer>
+		<integer>82</integer>
+		<integer>113</integer>
+		<integer>116</integer>
 		<integer>109</integer>
 		<dict>
 			<key>$classes</key>

@@ -318,6 +318,29 @@ static MLCadIni *sharedIniFile = nil;
 
 #pragma mark -
 
+//========== armAngleForTorsoName: =============================================
+//
+// Purpose:		Returns the absolute value of the angle at which arms should be 
+//				rotated in order to fit on the torso.
+//
+// Notes:		If I had my way, this information would be part of MLCad.ini so 
+//				I didn't need to do this cheezy hard-coding.
+//
+//==============================================================================
+- (float) armAngleForTorsoName:(NSString *)torsoName
+{
+	//mechanical torso. No arm rotation
+	if([torsoName isEqualToString:@"30375.dat"] == YES)
+		return 0.0;
+	//regular torso. 
+	//		-- this value is derived from a little trig on the torso surface.
+	else
+		return 9.791;
+}//end armAngleForTorsoName:
+
+
+#pragma mark -
+
 //========== setParts:intoMinifigurePartList: ==================================
 //
 // Purpose:		Assigns the partList variable to the new list of parts.

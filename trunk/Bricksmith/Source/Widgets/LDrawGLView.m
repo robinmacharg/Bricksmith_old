@@ -1223,13 +1223,13 @@ void setupLight(GLenum light)
 	// may want to extend our keys to mean different things with different 
 	// modifiers. It is easier to do that here than to pass it off to 
 	// -interpretKeyEvent:. But beware of no-character keypresses like deadkeys.
-	if([characters length] > 0) {
-	
+	if([characters length] > 0)
+	{
 		unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
 
 		switch(firstCharacter)
 		{
-			
+			//brick movements
 			case NSUpArrowFunctionKey:
 			case NSDownArrowFunctionKey:
 			case NSLeftArrowFunctionKey:
@@ -1242,6 +1242,8 @@ void setupLight(GLenum light)
 				[NSApp sendAction:@selector(delete:)
 							   to:nil //just send it somewhere!
 							 from:self];
+
+			//rotation shortcuts
 			case 'x':
 				[self->document rotateSelectionAround:V3Make(1,0,0)];
 				break;
@@ -1270,52 +1272,11 @@ void setupLight(GLenum light)
 }//end keyDown:
 
 
-//========== performKeyEquivalent: =============================================
-//
-// Purpose:		This is a command-key equivalent. Since we used the command key 
-//				a bit, we need to intercept these separately--they don't come 
-//				through key-down.
-//
-//				Return NO if we don't handle that, thus allowing the menu system 
-//				to take a stab at it.
-//
-//==============================================================================
-//- (BOOL) performKeyEquivalent:(NSEvent *)theEvent
-//{
-//	BOOL		handledEvent	= NO;
-////	ToolModeT	startingTool	= self->toolMode;
-//	
-//	if([[self window] firstResponder] == self){
-//		//This is a key-down event in disguise. We need to record the new characters.
-//		[self->currentKeyCharacters release];
-//		self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];
-//		[self resetCursor];
-//		
-//		//See if it's a recognized command key (logic duplicated from -resetCursorRects)
-//		if([currentKeyCharacters isEqualToString:@" "]){
-//		//if(self->toolMode != startingTool){ //doesn't work; resetCursorRects is called after this.
-//			handledEvent = YES; //prevent a beep, and also stop further processing of this message.
-//		}
-//		else
-//			//We didn't handle it.
-//			handledEvent = [super performKeyEquivalent:theEvent];
-//	}
-//	else {
-//		//We don't want it, since our meddling with command keys is strictly a 
-//		// first-responder kind of behavior.
-//		handledEvent = [super performKeyEquivalent:theEvent];
-//	}
-//	
-//	
-//	return handledEvent;
-//	
-//}//end performKeyEquivalent:
-
-
 //========== nudgeKeyDown: =====================================================
 //
 // Purpose:		We have received a keypress intended to move bricks. We need to 
-//				figure out which direction to move them in.
+//				figure out which direction to move them with respect to how the 
+//				model is currently oriented.
 //
 //==============================================================================
 - (void) nudgeKeyDown:(NSEvent *)theEvent
@@ -1329,48 +1290,90 @@ void setupLight(GLenum light)
 		if([characters length] > 0)
 		{
 			unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
-			Vector4 screenNudge		= {0,0,0,1}; //nudge in screen coordinates
-			Vector4 modelNudge		= {0,0,0,1}; //screen nudge adjusted to model coordinates
-			Vector3 adjustedNudge	= {0,0,0}; //model nudge constrained to one axis.
+			
+			Vector4 xVector = {1,0,0,1};
+			Vector4 yVector = {0,1,0,1};
+			Vector4 xModel, yModel; //the vectors in the model which are projected onto x,y on screen
+			Vector3 xNudge, yNudge, zNudge; //the closest model axes to which the screen's x,y,z align
+			Vector3 actualNudge	= {0,0,0}; //the final nudge vector for the key pressed
+			
+			//Translate the x, y, and z vectors on the surface of the screen 
+			// into the axes to which they most closely align in the model 
+			// itself.
+			//This requires the inverse of the current transformation matrix, so 
+			// we can convert projection-coordinates back to the model 
+			// coordinates they are displaying.
+			Matrix4 inversed = [self getInverseMatrix];
+			
+			//find the vectors in the model which project onto the screen's axes
+			// (We only care about x and y because this is a two-dimensional 
+			// projection, and the third axis is consquently ambiguous. See below.) 
+			V4MulPointByMatrix(&xVector, &inversed, &xModel);
+			V4MulPointByMatrix(&yVector, &inversed, &yModel);
+			
+			//find the actual axes closest to those model vectors
+			xNudge	= V3FromV4(&xModel);
+			yNudge	= V3FromV4(&yModel);
+			V3IsolateGreatestComponent(&xNudge);
+			V3IsolateGreatestComponent(&yNudge);
+			V3Normalize(&xNudge);
+			V3Normalize(&yNudge);
+			
+			//the z-axis is often ambiguous because we are working backwards 
+			// from a two-dimensional screen. Thankfully, while the process used 
+			// for deriving the x and y vectors is perhaps somewhat arbitrary, 
+			// it always yields sensible and unique results. Thus we can simply 
+			// derive the z-vector, which will be whatever axis x and y 
+			// *didn't* land on.
+			V3Cross(&xNudge, &yNudge, &zNudge);
 			
 			//By holding down the option key, we transcend the two-plane limitation 
 			// presented by the arrow keys. Option-presses mean movement along the 
-			// z-axis. Note that move "in" to the screen (up arrow, right arrow) 
+			// z-axis. Note that move "in" to the screen (up arrow, left arrow?) 
 			// is a movement along the screen's negative z-axis.
 			BOOL	isZMovement		= ([theEvent modifierFlags] & NSAlternateKeyMask) != 0;
 			BOOL	isNudge			= NO;
 			
-			switch(firstCharacter) {
-				
+			//now we must select which axis we actually are nudging on.
+			switch(firstCharacter)
+			{
 				case NSUpArrowFunctionKey:
-					if(isZMovement == YES)
-						screenNudge.z = -1;
+					if(isZMovement == YES){
+						actualNudge = zNudge;
+						V3Negate(&actualNudge); //into the screen (-z)
+					}
 					else
-						screenNudge.y = 1;
+						actualNudge = yNudge;
 					isNudge = YES;
 					break;
 					
 				case NSDownArrowFunctionKey:
 					if(isZMovement == YES)
-						screenNudge.z =  1;
-					else
-						screenNudge.y = -1;
+						actualNudge = zNudge;
+					else{
+						actualNudge = yNudge;
+						V3Negate(&actualNudge);
+					}
 					isNudge = YES;
 					break;
 					
 				case NSLeftArrowFunctionKey:
-					if(isZMovement == YES)
-						screenNudge.z =  1;
-					else
-						screenNudge.x = -1;
+					if(isZMovement == YES){
+						actualNudge = zNudge;
+						V3Negate(&actualNudge); //this is iffy at best
+					}
+					else{
+						actualNudge = xNudge;
+						V3Negate(&actualNudge);
+					}
 					isNudge = YES;
 					break;
 					
 				case NSRightArrowFunctionKey:
 					if(isZMovement == YES)
-						screenNudge.z = -1;
+						actualNudge = zNudge;
 					else
-						screenNudge.x =  1;
+						actualNudge = xNudge;
 					isNudge = YES;
 					break;
 					
@@ -1378,26 +1381,12 @@ void setupLight(GLenum light)
 					break;
 			}
 			
-			//Convert this nudge into a meaningful movement based on the current 
-			// view orientation.
-			if(isNudge == YES) {
-				//Get the inverse of the current transformation matrix, we can 
-				// convert projection-coordinates back to the model coordinates they 
-				// are displaying.
-				Matrix4 inversed = [self getInverseMatrix];
-				
-				//Now we will convert what appears to be the vertical and horizontal axes 
-				// into the actual model vectors they represent. We do this conversion 
-				// from screen to model coordinates by multiplying our screen points by 
-				// the modelview matrix inverse. That has the effect of "undoing" the 
-				// model matrix on the screen point, leaving us a model point.
-				V4MulPointByMatrix(&screenNudge, &inversed, &modelNudge);
-				
-				adjustedNudge = V3FromV4(&modelNudge);
-				V3IsolateGreatestComponent(&adjustedNudge);
-				
+			//Pass the nudge along to the document, which is the one actually in 
+			// charge of manipulating the data.
+			if(isNudge == YES)
+			{
 				if(document != nil)
-					[document nudgeSelectionBy:adjustedNudge]; 
+					[document nudgeSelectionBy:actualNudge]; 
 			}
 		}
 		

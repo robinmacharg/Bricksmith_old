@@ -51,6 +51,8 @@
 - (NSArray *) minifigureLegsRight;
 - (NSArray *) minifigureLegsRightAccessories;
 
+- (float) armAngleForTorsoName:(NSString *)torsoName;
+
 - (void) setParts:(NSArray *)parts intoMinifigurePartList:(NSMutableArray *)partList;
 
 //Parsing

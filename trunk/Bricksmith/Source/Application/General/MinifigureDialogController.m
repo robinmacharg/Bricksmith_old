@@ -295,6 +295,9 @@
 	[rightLeg			setLDrawColor:[self->rightLegsColorWell				LDrawColor]];
 	[rightLegAccessory	setLDrawColor:[self->rightLegAccessoriesColorWell	LDrawColor]];
 	
+	//other values
+	float		armAngle			= [self->iniFile armAngleForTorsoName:[torso referenceName]];
+	
 	///////////////////////////////////////
 	//
 	//	Do Positioning
@@ -364,7 +367,7 @@
 	
 	//		-- rotate arm to match torso
 	//			this value is derived from a little trig on the torso surface.
-	[self rotateByDegrees:V3Make(0, 0, 9.791)
+	[self rotateByDegrees:V3Make(0, 0, armAngle)
 					parts:rightArm, rightHand, rightHandAccessory, nil];
 	
 	//		-- move arm into torso
@@ -416,7 +419,7 @@
 					
 	//		-- rotate arm to match torso
 	//			this value is derived from a little trig on the torso surface.
-	[self rotateByDegrees:V3Make(0, 0, -9.791)
+	[self rotateByDegrees:V3Make(0, 0, -armAngle)
 					parts:leftArm, leftHand, leftHandAccessory, nil];
 					
 	//		-- move arm into torso

@@ -107,7 +107,12 @@
 		// drawing it as a wireframe instead of a filled color. This setting also 
 		// conveniently applies to all referenced parts herein. 
 		if(self->isSelected == YES)
+		{
+			//a bug on Intel iMacs is causing the wireframe not to get drawn 
+			// unless lighting is off.
+			glDisable(GL_LIGHTING);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
 		
 		//Load names for mouse-selection, if that's the mode we're in.
 		// Only elements contained within a step should ever wind up here.
@@ -155,7 +160,10 @@
 			
 		//Done drawing a selected part? Then switch back to normal filled drawing.
 		if(self->isSelected == YES)
+		{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glEnable(GL_LIGHTING);
+		}
 		
 	}
 	

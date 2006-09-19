@@ -500,12 +500,14 @@ static MLCadIni *sharedIniFile = nil;
 	NSScanner		*scanner		= nil;
 	
 	NSString		*partName		= nil;
+	NSString		*flags			= nil;
 	NSString		*translation	= nil;
 	float			a11, a12, a13, a21, a22, a23, a31, a32, a33;
 	NSString		*partLine		= nil;
 	LDrawPart		*currentPart	= nil;
 	
 	NSCharacterSet	*quoteSet		= [NSCharacterSet characterSetWithCharactersInString:@"\""];
+	NSCharacterSet	*whitespaceSet	= [NSCharacterSet whitespaceCharacterSet];
 	int				lineCount		= [lines count];
 	BOOL			gotName			= NO;
 	int				counter			= 0;
@@ -530,7 +532,7 @@ static MLCadIni *sharedIniFile = nil;
 		[scanner scanString:@"\""					intoString:NULL];
 		
 		//skip the flags; they don't mean anything yet anyway
-		[scanner scanInt:NULL];
+		[scanner scanUpToCharactersFromSet:whitespaceSet intoString:&flags];
 		
 		//the rest is the transformation matrix, but in a different order from 
 		// an LDraw type 1 part line.

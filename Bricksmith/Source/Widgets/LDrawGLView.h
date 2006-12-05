@@ -118,7 +118,11 @@ typedef enum {
 - (void) displayNeedsUpdating:(NSNotification *)notification;
 
 //Utilities
-- (LDrawDirective *) getPartFromHits:(GLuint *)nameBuffer hitCount:(GLuint)numberHits;
+- (NSArray *) getDirectivesUnderMouse:(NSEvent *)theEvent
+					  amongDirectives:(NSArray *)directives
+							 fastDraw:(BOOL)fastDraw;
+- (NSArray *) getPartsFromHits:(GLuint *)nameBuffer hitCount:(GLuint)numberHits;
+- (LDrawDirective *) getDirectiveFromHitCode:(GLuint)name;
 - (void) resetFrameSize;
 - (void) restoreConfiguration;
 - (void) makeProjection;

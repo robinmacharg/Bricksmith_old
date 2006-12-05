@@ -1630,98 +1630,41 @@ void setupLight(GLenum light)
 //				for anything that renders within the viewing area. We utilize 
 //				this feature to find out what part was clicked on.
 //
-//	Notes:		There's a gotcha here. The click region is determined by 
-//				isolating a 1-pixel square around the place where the mouse was 
-//				clicked. This is done with gluPickMatrix.
-//
-//				The trouble is that gluPickMatrix works in viewport coordinates, 
-//				which NONE of our Cocoa views are using! (Exception: GLViews 
-//				outside a scroll view at 100% zoom level.) To avoid getting 
-//				mired in the terrifying array of possible coordinate systems, 
-//				we just convert both the click point and the LDraw visible rect 
-//				to Window Coordinates.
-//
-//				Actually, I bet that is fundamentally wrong too. But it won't 
-//				show up unless the window coordinate system is being modified. 
-//				The ultimate solution is probably to convert to screen 
-//				coordinates, because that's what OpenGL is using anyway.
-//
-//				Confused? So am I.
+// Notes:		This method is optimized to do an iterative search, first with a
+//				low-resolution draw, then on a high-resolution pass. It's about 
+//				six times faster than just drawing the whole model.
 //
 //==============================================================================
 - (void)mousePartSelection:(NSEvent *)theEvent
 {
-	@synchronized([self openGLContext])
-	{
-		LDrawDirective	*clickedDirective	= nil;
-		NSView			*referenceView		= nil;
-		NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
-		NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
-		GLuint			 nameBuffer[512]	= {0};
-		GLint			 viewport[4]		= {0};
-		int				 numberOfHits		= 0;
-		
-		[[self openGLContext] makeCurrentContext];
-		
-		//Prepare OpenGL to record hits in the viewing area. We need to feed it 
-		// a buffer which will be filled with the tags of things that got hit.
-		glGetIntegerv(GL_VIEWPORT, viewport);
-		glSelectBuffer(512, nameBuffer);
-		glRenderMode(GL_SELECT); //switch to hit-testing mode.
-		{
-			//Prepare for recording names. These functions must be called 
-			// *after* switching to render mode.
-			glInitNames();
-			glPushName(UINT_MAX); //0 would be a valid choice, after all...
-			
-			//Restrict our rendering area (and thus our hit-testing region) to 
-			// a very small rectangle around the mouse position.
-			glMatrixMode(GL_PROJECTION);
-			glPushMatrix();
-			
-			glLoadIdentity();
-			
-				//Lastly, convert to viewport coordinates:
-			float pickX = viewClickedPoint.x - NSMinX(visibleRect);
-			float pickY = viewClickedPoint.y - NSMinY(visibleRect);
-			
-			gluPickMatrix(pickX,
-						  pickY,
-						  1, //width
-						  1, //height
-						  viewport);
-			
-			NSRect newFrame = [self frame];
-				//Now load the common viewing frame
-			[self makeProjection];
-			
-			glMatrixMode(GL_MODELVIEW);
-			[self->fileBeingDrawn draw:DRAW_HIT_TEST_MODE parentColor:glColor];
-			
-			//Restore original viewing matrix after mangling for the hit area.
-			glMatrixMode(GL_PROJECTION);
-			glPopMatrix();
-			
-			glFlush();
-			[[self openGLContext] flushBuffer];
-			
-			[self setNeedsDisplay:YES];
-		}
-		numberOfHits = glRenderMode(GL_RENDER);
-		
-		clickedDirective = [self getPartFromHits:nameBuffer hitCount:numberOfHits];
-		//Notify our delegate about this momentous event.
-		// It's okay to send nil; that means "deselect."
-		// We want to add this to the current selection if the shift key is down.
-		if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
-		{
-			[self->document LDrawGLView:self
-				 wantsToSelectDirective:clickedDirective
-				   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
-		}
-		
-	}
+	NSArray			*fastDrawParts		= nil;
+	NSArray			*fineDrawParts		= nil;
+	LDrawDirective	*clickedDirective	= nil;
 	
+	//first do hit-testing on nothing but the bounding boxes; that is very fast 
+	// and likely eliminates a lot of parts.
+	fastDrawParts	= [self getDirectivesUnderMouse:theEvent
+									amongDirectives:[NSArray arrayWithObject:self->fileBeingDrawn]
+										   fastDraw:YES];
+	
+	//now do a full draw for testing on the most likely candidates
+	fineDrawParts	= [self getDirectivesUnderMouse:theEvent
+									amongDirectives:fastDrawParts
+										   fastDraw:NO];
+	
+	if([fineDrawParts count] > 0)
+		clickedDirective = [fineDrawParts objectAtIndex:0];
+	
+	//Notify our delegate about this momentous event.
+	// It's okay to send nil; that means "deselect."
+	// We want to add this to the current selection if the shift key is down.
+	if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
+	{
+		[self->document LDrawGLView:self
+			 wantsToSelectDirective:clickedDirective
+			   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
+	}
+
 }//end mousePartSelection:
 
 
@@ -1853,9 +1796,124 @@ void setupLight(GLenum light)
 #pragma mark UTILITIES
 #pragma mark -
 
+//========== getDirectivesUnderMouse:amongDirectives:fastDraw: =================
+//
+// Purpose:		Finds the directives under a given mouse-click. This method is 
+//				written so that the caller can optimize its hit-detection by 
+//				doing a preliminary test on just the bounding boxes.
+//
+// Parameters:	theEvent	= mouse-click event
+//				directives	= the directives under consideration for being 
+//								clicked. This may be the whole File directive, 
+//								or a smaller subset we have already determined 
+//								(by a previous call) is in the area.
+//				fastDraw	= consider only bounding boxes for hit-detection.
+//
+// Returns:		Array of clicked parts; the closest one -- and the only one we 
+//				care about -- is always the 0th element.
+//
+// Notes:		There's a gotcha here. The click region is determined by 
+//				isolating a 1-pixel square around the place where the mouse was 
+//				clicked. This is done with gluPickMatrix.
+//
+//				The trouble is that gluPickMatrix works in viewport coordinates, 
+//				which NONE of our Cocoa views are using! (Exception: GLViews 
+//				outside a scroll view at 100% zoom level.) To avoid getting 
+//				mired in the terrifying array of possible coordinate systems, 
+//				we just convert both the click point and the LDraw visible rect 
+//				to Window Coordinates.
+//
+//				Actually, I bet that is fundamentally wrong too. But it won't 
+//				show up unless the window coordinate system is being modified. 
+//				The ultimate solution is probably to convert to screen 
+//				coordinates, because that's what OpenGL is using anyway.
+//
+//				Confused? So am I.
+//
+//==============================================================================
+- (NSArray *) getDirectivesUnderMouse:(NSEvent *)theEvent
+					  amongDirectives:(NSArray *)directives
+							 fastDraw:(BOOL)fastDraw
+{
+	NSArray	*clickedDirectives	= nil;
+
+	@synchronized([self openGLContext])
+	{
+		LDrawDirective	*clickedDirective	= nil;
+		NSView			*referenceView		= nil;
+		NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
+		NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
+		GLuint			 nameBuffer[512]	= {0};
+		GLint			 viewport[4]		= {0};
+		int				 numberOfHits		= 0;
+		int				 counter			= 0;
+		unsigned int	 drawOptions		= DRAW_HIT_TEST_MODE;
+		
+		if(fastDraw == YES)
+			drawOptions |= DRAW_BOUNDS_ONLY;
+		
+		[[self openGLContext] makeCurrentContext];
+		
+		//Prepare OpenGL to record hits in the viewing area. We need to feed it 
+		// a buffer which will be filled with the tags of things that got hit.
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		glSelectBuffer(512, nameBuffer);
+		glRenderMode(GL_SELECT); //switch to hit-testing mode.
+		{
+			//Prepare for recording names. These functions must be called 
+			// *after* switching to render mode.
+			glInitNames();
+			glPushName(UINT_MAX); //0 would be a valid choice, after all...
+			
+			//Restrict our rendering area (and thus our hit-testing region) to 
+			// a very small rectangle around the mouse position.
+			glMatrixMode(GL_PROJECTION);
+			glPushMatrix();
+			
+			glLoadIdentity();
+			
+				//Lastly, convert to viewport coordinates:
+			float pickX = viewClickedPoint.x - NSMinX(visibleRect);
+			float pickY = viewClickedPoint.y - NSMinY(visibleRect);
+			
+			gluPickMatrix(pickX,
+						  pickY,
+						  1, //width
+						  1, //height
+						  viewport);
+			
+			NSRect newFrame = [self frame];
+				//Now load the common viewing frame
+			[self makeProjection];
+			
+			glMatrixMode(GL_MODELVIEW);
+			
+			//draw all the requested directives
+			for(counter = 0; counter < [directives count]; counter++)
+				[[directives objectAtIndex:counter] draw:drawOptions parentColor:glColor];
+			
+			//Restore original viewing matrix after mangling for the hit area.
+			glMatrixMode(GL_PROJECTION);
+			glPopMatrix();
+			
+			glFlush();
+			[[self openGLContext] flushBuffer];
+			
+			[self setNeedsDisplay:YES];
+		}
+		numberOfHits = glRenderMode(GL_RENDER);
+		
+		clickedDirectives = [self getPartsFromHits:nameBuffer hitCount:numberOfHits];
+	}
+	
+	return clickedDirectives;
+	
+}//end getDirectivesUnderMouse:amongDirectives:fastDraw:
+
+
 //========== getPartFromHits:hitCount: =========================================
 //
-// Purpose:		Deduce the part that was clicked on, given the selection data 
+// Purpose:		Deduce the parts that were clicked on, given the selection data 
 //				returned from glMatrixMode(GL_SELECT). This hit data is created 
 //				by OpenGL when we click the mouse.
 //
@@ -1877,17 +1935,23 @@ void setupLight(GLenum light)
 //				which hit was the nearest to the front (smallest minimum depth); 
 //				that is the one we clicked on.
 //
+// Returns:		Array of all the parts under the click. The nearest part is 
+//				guaranteed to be the first entry in the array. There is no 
+//				defined order for the rest of the parts.
+//
 //==============================================================================
-- (LDrawDirective *) getPartFromHits:(GLuint *)nameBuffer
-							hitCount:(GLuint)numberHits
+- (NSArray *) getPartsFromHits:(GLuint *)nameBuffer
+					  hitCount:(GLuint)numberHits
 {
-	LDrawDirective *clickedDirective = nil;
+	NSMutableArray	*clickedParts		= [NSMutableArray arrayWithCapacity:numberHits];
+	LDrawDirective	*currentDirective	= nil;
 	
 	//The hit record depths are mapped between 0 and UINT_MAX, where the maximum 
 	// integer is the deepest point. We are looking for the shallowest point, 
 	// because that's what we clicked on.
 	GLuint	minimumDepth		= UINT_MAX;
-	GLuint	closestName			= 0;
+	GLuint	currentName			= 0;
+	GLuint	currentDepth		= 0;
 	int		numberNames			= 0;
 	int		hitCounter			= 0;
 	int		counter				= 0;
@@ -1896,57 +1960,85 @@ void setupLight(GLenum light)
 	//Process all the hits. In theory, each hit record can be of variable 
 	// length, so the logic is a little messy. (In Bricksmith, each it record 
 	// is exactly 4 entries long, but we're being all general here!)
-	for(hitCounter = 0; hitCounter < numberHits; hitCounter++) {
-		
+	for(hitCounter = 0; hitCounter < numberHits; hitCounter++)
+	{
 		//We find hit records by reckoning them as starting at an 
 		// offset in the buffer. hitRecordBaseIndex is the index of the 
 		// first entry in the record.
 		
-		numberNames = nameBuffer[hitRecordBaseIndex + 0]; //first entry.
-		//Is this hit closer than the last closest one?
-		if(nameBuffer[hitRecordBaseIndex+1] < minimumDepth) {
-			minimumDepth = nameBuffer[hitRecordBaseIndex+1];
-			//If this was closer, we need to record the name!
-			for(counter = 0; counter < numberNames; counter++){
-				//Names start in the fourth entry of the hit.
-				closestName = nameBuffer[hitRecordBaseIndex + 3 + counter];
-				
-				//By convention in Bricksmith, we only have one name per hit.
-			}
+		numberNames		= nameBuffer[hitRecordBaseIndex + 0]; //first entry.
+		currentDepth	= nameBuffer[hitRecordBaseIndex + 1];
+		
+		//By convention in Bricksmith, we only have one name per hit, so 
+		// numberNames == 1.
+		for(counter = 0; counter < numberNames; counter++)
+		{
+			//Names start in the fourth entry of the hit.
+			currentName = nameBuffer[hitRecordBaseIndex + 3 + counter];
+			
 		}
+		currentDirective = [self getDirectiveFromHitCode:currentName];
+		
+		//Is this hit closer than the last closest one?
+		if(currentDepth < minimumDepth)
+		{
+			minimumDepth = currentDepth;
+			
+			//If this was closer, we need to record the name at the top of the 
+			// array
+			[clickedParts insertObject:currentDirective atIndex:0];
+		}
+		else
+			[clickedParts addObject:currentDirective];
 		
 		//Advance past this entire hit record. (Three standard entries followed 
 		// by a variable number of names per record.)
 		hitRecordBaseIndex += 3 + numberNames;
 	}
+		
+	return clickedParts;
 	
-	//Match the closest name with the directive it represents. 
-	// Note that 0 is a perfectly valid directive tag; our clue that we 
-	// didn't find anything is if the number of hits is invalid.
-	if(numberHits > 0) {
-		//Name tags encode the indices at which the reside.
-		int stepIndex = closestName / STEP_NAME_MULTIPLIER; //integer division
-		int partIndex = closestName % STEP_NAME_MULTIPLIER;
-		
-		LDrawModel *enclosingModel = nil;
-		LDrawStep *enclosingStep = nil;
-		
-		//Find the reference we seek. Note that the "fileBeingDrawn" is 
-		// not necessarily a file, so we have to compensate.
-		if([fileBeingDrawn isKindOfClass:[LDrawFile class]] == YES)
-			enclosingModel = (LDrawModel *)[(LDrawFile*)fileBeingDrawn activeModel];
-		else if([fileBeingDrawn isKindOfClass:[LDrawModel class]] == YES)
-			enclosingModel = (LDrawModel *)fileBeingDrawn;
-		
-		if(enclosingModel != nil) {
-			enclosingStep    = [[enclosingModel steps] objectAtIndex:stepIndex];
-			clickedDirective = [[enclosingStep subdirectives] objectAtIndex:partIndex];
-		}
+}//end getPartFromHits:hitCount:
+
+
+//========== getDirectiveFromHitCode: ==========================================
+//
+// Purpose:		When we click the mouse, it generates an OpenGL hit-test in 
+//				which parts that were "hit" leave a signature behind. That 
+//				signature in an encoded integer which determines where in the 
+//				model the part resides. This method decodes that tag.
+//
+// Note:		0 is a perfectly valid directive tag; our clue that we didn't 
+//				find anything is if the number of hits is invalid. That 
+//				information is beyond the scope of this method's knowledge.
+//
+//==============================================================================
+- (LDrawDirective *) getDirectiveFromHitCode:(GLuint)name
+{
+	LDrawModel		*enclosingModel		= nil;
+	LDrawStep		*enclosingStep		= nil;
+	LDrawDirective	*clickedDirective	= nil;
+	
+	//Name tags encode the indices at which the reside.
+	int	stepIndex	= name / STEP_NAME_MULTIPLIER; //integer division
+	int	partIndex	= name % STEP_NAME_MULTIPLIER;
+	
+	//Find the reference we seek. Note that the "fileBeingDrawn" is 
+	// not necessarily a file, so we have to compensate.
+	if([fileBeingDrawn isKindOfClass:[LDrawFile class]] == YES)
+		enclosingModel = (LDrawModel *)[(LDrawFile*)fileBeingDrawn activeModel];
+	else if([fileBeingDrawn isKindOfClass:[LDrawModel class]] == YES)
+		enclosingModel = (LDrawModel *)fileBeingDrawn;
+	
+	if(enclosingModel != nil)
+	{
+		enclosingStep    = [[enclosingModel steps] objectAtIndex:stepIndex];
+		clickedDirective = [[enclosingStep subdirectives] objectAtIndex:partIndex];
 	}
 	
 	return clickedDirective;
 	
-}//end getPartFromHits:hitCount:
+}//end getDirectiveFromHitCode:
 
 
 //========== resetFrameSize: ===================================================

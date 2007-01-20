@@ -7,10 +7,13 @@
 //				A part browser consists of a table which displays part numbers 
 //				and descriptions, and a combo box to choose part categories.
 //
-//				An instance of this class should exist in each Nib file which 
+// Usage:		An instance of this class should exist in each Nib file which 
 //				contains a part browser, and the browser widgets and actions 
 //				should be connected to it. This class will then take care of 
 //				managing those widgets.
+//
+//				Clients wishing to know about part insertions should implement 
+//				the action -insertLDrawPart:.
 //
 //  Created by Allen Smith on 2/17/05.
 //  Copyright 2005. All rights reserved.
@@ -32,8 +35,8 @@
 //				So when awaking, we grab the actual data source for the class.
 //
 //==============================================================================
-- (void) awakeFromNib {
-
+- (void) awakeFromNib
+{
 	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
 	NSString		*startingCategory	= [userDefaults stringForKey:PART_BROWSER_PREVIOUS_CATEGORY];
 	int				 startingRow		= [userDefaults integerForKey:PART_BROWSER_PREVIOUS_SELECTED_ROW];
@@ -80,7 +83,8 @@
 	[searchMenuTemplate	release];
 	[recentsItem		release];
 	[noRecentsItem		release];
-}
+
+}//end awakeFromNib
 
 
 //========== init ==============================================================
@@ -88,12 +92,13 @@
 // Purpose:		This is very basic; it's not where the action is.
 //
 //==============================================================================
-- (id) init {
-	[super init];
+- (id) init
+{
+	self = [super init];
 	
 	//Not displaying anything yet.
-	categoryList = [[NSArray array] retain];
-	tableDataSource = [[NSMutableArray array] retain];
+	categoryList	= [[NSArray array] retain];
+	tableDataSource	= [[NSMutableArray array] retain];
 	
 	return self;
 }
@@ -103,14 +108,14 @@
 #pragma mark ACCESSORS
 #pragma mark -
 
-//========== selectedPart ======================================================
+//========== selectedPartName ==================================================
 //
 // Purpose:		Returns the name of the selected part file.
 //				i.e., "3001.dat"
 //
 //==============================================================================
-- (NSString *) selectedPart {
-
+- (NSString *) selectedPartName
+{
 	int				 rowIndex	= [partsTable selectedRow];
 	NSDictionary	*partRecord	= nil;
 	NSString		*partName	= nil;
@@ -121,7 +126,9 @@
 	}
 	
 	return partName;
-}
+	
+}//end selectedPartName
+
 
 //========== setPartCatalog: ===================================================
 //
@@ -129,7 +136,8 @@
 //				set up the data sources to reflect it.
 //
 //==============================================================================
-- (void) setPartCatalog:(NSDictionary *)newCatalog {
+- (void) setPartCatalog:(NSDictionary *)newCatalog
+{
 	partCatalog = newCatalog;
 	
 	//Get all the categories.
@@ -208,7 +216,8 @@
 //				the category combo box's data source.
 //
 //==============================================================================
-- (void) setCategoryList:(NSArray *)newCategoryList{
+- (void) setCategoryList:(NSArray *)newCategoryList
+{
 	//swap the variable
 	[newCategoryList retain];
 	[categoryList release];
@@ -230,8 +239,8 @@
 //				The new parts are then displayed in the table.
 //
 //==============================================================================
-- (void) setTableDataSource:(NSMutableArray *) partsInCategory{
-	
+- (void) setTableDataSource:(NSMutableArray *) partsInCategory
+{
 	//Sort the parts based on whatever the current sort order is for the table.
 	[partsInCategory sortUsingDescriptors:[partsTable sortDescriptors]];
 	
@@ -251,12 +260,29 @@
 #pragma mark ACTIONS
 #pragma mark -
 
+
+//========== addPartClicked: ===================================================
+//
+// Purpose:		Need to add the selected part to whoever is interested in that. 
+//				This is dispatched as a nil-targeted action, and will most 
+//				likely be picked up by the foremost document.
+//
+//==============================================================================
+- (IBAction) addPartClicked:(id)sender
+{
+	//anyone who implements this message will know what to do.
+	BOOL success = [NSApp sendAction:@selector(insertLDrawPart:) to:nil from:self];
+
+}//end addPartClicked:
+
+
 //========== categoryComboBoxChanged: ==========================================
 //
 // Purpose:		A new category has been selected.
 //
 //==============================================================================
-- (IBAction) categoryComboBoxChanged:(id)sender{
+- (IBAction) categoryComboBoxChanged:(id)sender
+{
 	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
 	NSString		*newCategory	= [sender stringValue];
 	BOOL			 success		= NO;
@@ -280,7 +306,7 @@
 //==============================================================================
 - (void) doubleClickedInPartTable:(id)sender
 {
-	//oops. We don't know where to insert it here, do we?
+	[self addPartClicked:sender];
 }
 
 //========== searchFieldChanged: ===============================================
@@ -427,6 +453,21 @@
 
 
 #pragma mark -
+
+//**** NSTableDataSource ****
+//========== tableView:writeRows:toPasteboard: =================================
+//
+// Purpose:		It's time for drag-and-drop parts!
+//
+//==============================================================================
+- (BOOL)tableView:(NSTableView *)tableView
+		writeRows:(NSArray *)rows
+	 toPasteboard:(NSPasteboard *)pboard
+{
+	//LDrawDraggingPboardType
+}//end tableView:writeRows:toPasteboard:
+
+#pragma mark -
 #pragma mark DELEGATES
 #pragma mark -
 
@@ -524,16 +565,18 @@
 //				table.
 //
 //==============================================================================
-- (void) syncSelectionAndPartDisplayed {
-	NSString	*selectedPartName	= [self selectedPart];
+- (void) syncSelectionAndPartDisplayed
+{
+	NSString	*selectedPartName	= [self selectedPartName];
 	PartLibrary	*partLibrary		= [LDrawApplication sharedPartLibrary];
 	id			 modelToView		= nil;
 	
 	if(selectedPartName != nil) {
 		modelToView = [partLibrary modelForName:selectedPartName];
 	}
-	[partPreview setLDrawDirective:modelToView];	
-}
+	[partPreview setLDrawDirective:modelToView];
+	
+}//end syncSelectionAndPartDisplayed
 
 
 #pragma mark -

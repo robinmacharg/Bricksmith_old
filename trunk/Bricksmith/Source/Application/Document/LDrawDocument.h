@@ -88,6 +88,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 
 //Actions
 - (void) changeLDrawColor:(id)sender;
+- (void) insertLDrawPart:(id)sender;
 - (void) panelMoveParts:(id)sender;
 - (void) panelRotateParts:(id)sender;
 

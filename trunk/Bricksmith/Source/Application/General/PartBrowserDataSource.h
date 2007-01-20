@@ -25,13 +25,14 @@
 }
 
 //Accessors
-- (NSString *) selectedPart;
+- (NSString *) selectedPartName;
 - (void) setPartCatalog:(NSDictionary *)newCatalog;
 - (BOOL) setCategory:(NSString *)newCategory;
 - (void) setCategoryList:(NSArray *)categoryList;
 - (void) setTableDataSource:(NSMutableArray *) partsInCategory;
 
 //Actions
+- (IBAction) addPartClicked:(id)sender;
 - (IBAction) categoryComboBoxChanged:(id)sender;
 - (void) doubleClickedInPartTable:(id)sender;
 - (IBAction) searchFieldChanged:(id)sender;

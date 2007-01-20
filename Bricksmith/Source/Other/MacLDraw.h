@@ -315,9 +315,15 @@ typedef enum MenuTags {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-//Contains an array of LDrawDirectives stored as NSData objects. There should 
-// be no duplication of objects.
+//Used for dragging within the File Contents outline. Contains an array of 
+// LDrawDirectives stored as NSData objects. There should be no duplication of 
+// objects.
 #define LDrawDirectivePboardType			@"LDrawDirectivePboardType"
+
+//Used for dragging parts around in or between viewports. Contains an array of 
+// LDrawDirectives stored as NSData objects. There should be no duplication of 
+// objects.
+#define LDrawDraggingPboardType				@"LDrawDraggingPboardType"
 
 //Contains an array of indexes for the original objects being drug.
 // Since the objects are converted to data when placed on the 

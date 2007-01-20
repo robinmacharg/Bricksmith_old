@@ -88,7 +88,12 @@
         }, 
         {CLASS = NSObject; LANGUAGE = ObjC; }, 
         {
-            ACTIONS = {categoryComboBoxChanged = id; searchFieldChanged = id; }; 
+            ACTIONS = {
+                addPartClicked = id; 
+                categoryComboBoxChanged = id; 
+                doubleClickedInPartTable = id; 
+                searchFieldChanged = id; 
+            }; 
             CLASS = PartBrowserDataSource; 
             LANGUAGE = ObjC; 
             OUTLETS = {

@@ -706,24 +706,41 @@
 //				the new color specified in the panel.
 //
 //==============================================================================
-- (void) changeLDrawColor:(id)sender{
-
-	NSArray		*selectedObjects = [self selectedObjects];
-	id			 currentObject;
-	LDrawColorT	 newColor = [sender LDrawColor];
-	int			 counter;
+- (void) changeLDrawColor:(id)sender
+{
+	NSArray		*selectedObjects	= [self selectedObjects];
+	id			 currentObject		= nil;
+	LDrawColorT	 newColor			= [sender LDrawColor];
+	int			 counter			= 0;
 	
-	for(counter = 0; counter < [selectedObjects count]; counter++){
-	
+	for(counter = 0; counter < [selectedObjects count]; counter++)
+	{
 		currentObject = [selectedObjects objectAtIndex:counter];
 	
-		if([currentObject conformsToProtocol:@protocol(LDrawColorable)]){
+		if([currentObject conformsToProtocol:@protocol(LDrawColorable)])
 			[self setObject:currentObject toColor:newColor];
-		}
 	}
 	if([selectedObjects count] > 0)
 		[[self documentContents] setNeedsDisplay];
 }
+
+
+//========== insertLDrawPart: ==================================================
+//
+// Purpose:		We are being prompted to insert a new part into the model.
+//
+// Parameters:	sender = PartBrowserDataSource generating the insert request.
+//
+//==============================================================================
+- (void) insertLDrawPart:(id)sender
+{
+	NSString	*partName	= [sender selectedPartName];
+	
+	//We got a part; let's add it!
+	if(partName != nil)
+		[self addPartNamed:partName];
+	
+}//end insertLDrawPart:
 
 
 //========== panelMoveParts: ===================================================
@@ -1495,29 +1512,26 @@
 //				selection. Otherwise, the step appears at the end of the list.
 //
 //==============================================================================
-- (IBAction) addPartClicked:(id)sender {
-	
+- (IBAction) addPartClicked:(id)sender
+{	
 	NSString		*partName		= nil;
 	
 	//Find out what part should be inserted.
 	// If the parts browser drawer is open, we will read the selection out 
 	// of it.
-	if([partBrowserDrawer state] == NSDrawerOpenState) {
-		partName = [partsBrowser selectedPart];
+	if([partBrowserDrawer state] == NSDrawerOpenState)
+	{
+		[self->partsBrowser addPartClicked:sender];
 	}
 	//But if the drawer is closed, we'll display a dialog prompting for the 
 	// part.
 	else {
 		PartChooserPanel *partChooser = [PartChooserPanel partChooserPanel];
-		if([partChooser runModal] == NSOKButton){
-			partName = [partChooser selectedPart];
-		}
+		[partChooser runModal];
+		//the dialog decides whether to insert the part, and sends the 
+		// appropriate nil-targeted action if it is.
 	}
 
-	//We got a part; let's add it!
-	if(partName != nil){
-		[self addPartNamed:partName];
-	}
 }//end addPartClicked:
 
 

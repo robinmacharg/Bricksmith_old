@@ -678,10 +678,6 @@ void rgbaForCode(LDrawColorT colorCode, UInt8 *colorArray){
 
 	}
 	
-	colorArray[0] = MIN(colorArray[0] * 1.2, 255);
-	colorArray[1] = MIN(colorArray[1] * 1.2, 255);
-	colorArray[2] = MIN(colorArray[2] * 1.2, 255);
-	
 }//end rgbaForCode
 
 

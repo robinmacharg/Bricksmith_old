@@ -143,96 +143,6 @@
 }
 
 
-void setupLight(GLenum light)
-{
-	GLfloat lAmbient[4];
-	GLfloat lDiffuse[4];
-	GLfloat lSpecular[4];
-	
-	if (YES) //flags.subduedLighting)
-	{
-		lAmbient[0] = lAmbient[1] = lAmbient[2] = 0.5f;
-		lDiffuse[0] = lDiffuse[1] = lDiffuse[2] = 0.5f;
-	}
-	else
-	{
-		lAmbient[0] = lAmbient[1] = lAmbient[2] = 0.0f;
-		lDiffuse[0] = lDiffuse[1] = lDiffuse[2] = 1.0f;
-	}
-	if (YES) //!flags.usesSpecular)
-	{
-		lSpecular[0] = lSpecular[1] = lSpecular[2] = 0.0f;
-	}
-	else
-	{
-		lSpecular[0] = lSpecular[1] = lSpecular[2] = 1.0f;
-	}
-	lAmbient[3] = 1.0f;
-	lDiffuse[3] = 1.0f;
-	lSpecular[3] = 1.0f;
-	if (light != GL_LIGHT0)
-	{
-		lAmbient[0] = lAmbient[1] = lAmbient[2] = 0.0f;
-	}
-	glLightfv(light, GL_AMBIENT, lAmbient);
-	glLightfv(light, GL_SPECULAR, lSpecular);
-	glLightfv(light, GL_DIFFUSE, lDiffuse);
-	glEnable(light);
-}
-
-/*
-//========== prepareOpenGL =====================================================
-//
-// Purpose:		The context is all set up; this is where we prepare our OpenGL 
-//				state.
-//
-//==============================================================================
-- (void)prepareOpenGL
-{
-	glClearColor(1.0, 1.0, 1.0, 1.0); //white background
-	glLineWidth(1);
-	glEnable(GL_LINE_SMOOTH); //makes lines transparent! Bad!
-	glEnable(GL_DEPTH_TEST);
-	
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-//	setupLighting();
-	//glDisable(GL_NORMALIZE);
-	glEnable(GL_NORMALIZE);
-	
-	setupLight(GL_LIGHT0);
-	glEnable(GL_LIGHTING);
-	setupLight(GL_LIGHT1);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-
-//	setupMaterial();
-	GLfloat mAmbient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-	GLfloat mSpecular[] = {0.5f, 0.5f, 0.5f, 1.0f};
-	
-	// Note: default emission is <0,0,0,1>, which is what we want.
-	if (YES) //!flags.usesSpecular)
-	{
-		mSpecular[0] = mSpecular[1] = mSpecular[2] = 0.0f;
-	}
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mAmbient);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mSpecular);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 64.0f);
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glEnable(GL_COLOR_MATERIAL);
-
-
-//	setupTextures();
-	//adds a LEGO logo on the top of each stud!
-	
-	//Now that the light is positioned where we want it, we can restore the 
-	// correct viewing angle.
-	[self setViewingAngle:self->viewingAngle];
-	
-}//end prepareOpenGL
-*/
-
-
 //========== prepareOpenGL =====================================================
 //
 // Purpose:		The context is all set up; this is where we prepare our OpenGL 
@@ -264,19 +174,30 @@ void setupLight(GLenum light)
 	glLoadIdentity();
 	glRotatef(180,1,0,0); //convert to standard, upside-down LDraw orientation.
 
-	float position0[] = {0, -0.5, -1, 0};
+	float position0[] = {0, -0.15, -1.0, 0};
 	
-//	float lightModelAmbient[4]    = {0.1, 0.1, 0.1, 0.0};
-	float lightModelAmbient[4]    = {0.2, 0.2, 0.2, 0.0};
+	float lightModelAmbient[4]    = {0.6, 0.6, 0.6, 0.0};
 	
-	float light0Ambient[4]     = { 0.0, 0.0, 0.0, 0.0 }; //don't set this. I think it highlights BFC-culling issues.
+	float light0Ambient[4]     = { 0.7, 0.7, 0.7, 1.0 };
 	float light0Diffuse[4]     = { 1.0, 1.0, 1.0, 1.0 };
-	float light0Specular[4]    = { 0.6, 0.6, 0.6, 1.0 };
+	float light0Specular[4]    = { 0.0, 0.0, 0.0, 1.0 };
 	
+	GLfloat ambient[4] = { 0.05, 0.05, 0.05, 1.0 };
+//	GLfloat diffuse[4] = { 0.5, 0.5, 0.5, 1.0 };
+	GLfloat specular[4]= { 0.0, 0.0, 0.0, 1.0 };
+	GLfloat shininess  = 0;
+	glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, ambient );
+//	glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse ); //don't bother; overridden by glColorMaterial
+	glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, specular );
+	glMaterialfv( GL_FRONT_AND_BACK, GL_SHININESS, &shininess );
+
+	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
 	
+
 	glLightModeli( GL_LIGHT_MODEL_LOCAL_VIEWER,	GL_FALSE);
 	glLightModeli( GL_LIGHT_MODEL_TWO_SIDE,		GL_TRUE );
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,		lightModelAmbient);
@@ -294,126 +215,9 @@ void setupLight(GLenum light)
 	// correct viewing angle.
 	[self setViewingAngle:self->viewingAngle];
 	
-	
-	
-	//Attempts to make lighting look a little nicer. None of them quite looked 
-	// right.
-//	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-//	//GL_DIFFUSE + Ambient (1,1,1) makes everything look muddy.
-//	// Ambient (0,0,0) is vibrant, but generally too dark.
-//	GLfloat ambient[4] = { 0.562, 0.562, 0.562, 1.0 };
-//
-//	//GL_AMBIENT + Diffuse (1,1,1) makes things look frozen in ice.
-//	// Diffuse (0.5, 0.5, 0.5) makes colors pastel
-//	// Diffuse (0,0,0) make the model look dark.
-//	//GLfloat diffuse[4] = { 0.25, 0.25, 0.25, 1.0 };
-//	//GLfloat specular[4]= { 0.08, 0.08, 0.08, 1.0 };
-//	GLfloat specular[4]= { 0, 0, 0, 1.0 };
-//	GLfloat shininess  = 24;
-//	
-//	glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, ambient );
-//	//glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );
-//	glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, specular );
-//	glMaterialfv( GL_FRONT_AND_BACK, GL_SHININESS, &shininess );
-
 }//end prepareOpenGL
 
 
-
-/*
-//========== prepareOpenGL =====================================================
-//
-// Purpose:		The context is all set up; this is where we prepare our OpenGL 
-//				state.
-//
-//				ADAPTED FROM LDVIEW.
-//
-//==============================================================================
-- (void)prepareOpenGL
-{
-	glClearColor(1.0, 1.0, 1.0, 1.0); //white background
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_LINE_SMOOTH); //makes lines transparent! Bad!
-	glEnable(GL_POLYGON_SMOOTH); //what's the difference?
-	glLineWidth(1);
-	
-	//
-	// Define the lighting.
-	//
-	
-	//Our light position is transformed by the modelview matrix. That means 
-	// we need to have a standard model matrix loaded to get our light to 
-	// land in the right place! But our modelview might have already been 
-	// affected by someone calling -setViewingAngle:. So we restore the 
-	// default here.
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glRotatef(180,1,0,0); //convert to standard, upside-down LDraw orientation.
-	
-	float position0[] = {0, -0.5, -1, 0};
-	
-//	float lightModelAmbient[4]    = {0.1, 0.1, 0.1, 0.0};
-	float lightModelAmbient[4]    = {0.2, 0.2, 0.2, 0.0};
-	
-	GLfloat mAmbient[]			= {0.0, 0.0, 0.0, 1.0};
-	GLfloat mSpecular[]			= {0.5, 0.5, 0.5, 1.0};
-	
-	float light0Ambient[4]     = { 0.0, 0.0, 0.0, 1.0 }; //don't set this. I think it highlights BFC-culling issues.
-	float light0Diffuse[4]     = { 1.0, 1.0, 1.0, 1.0 };
-	float light0Specular[4]    = { 1.0, 1.0, 1.0, 1.0 };
-	
-	glShadeModel(GL_SMOOTH);
-	glEnable(GL_NORMALIZE);
-
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,		mAmbient);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,	mSpecular);
-	glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS,	64.0f);
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glEnable(GL_COLOR_MATERIAL);
-	
-	glLightModeli( GL_LIGHT_MODEL_LOCAL_VIEWER,	GL_FALSE);
-	glLightModeli( GL_LIGHT_MODEL_TWO_SIDE,		GL_TRUE );
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,		lightModelAmbient);
-	
-	glLightfv(GL_LIGHT0, GL_AMBIENT,  light0Ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE,  light0Diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, light0Specular);
-	
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	
-//	glLightfv(GL_LIGHT0, GL_POSITION, position0);
-	
-	//Now that the light is positioned where we want it, we can restore the 
-	// correct viewing angle.
-	[self setViewingAngle:self->viewingAngle];
-	
-	
-	
-	//Attempts to make lighting look a little nicer. None of them quite looked 
-	// right.
-//	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-//	//GL_DIFFUSE + Ambient (1,1,1) makes everything look muddy.
-//	// Ambient (0,0,0) is vibrant, but generally too dark.
-//	GLfloat ambient[4] = { 0.562, 0.562, 0.562, 1.0 };
-//
-//	//GL_AMBIENT + Diffuse (1,1,1) makes things look frozen in ice.
-//	// Diffuse (0.5, 0.5, 0.5) makes colors pastel
-//	// Diffuse (0,0,0) make the model look dark.
-//	//GLfloat diffuse[4] = { 0.25, 0.25, 0.25, 1.0 };
-//	//GLfloat specular[4]= { 0.08, 0.08, 0.08, 1.0 };
-//	GLfloat specular[4]= { 0, 0, 0, 1.0 };
-//	GLfloat shininess  = 24;
-//	
-//	glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, ambient );
-//	//glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );
-//	glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, specular );
-//	glMaterialfv( GL_FRONT_AND_BACK, GL_SHININESS, &shininess );
-	
-}//end prepareOpenGL
-*/
 
 #pragma mark -
 #pragma mark DRAWING

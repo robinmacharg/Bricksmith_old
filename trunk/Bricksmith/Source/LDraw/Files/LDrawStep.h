@@ -9,6 +9,7 @@
 //  Copyright (c) 2005. All rights reserved.
 //==============================================================================
 #import <Cocoa/Cocoa.h>
+#import <pthread.h>
 
 #import "LDrawColor.h"
 #import "LDrawContainer.h"
@@ -25,14 +26,16 @@ typedef enum {
 } LDrawStepFlavorT;
 
 
-@interface LDrawStep : LDrawContainer {
-	
+@interface LDrawStep : LDrawContainer
+{
 	//Optimization variables
 	LDrawStepFlavorT	stepFlavor; //defaults to LDrawStepAnyDirectives
 	LDrawColorT			colorOfAllDirectives;
+	
 	BOOL				hasDisplayList;
 	GLuint				displayListTag;	//list ID for normals in non-inverted matrix
 	GLuint				displayListInvertedNormalsTag; //list ID for normals in an inverted matrix
+	pthread_mutex_t		displayListMutex;
 
 	//Inherited from the superclasses:
 	//NSMutableArray	*containedObjects; //the commands that make up the step.

@@ -270,7 +270,14 @@
 			if(		hasDisplayList == YES
 				&&	(optionsMask & DRAW_REVERSE_NORMALS) == 0)
 			{
-				glCallList(self->displayListTag);
+				//on the somewhat non-committal advice of an Apple engineer who should 
+				// know, I am wrapping my calls to shared-context display lists with 
+				// mutexes.
+				pthread_mutex_lock(&displayListMutex);
+				
+					glCallList(self->displayListTag);
+				
+				pthread_mutex_unlock(&displayListMutex);
 			}
 			else
 				[modelToDraw draw:optionsMask parentColor:parentColor];
@@ -1012,6 +1019,8 @@
 	if(self->referenceName != nil && self->color != LDrawCurrentColor)
 	{
 		LDrawModel *referencedSubmodel	= [self referencedMPDSubmodel];
+		
+		pthread_mutex_init(&displayListMutex, NULL);
 	
 		#if (OPTIMIZE_STEPS	== 0)
 			//Don't optimize MPD references. The user can change their referenced
@@ -1101,14 +1110,18 @@
 //				bricks never discolor.
 //
 //==============================================================================
-- (void) dealloc {
+- (void) dealloc
+{
 	//release instance variables.
 	[displayName	release];
 	[referenceName	release];
 	
 	//give our display list back
 	if(self->hasDisplayList)
+	{
 		glDeleteLists(displayListTag, 1);
+		pthread_mutex_destroy(&displayListMutex);
+	}
 	
 	[super dealloc];
 }

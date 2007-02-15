@@ -9,11 +9,12 @@
 //  Copyright (c) 2005. All rights reserved.
 //==============================================================================
 #import <Cocoa/Cocoa.h>
+#import <OpenGL/gl.h>
+#import <pthread.h>
 
 #import "LDrawDirective.h"
 #import "LDrawDrawableElement.h"
 #import "LDrawColor.h"
-#import <OpenGL/gl.h>
 #import "MatrixMath.h"
 
 @class LDrawFile;
@@ -31,6 +32,7 @@
 
 	BOOL			hasDisplayList;
 	GLuint			displayListTag;	//list ID for normals in non-inverted matrix
+	pthread_mutex_t	displayListMutex;
 }
 
 //Initialization

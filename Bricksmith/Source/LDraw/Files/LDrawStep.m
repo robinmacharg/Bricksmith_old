@@ -140,14 +140,22 @@
 	// see other comments in -[LDrawStep optimize]
 	if(hasDisplayList == YES)
 	{
-		if((optionsMask & DRAW_REVERSE_NORMALS) != 0)
-			glCallList(self->displayListInvertedNormalsTag);
-		else
-			glCallList(self->displayListTag);
+		//on the somewhat non-committal advice of an Apple engineer who should 
+		// know, I am wrapping my calls to shared-context display lists with 
+		// mutexes.
+		pthread_mutex_lock(&displayListMutex);
 			
+			if((optionsMask & DRAW_REVERSE_NORMALS) != 0)
+				glCallList(self->displayListInvertedNormalsTag);
+			else
+				glCallList(self->displayListTag);
+				
+		pthread_mutex_unlock(&displayListMutex);
+	
 		#if OPTIMIZE_STEPS
 			glColor4fv(parentColor);
 		#endif
+		
 	}
 	else
 	{
@@ -386,6 +394,8 @@
 //		&&	(stepColor == LDrawCurrentColor || stepColor == LDrawEdgeColor)
 		&&	numberCommands >= 4 )
 	{
+		pthread_mutex_init(&displayListMutex, NULL);
+
 		if(stepColor == LDrawEdgeColor)
 		{	//create 1 new, empty display list. These are almost certainly 
 			// lines, and they don't care about normals.

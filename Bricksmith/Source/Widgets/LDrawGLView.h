@@ -71,6 +71,7 @@ typedef enum {
 	unsigned			 numberDrawRequests;	//how many threaded draws are piling up in the queue.
 	GLfloat				 cameraDistance;
 	LDrawColorT			 color;					//default color to draw parts if none is specified
+	GLfloat				 glBackgroundColor[4];
 	GLfloat				 glColor[4];			//OpenGL equivalent of the LDrawColor.
 	ProjectionModeT		 projectionMode;
 	RotationDrawModeT	 rotationDrawMode;		//drawing detail while rotating.
@@ -89,6 +90,7 @@ typedef enum {
 - (LDrawColorT) LDrawColor;
 - (NSPoint) centerPoint;
 - (Matrix4) getInverseMatrix;
+- (Matrix4) getMatrix;
 - (ViewingAngleT) viewingAngle;
 - (float) zoomPercentage;
 - (void) setAcceptsFirstResponder:(BOOL)flag;
@@ -128,6 +130,7 @@ typedef enum {
 - (void) makeProjection;
 - (void) saveConfiguration;
 - (void) scrollCenterToPoint:(NSPoint)newCenter;
+- (void) takeBackgroundColorFromUserDefaults;
 
 @end
 

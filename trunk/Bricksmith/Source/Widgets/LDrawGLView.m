@@ -42,6 +42,7 @@
 #import "LDrawModel.h"
 #import "LDrawStep.h"
 #import "MacLDraw.h"
+#import "UserDefaultsCategory.h"
 
 @implementation LDrawGLView
 
@@ -72,6 +73,11 @@
 	[notificationCenter addObserver:self
 						   selector:@selector(mouseToolDidChange:)
 							   name:LDrawMouseToolDidChangeNotification
+							 object:nil ];
+	
+	[notificationCenter addObserver:self
+						   selector:@selector(backgroundColorDidChange:)
+							   name:LDrawViewBackgroundColorDidChangeNotification
 							 object:nil ];
 	
 	//Machinery needed to draw Quartz overtop OpenGL. Sadly, it caused our view 
@@ -148,18 +154,17 @@
 // Purpose:		The context is all set up; this is where we prepare our OpenGL 
 //				state.
 //
-//				ORIGINAL BRICKSMITH 1.3 SETTINGS.
-//
 //==============================================================================
 - (void)prepareOpenGL
 {
-	glClearColor(1.0, 1.0, 1.0, 1.0); //white background
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //	glEnable(GL_LINE_SMOOTH); //makes lines transparent! Bad!
 //	glEnable(GL_POLYGON_SMOOTH); //what's the difference?
 	glLineWidth(1);
+	
+	[self takeBackgroundColorFromUserDefaults]; //glClearColor()
 	
 	//
 	// Define the lighting.
@@ -487,6 +492,29 @@
 //==============================================================================
 - (Matrix4) getInverseMatrix
 {
+	Matrix4	transformation	= [self getMatrix];
+	Matrix4	inversed;
+	
+	Matrix4Invert( &transformation, &inversed);
+		
+	return inversed;
+	
+}//end getInverseMatrix
+
+
+//========== getMatrix =========================================================
+//
+// Purpose:		Returns the the current modelview matrix, basically.
+//
+// Note:		This function filters out the translation which is caused by 
+//				"moving" the camera with gluLookAt. That allows us to continue 
+//				working with the model as if it's positioned at the origin, 
+//				which means that points we generate with this matrix will 
+//				correspond to points in the LDraw model itself.
+//
+//==============================================================================
+- (Matrix4) getMatrix
+{
 	@synchronized([self openGLContext])
 	{
 		GLfloat	currentMatrix[16];
@@ -503,11 +531,9 @@
 		transformation.element[3][1] = 0; //translation is in the bottom row of the matrix.
 		transformation.element[3][2] = 0;
 		
-		Matrix4Invert( &transformation, &inversed);
-		
-		return inversed;
+		return transformation;
 	}
-}//end getInverseMatrix
+}//end getMatrix
 
 
 //========== LDrawColor ========================================================
@@ -724,7 +750,7 @@
 		
 		//The camera distance was set for us by -resetFrameSize, so as to be able 
 		// to see the entire model.
-		gluLookAt( 0, 0, cameraDistance, //camera location
+		gluLookAt( 0, 0, self->cameraDistance, //camera location
 				   0,0,0, //look-at point
 				   0, -1, 0 ); //LDraw is upside down.
 		
@@ -1340,11 +1366,11 @@
 //==============================================================================
 - (void)rotationDragged:(NSEvent *)theEvent
 {
-	//Since there are multiple OpenGL rendering areas on the screen, we must 
-	// explicitly indicate that we are drawing into ourself. Weird yes, but 
-	// horrible things happen without this call.
 	@synchronized([self openGLContext])
 	{
+		//Since there are multiple OpenGL rendering areas on the screen, we must 
+		// explicitly indicate that we are drawing into ourself. Weird yes, but 
+		// horrible things happen without this call.
 		[[self openGLContext] makeCurrentContext];
 
 		//Find the mouse displacement from the last known mouse point.
@@ -1383,6 +1409,12 @@
 		// "undoing" the model matrix on the screen point, leaving us a model point.
 		V4MulPointByMatrix(&vectorX, &inversed, &transformedVectorX);
 		V4MulPointByMatrix(&vectorY, &inversed, &transformedVectorY);
+		
+		if(self->viewingAngle != ViewingAngle3D)
+		{
+			[self setProjectionMode:ProjectionModePerspective];
+			self->viewingAngle = ViewingAngle3D;
+		}
 		
 		//Now rotate the model around the visual "up" and "down" directions.
 		glMatrixMode(GL_MODELVIEW);
@@ -1521,6 +1553,20 @@
 #pragma mark -
 #pragma mark NOTIFICATIONS
 #pragma mark -
+
+
+//========== backgroundColorDidChange: =========================================
+//
+// Purpose:		The global preference for the LDraw views' background color has 
+//				been changed. We need to update our display accordingly.
+//
+//==============================================================================
+- (void) backgroundColorDidChange:(NSNotification *)notification
+{
+	[self takeBackgroundColorFromUserDefaults];
+	
+}//end backgroundColorDidChange:
+
 
 //========== displayNeedsUpdating: =============================================
 //
@@ -1860,8 +1906,8 @@
 			//We do not want to apply this resizing to a raw GL view.
 			// It only makes sense for those in a scroll view. (The Part Browsers 
 			// have been moved to scrollviews now too in order to allow zooming.)
-			if([self enclosingScrollView] != nil){
-				
+			if([self enclosingScrollView] != nil)
+			{
 				//Determine whether the canvas size needs to change.
 				Point3	origin			= {0,0,0};
 				NSPoint	centerPoint		= [self centerPoint];
@@ -2010,29 +2056,40 @@
 		
 		glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
 		
-		if(self->projectionMode == ProjectionModePerspective){
+		if(self->projectionMode == ProjectionModePerspective)
+		{
+			// We want perspective and ortho views to show objects at the origin 
+			// as the same size. Since perspective viewing is defined by a 
+			// frustum (truncated pyramid), we have to shrink the visibily 
+			// plane--which is located on the near clipping plane--in such a way 
+			// that the slice of the frustum at the origin will have the 
+			// dimensions of the desired visibility plane. (Remember, slices 
+			// grow *bigger* as they go deeper into the view. Since the origin 
+			// is deeper, that means we need a near visibility plane that is 
+			// *smaller* than the desired size at the origin.)  
+			//
+			// Find the scaling percentage betwen the frustum slice through 
+			// (0,0,0) and the slice that defines the near clipping plane. 
+			float visibleProportion = (fabs(self->cameraDistance) - fieldDepth)
+														/
+											fabs(self->cameraDistance);
 			
-			//We want the model to appear "full size" at the origin. Since
-			// perspective viewing is defined by a frustum (truncated pyramid),
-			// we have to shrink the visibily plane--which is located on the 
-			// near clipping plane--in such a way that a slice of the frustum 
-			// through the origin will have the dimensions of the desired 
-			// visibility plane. (Remember, slices grow *bigger* as they go 
-			// deeper into the view. Since the origin is deeper, that means 
-			// we need a near visibility plane that is *smaller* than the 
-			// desired size at the origin.)
-			float visibleProportion = (float) (CAMERA_DISTANCE_FACTOR - 1) / CAMERA_DISTANCE_FACTOR;
-						//based on some trigonometry: cos viewingAngle = modelSize / 7*modelSize
+			//scale down the visibility plane, centering it in the full-size one.
+			visibilityPlane.origin.x += NSWidth(visibilityPlane)  * (1 - visibleProportion) / 2;
+			visibilityPlane.origin.y += NSHeight(visibilityPlane) * (1 - visibleProportion) / 2;
+			visibilityPlane.size.width	*= visibleProportion;
+			visibilityPlane.size.height	*= visibleProportion;
 			
-			glFrustum(visibleProportion * NSMinX(visibilityPlane),	//left
-					  visibleProportion * NSMaxX(visibilityPlane),	//right
-					  visibleProportion * NSMinY(visibilityPlane),	//bottom
-					  visibleProportion * NSMaxY(visibilityPlane),	//top
+			glFrustum(NSMinX(visibilityPlane),	//left
+					  NSMaxX(visibilityPlane),	//right
+					  NSMinY(visibilityPlane),	//bottom
+					  NSMaxY(visibilityPlane),	//top
 					  fabs(cameraDistance) - fieldDepth,	//near (closer points are clipped); distance from CAMERA LOCATION
 					  fabs(cameraDistance) + fieldDepth		//far (points beyond this are clipped); distance from CAMERA LOCATION
-					  );
+					 );
 		}
-		else{
+		else
+		{
 			glOrtho(NSMinX(visibilityPlane),	//left
 					NSMaxX(visibilityPlane),	//right
 					NSMinY(visibilityPlane),	//bottom
@@ -2078,7 +2135,8 @@
 //				given in frame coordinates.
 //
 //==============================================================================
-- (void) scrollCenterToPoint:(NSPoint)newCenter {
+- (void) scrollCenterToPoint:(NSPoint)newCenter
+{
 	id		clipView		= [self superview];
 	NSRect	visibleRect		= [self visibleRect];
 	
@@ -2086,6 +2144,47 @@
 									newCenter.y - NSHeight(visibleRect)/2) ];
 }
 
+
+//========== takeBackgroundColorFromUserDefaults ===============================
+//
+// Purpose:		The user gets to choose a background color used throughout the 
+//				application. Read and use it here.
+//
+//==============================================================================
+- (void) takeBackgroundColorFromUserDefaults
+{
+	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
+	NSColor			*newColor		= [userDefaults colorForKey:LDRAW_VIEWER_BACKGROUND_COLOR_KEY];
+	NSColor			*rgbColor		= nil;
+	
+	if(newColor == nil)
+		newColor = [NSColor whiteColor];
+	
+	// the new color may not be in the RGB colorspace, so we need to convert.
+	rgbColor = [newColor colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+	
+	glBackgroundColor[0] = [rgbColor redComponent];
+	glBackgroundColor[1] = [rgbColor greenComponent];
+	glBackgroundColor[2] = [rgbColor blueComponent];
+	glBackgroundColor[3] = 1.0;
+	
+	@synchronized([self openGLContext])
+	{
+		//This method can get called from -prepareOpenGL, which is itself called 
+		// from -makeCurrentContext. That's a recipe for infinite recursion. So, 
+		// we only makeCurrentContext if we *need* to.
+		if([NSOpenGLContext currentContext] != [self openGLContext])
+			[[self openGLContext] makeCurrentContext];
+		
+		glClearColor( glBackgroundColor[0],
+					  glBackgroundColor[1],
+					  glBackgroundColor[2],
+					  glBackgroundColor[3] );
+	}
+
+	[self setNeedsDisplay:YES];
+	
+}//end takeBackgroundColorFromUserDefaults
 
 #pragma mark -
 #pragma mark DESTRUCTOR

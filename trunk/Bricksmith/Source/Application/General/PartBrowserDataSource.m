@@ -44,18 +44,13 @@
 	NSMenuItem		*recentsItem		= nil;
 	NSMenuItem		*noRecentsItem		= nil;
 	
+	
+	//---------- Widget Setup --------------------------------------------------
+	
 	[self->partsTable setTarget:self];
 	[self->partsTable setDoubleAction:@selector(doubleClickedInPartTable:)];
 	
 	[partPreview setAcceptsFirstResponder:NO];
-	
-	[self setPartCatalog:[[LDrawApplication sharedPartLibrary] partCatalog]];
-	[self setCategory:startingCategory];
-	[partsTable scrollRowToVisible:startingRow];
-	[partsTable selectRowIndexes:[NSIndexSet indexSetWithIndex:startingRow]
-			byExtendingSelection:NO];
-	[self syncSelectionAndPartDisplayed];
-	
 	
 	//Configure the search field's menu
 	recentsItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"NoRecentSearches", nil)
@@ -71,7 +66,31 @@
 	[searchMenuTemplate insertItem:recentsItem atIndex:1];
 	
 	[[self->searchField cell] setSearchMenuTemplate:searchMenuTemplate];
+	
+	// If there is no sort order yet, define one.
+	if([[self->partsTable sortDescriptors] count] == 0)
+	{
+		NSTableColumn		*descriptionColumn	= [self->partsTable tableColumnWithIdentifier:PART_NAME_KEY];
+		NSSortDescriptor	*sortDescriptor		= [descriptionColumn sortDescriptorPrototype];
 		
+		NSLog(@"setting sort descriptors");
+		[self->partsTable setSortDescriptors:[NSArray arrayWithObject:sortDescriptor]];
+	}
+	
+	
+	//---------- Set Data ------------------------------------------------------
+	
+	[self setPartCatalog:[[LDrawApplication sharedPartLibrary] partCatalog]];
+	[self setCategory:startingCategory];
+	
+	[partsTable scrollRowToVisible:startingRow];
+	[partsTable selectRowIndexes:[NSIndexSet indexSetWithIndex:startingRow]
+			byExtendingSelection:NO];
+	[self syncSelectionAndPartDisplayed];
+	
+	
+	//---------- Notifications -------------------------------------------------
+	
 	//We also want to know if the part catalog changes while the program is running.
 	[[NSNotificationCenter defaultCenter]
 			addObserver: self
@@ -79,7 +98,8 @@
 				   name: LDrawPartCatalogDidChangeNotification
 				 object: nil ];
 	
-	//Free Memory.
+	
+	//---------- Free Memory ---------------------------------------------------
 	[searchMenuTemplate	release];
 	[recentsItem		release];
 	[noRecentsItem		release];

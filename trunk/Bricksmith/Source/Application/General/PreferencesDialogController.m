@@ -31,8 +31,8 @@ PreferencesDialogController *preferencesDialog = nil;
 // Purpose:		Show the preferences window.
 //
 //==============================================================================
-- (void) awakeFromNib{
-
+- (void) awakeFromNib
+{
 	//Grab the current window content from the Nib (it should be blank). 
 	// We will display this while changing panes.
 	blankContent = [[preferencesWindow contentView] retain];
@@ -48,7 +48,7 @@ PreferencesDialogController *preferencesDialog = nil;
 		lastIdentifier = PREFS_LDRAW_TAB_IDENTFIER;
 	[self selectPanelWithIdentifier:lastIdentifier];
 	
-}
+}//end awakeFromNib
 
 #pragma mark -
 #pragma mark INITIALIZATION
@@ -96,15 +96,33 @@ PreferencesDialogController *preferencesDialog = nil;
 // Purpose:		Brings the window on screen.
 //
 //==============================================================================
-- (void) setDialogValues{
-	
+- (void) setDialogValues
+{
 	//Make sure there are actually preferences to read before attempting to 
 	// retrieve them.
 	[PreferencesDialogController ensureDefaults];
 
+	[self setGeneralTabValues];
 	[self setStylesTabValues];
 	[self setLDrawTabValues];
-}
+	
+}//end setDialogValues
+
+
+//========== setGeneralTabValues ===============================================
+//
+// Purpose:		Updates the data in the General tab to match what is on the 
+//			    disk.  
+//
+//==============================================================================
+- (void) setGeneralTabValues
+{
+	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
+	PartBrowserStyleT	 partBrowserStyle	= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
+	
+	[self->partBrowserStyleRadioButtons selectCellWithTag:partBrowserStyle];
+	
+}//end setGeneralTabValues
 
 
 //========== setStylesTabValues ================================================
@@ -112,10 +130,11 @@ PreferencesDialogController *preferencesDialog = nil;
 // Purpose:		Updates the data in the Styles tab to match what is on the disk.
 //
 //==============================================================================
-- (void) setStylesTabValues{
-	
+- (void) setStylesTabValues
+{
 	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
 	
+	NSColor			*backgroundColor	= [userDefaults colorForKey:LDRAW_VIEWER_BACKGROUND_COLOR_KEY];
 	NSColor			*modelsColor		= [userDefaults colorForKey:SYNTAX_COLOR_MODELS_KEY];
 	NSColor			*stepsColor			= [userDefaults colorForKey:SYNTAX_COLOR_STEPS_KEY];
 	NSColor			*partsColor			= [userDefaults colorForKey:SYNTAX_COLOR_PARTS_KEY];
@@ -123,13 +142,16 @@ PreferencesDialogController *preferencesDialog = nil;
 	NSColor			*commentsColor		= [userDefaults colorForKey:SYNTAX_COLOR_COMMENTS_KEY];
 	NSColor			*unknownColor		= [userDefaults colorForKey:SYNTAX_COLOR_UNKNOWN_KEY];
 	
+	[backgroundColorWell	setColor:backgroundColor];
+	
 	[modelsColorWell		setColor:modelsColor];
 	[stepsColorWell			setColor:stepsColor];
 	[partsColorWell			setColor:partsColor];
 	[primitivesColorWell	setColor:primitivesColor];
 	[commentsColorWell		setColor:commentsColor];
 	[unknownColorWell		setColor:unknownColor];
-}
+
+}//end setStylesTabValues
 
 
 //========== setLDrawTabValues =================================================
@@ -171,8 +193,8 @@ PreferencesDialogController *preferencesDialog = nil;
 //				should change.
 //
 //==============================================================================
-- (void)changeTab:(id)sender{
-	
+- (void)changeTab:(id)sender
+{	
 	NSString	*itemIdentifier	= [sender itemIdentifier];
 	
 	[self selectPanelWithIdentifier:itemIdentifier];
@@ -180,14 +202,57 @@ PreferencesDialogController *preferencesDialog = nil;
 
 
 #pragma mark -
+#pragma mark General Tab
+
+//========== partBrowserStyleChanged: ==========================================
+//
+// Purpose:		We have multiple ways of showing the part browser.
+//
+//==============================================================================
+- (IBAction) partBrowserStyleChanged:(id)sender
+{
+	NSUserDefaults		*userDefaults	= [NSUserDefaults standardUserDefaults];
+	PartBrowserStyleT	 newStyle		= [self->partBrowserStyleRadioButtons selectedTag];
+	
+	[userDefaults setInteger:newStyle forKey:PART_BROWSER_STYLE_KEY];
+	
+	//inform interested parties.
+	[[NSNotificationCenter defaultCenter] 
+			postNotificationName:LDrawPartBrowserStyleDidChangeNotification
+						  object:[NSNumber numberWithInt:newStyle] ];
+	
+}//end partBrowserStyleChanged:
+
+#pragma mark -
 #pragma mark Styles Tab
+
+//========== backgroundColorWellChanged: =======================================
+//
+// Purpose:		The color for the LDraw views' background has been changed. 
+//				Update the value in the preferences.
+//
+//==============================================================================
+- (IBAction) backgroundColorWellChanged:(id)sender
+{
+	NSColor			*newColor		= [sender color];
+	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
+	
+	[userDefaults setColor:newColor forKey:LDRAW_VIEWER_BACKGROUND_COLOR_KEY];
+	
+	[[NSNotificationCenter defaultCenter] 
+			postNotificationName:LDrawViewBackgroundColorDidChangeNotification
+						  object:newColor ];
+						  
+}//end backgroundColorWellChanged:
+
 
 //========== modelsColorWellChanged: ===========================================
 //
 // Purpose:		This syntax-color well changed. Update the value in preferences.
 //
 //==============================================================================
-- (IBAction) modelsColorWellChanged:(id)sender{
+- (IBAction) modelsColorWellChanged:(id)sender
+{
 	NSColor			*newColor		= [sender color];
 	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
 	
@@ -377,8 +442,9 @@ PreferencesDialogController *preferencesDialog = nil;
 - (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar
 {
 	return [NSArray arrayWithObjects:
-						PREFS_STYLE_TAB_IDENTFIER,
+						PREFS_GENERAL_TAB_IDENTIFIER,
 						PREFS_LDRAW_TAB_IDENTFIER,
+						PREFS_STYLE_TAB_IDENTFIER,
 						nil
 			];
 }
@@ -422,8 +488,12 @@ PreferencesDialogController *preferencesDialog = nil;
 	
 	[newItem setLabel:NSLocalizedString(itemIdentifier, nil)];
 	
-	if([itemIdentifier isEqualToString:PREFS_LDRAW_TAB_IDENTFIER])
+	if([itemIdentifier isEqualToString:PREFS_GENERAL_TAB_IDENTIFIER])
+		[newItem setImage:[NSImage imageNamed:@"Mac Brick"]];
+	
+	else if([itemIdentifier isEqualToString:PREFS_LDRAW_TAB_IDENTFIER])
 		[newItem setImage:[NSImage imageNamed:@"LDrawLogo"]];
+	
 	else if([itemIdentifier isEqualToString:PREFS_STYLE_TAB_IDENTFIER])
 		[newItem setImage:[NSImage imageNamed:@"SyntaxColoring"]];
 	
@@ -478,6 +548,7 @@ PreferencesDialogController *preferencesDialog = nil;
 	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
 	NSMutableDictionary	*initialDefaults	= [NSMutableDictionary dictionary];
 	
+	NSColor			*backgroundColor	= [NSColor whiteColor];
 	NSColor			*modelsColor		= [NSColor blackColor];
 	NSColor			*stepsColor			= [NSColor blackColor];
 	NSColor			*partsColor			= [NSColor blackColor];
@@ -489,8 +560,15 @@ PreferencesDialogController *preferencesDialog = nil;
 	NSColor			*unknownColor		= [NSColor lightGrayColor];
 	
 	//
+	// General
+	//
+	[initialDefaults setObject:[NSNumber numberWithInt:PartBrowserShowAsDrawer]	forKey:PART_BROWSER_STYLE_KEY];
+
+	//
 	// Syntax Colors
 	//
+	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:backgroundColor]	forKey:LDRAW_VIEWER_BACKGROUND_COLOR_KEY];
+	
 	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:modelsColor]		forKey:SYNTAX_COLOR_MODELS_KEY];
 	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:stepsColor]		forKey:SYNTAX_COLOR_STEPS_KEY];
 	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:partsColor]		forKey:SYNTAX_COLOR_PARTS_KEY];
@@ -645,15 +723,18 @@ PreferencesDialogController *preferencesDialog = nil;
 //				represented by itemIdentifier.
 //
 //==============================================================================
-- (void)selectPanelWithIdentifier:(NSString *)itemIdentifier{
-	
+- (void)selectPanelWithIdentifier:(NSString *)itemIdentifier
+{
 	NSView		*newContentView	= nil;
 	NSRect		 newFrameRect	= NSZeroRect;
 	
 	//Make sure the corresponding toolbar tab is selected too.
 	[[preferencesWindow toolbar] setSelectedItemIdentifier:itemIdentifier];
 	
-	if([itemIdentifier isEqualToString:PREFS_LDRAW_TAB_IDENTFIER])
+	if([itemIdentifier isEqualToString:PREFS_GENERAL_TAB_IDENTIFIER])
+		newContentView = self->generalTabContentView;
+	
+	else if([itemIdentifier isEqualToString:PREFS_LDRAW_TAB_IDENTFIER])
 		newContentView = ldrawContentView;
 	
 	else if([itemIdentifier isEqualToString:PREFS_STYLE_TAB_IDENTFIER])
@@ -684,8 +765,9 @@ PreferencesDialogController *preferencesDialog = nil;
 //==============================================================================
 - (void)dealloc
 {
-	[preferencesWindow	release];
-	[blankContent		release];
+	[generalTabContentView	release];
+	[preferencesWindow		release];
+	[blankContent			release];
 	
 	//clear out our global preferences controller. 
 	// It will be reinitialized when needed.

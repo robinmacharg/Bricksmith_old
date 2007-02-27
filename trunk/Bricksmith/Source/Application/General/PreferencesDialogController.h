@@ -11,20 +11,30 @@
 #import <Cocoa/Cocoa.h>
 
 //Toolbar Tab Identifiers
-#define PREFS_STYLE_TAB_IDENTFIER	@"PreferencesTabStyles"
-#define PREFS_LDRAW_TAB_IDENTFIER	@"PreferencesTabLDraw"
+#define PREFS_GENERAL_TAB_IDENTIFIER	@"PreferencesTabGeneral"
+#define PREFS_LDRAW_TAB_IDENTFIER		@"PreferencesTabLDraw"
+#define PREFS_STYLE_TAB_IDENTFIER		@"PreferencesTabStyles"
 
 
 
 @interface PreferencesDialogController : NSObject
 {
     IBOutlet NSWindow		*preferencesWindow;
-	         NSView			*blankContent; //the initial, empty content of the window in the Nib.
+	
+			 NSView			*blankContent; //the initial, empty content of the window in the Nib.
+	IBOutlet NSView			*generalTabContentView;
 	IBOutlet NSView			*stylesContentView;
 	IBOutlet NSView			*ldrawContentView;
 	
+	// General Tab
+    IBOutlet NSMatrix		*partBrowserStyleRadioButtons;
+
+	// LDraw Tab
     IBOutlet NSTextField	*LDrawPathTextField;
 	IBOutlet NSForm			*gridSpacingForm;
+	
+	// Style Tab
+	IBOutlet NSColorWell	*backgroundColorWell;
 	
 	IBOutlet NSColorWell	*modelsColorWell;
 	IBOutlet NSColorWell	*stepsColorWell;
@@ -33,19 +43,27 @@
 	IBOutlet NSColorWell	*commentsColorWell;
 	IBOutlet NSColorWell	*unknownColorWell;
 	
+	// Miscellaneous
 	IBOutlet NSView			*folderChooserAccessoryView;
 	
 }
 //Initialization
 + (void) doPreferences;
 - (void) showPreferencesWindow;
+
 - (void) setDialogValues;
+- (void) setGeneralTabValues;
 - (void) setStylesTabValues;
 - (void) setLDrawTabValues;
 
 //Actions
 - (void)changeTab:(id)sender;
 
+// - General Tab
+- (IBAction) partBrowserStyleChanged:(id)sender;
+
+// - Styles Tab
+- (IBAction) backgroundColorWellChanged:(id)sender;
 - (IBAction) modelsColorWellChanged:(id)sender;
 - (IBAction) stepsColorWellChanged:(id)sender;
 - (IBAction) partsColorWellChanged:(id)sender;
@@ -53,6 +71,7 @@
 - (IBAction) commentsColorWellChanged:(id)sender;
 - (IBAction) unknownColorWellChanged:(id)sender;
 
+// - LDraw Tab
 - (IBAction) chooseLDrawFolder:(id)sender;
 - (IBAction) pathTextFieldChanged:(id)sender;
 - (IBAction) reloadParts:(id)sender;

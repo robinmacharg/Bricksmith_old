@@ -31,6 +31,8 @@
 #define LDRAW_GL_VIEW_ANGLE							@"LDrawGLView Viewing Angle"
 #define LDRAW_GL_VIEW_PROJECTION					@"LDrawGLView Viewing Projection"
 #define LDRAW_PATH_KEY								@"LDraw Path"
+#define LDRAW_VIEWER_BACKGROUND_COLOR_KEY			@"LDraw Viewer Background Color"
+#define PART_BROWSER_STYLE_KEY						@"Part Browser Style"
 #define PART_BROWSER_DRAWER_STATE					@"Part Browser Drawer State"
 #define PART_BROWSER_PREVIOUS_CATEGORY				@"Part Browser Previous Category"
 #define PART_BROWSER_PREVIOUS_SELECTED_ROW			@"Part Browser Previous Selected Row"
@@ -219,35 +221,43 @@
 
 //A directive was modified, either explicitly by the user or by undo/redo.
 // Object is the LDrawDirective that changed. No userInfo.
-#define LDrawDirectiveDidChangeNotification			@"LDrawDirectiveDidChangeNotification"
+#define LDrawDirectiveDidChangeNotification				@"LDrawDirectiveDidChangeNotification"
 
 //The color which will be assigned to new parts has changed.
 // Object is the new LDrawColorT, as an NSNumber. No userInfo.
-#define LDrawColorDidChangeNotification				@"LDrawColorDidChangeNotification"
+#define LDrawColorDidChangeNotification					@"LDrawColorDidChangeNotification"
 
 //Active model changed.
 // Object is the LDrawFile in which the model resides. No userInfo.
-#define LDrawFileActiveModelDidChangeNotification	@"LDrawFileActiveModelDidChangeNotification"
+#define LDrawFileActiveModelDidChangeNotification		@"LDrawFileActiveModelDidChangeNotification"
 
 //File has changed in some way that it should be redisplayed. Object is the LDrawFile that changed. No userInfo.
 // Note: this should probably replace LDrawDirectiveDidChangeNotification in some places.
-#define LDrawFileDidChangeNotification				@"LDrawFileDidChangeNotification"
+#define LDrawFileDidChangeNotification					@"LDrawFileDidChangeNotification"
 
 //the keys on the keyboard which were depressed just changed.
 // Object is an NSEvent: keyUp, keyDown, or flagsChanged.
-#define LDrawKeyboardDidChangeNotification			@"LDrawKeyboardDidChangeNotification"
+#define LDrawKeyboardDidChangeNotification				@"LDrawKeyboardDidChangeNotification"
 
 //tool mode changed.
 // Object is an NSNumber containing the new ToolModeT.
-#define LDrawMouseToolDidChangeNotification			@"LDrawMouseToolDidChangeNotification"
+#define LDrawMouseToolDidChangeNotification				@"LDrawMouseToolDidChangeNotification"
 
 //The part catalog was regenerated from disk.
 // Object is the new catalog. No userInfo.
-#define LDrawPartCatalogDidChangeNotification		@"LDrawPartCatalogDidChangeNotification"
+#define LDrawPartCatalogDidChangeNotification			@"LDrawPartCatalogDidChangeNotification"
+
+//Part Browser should be shown a different way.
+// Object is NSNumber of new style. No userInfo.
+#define LDrawPartBrowserStyleDidChangeNotification		@"LDrawPartBrowserStyleDidChangeNotification"
 
 //Syntax coloring changed in preferences.
 // Object is the application. No userInfo.
-#define LDrawSyntaxColorsDidChangeNotification		@"LDrawSyntaxColorsDidChangeNotification"
+#define LDrawSyntaxColorsDidChangeNotification			@"LDrawSyntaxColorsDidChangeNotification"
+
+//Syntax coloring changed in preferences.
+// Object is the new color. No userInfo.
+#define LDrawViewBackgroundColorDidChangeNotification	@"LDrawViewBackgroundColorDidChangeNotification"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -258,7 +268,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum MenuTags {
+typedef enum MenuTags
+{
 	//Application Menu
 	applicationMenuTag			= 0,
 	
@@ -305,6 +316,21 @@ typedef enum MenuTags {
 	
 } menuTagsT;
 
+
+////////////////////////////////////////////////////////////////////////////////
+//
+#pragma mark		Shared Datatypes
+//
+// Data types which would otherwise be homeless
+//
+////////////////////////////////////////////////////////////////////////////////
+
+typedef enum PartBrowserStyle
+{
+	PartBrowserShowAsDrawer	= 0,
+	PartBrowserShowAsPanel	= 1
+
+} PartBrowserStyleT;
 
 
 ////////////////////////////////////////////////////////////////////////////////

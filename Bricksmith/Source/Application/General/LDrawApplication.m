@@ -237,8 +237,52 @@
 		// a new one.
 	}
 	
+	// Register for Notifications
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(partBrawserStyleDidChange:)
+												 name:LDrawPartBrowserStyleDidChangeNotification
+											   object:nil ];
+	
 	[pixelFormat release];
 }
+
+
+#pragma mark -
+#pragma mark NOTIFICATIONS
+#pragma mark -
+
+//========== partBrawserStyleDidChange: ========================================
+//
+// Purpose:		Reconfigure the part browser display based on new user 
+//				preferences.
+//
+//==============================================================================
+- (void) partBrawserStyleDidChange:(NSNotification *)notification
+{
+	NSUserDefaults		*userDefaults	= [NSUserDefaults standardUserDefaults];
+	PartBrowserStyleT	 newStyle		= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
+	
+	switch(newStyle)
+	{
+		case PartBrowserShowAsDrawer:
+			
+			//close the shared part browser
+			
+			//for each document, open the browser drawer
+			
+			break;
+			
+		case PartBrowserShowAsPanel:
+			
+			//for each document, close the browser drawer
+			
+			//open the shared part browser.
+			
+			break;
+	} 
+	
+}//end partBrawserStyleDidChange:
+
 
 #pragma mark -
 #pragma mark UTILITIES

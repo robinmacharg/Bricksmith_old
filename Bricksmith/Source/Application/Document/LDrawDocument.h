@@ -73,6 +73,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (LDrawFile *) documentContents;
 - (NSWindow *)foremostWindow;
 - (gridSpacingModeT) gridSpacingMode;
+- (NSDrawer *) partBrowserDrawer;
 - (void) setDocumentContents:(LDrawFile *)newContents;
 - (void) setGridSpacingMode:(gridSpacingModeT)newMode;
 - (void) setLastSelectedPart:(LDrawPart *)newPart;
@@ -108,7 +109,6 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 
 // - Tools menu
 - (IBAction) showInspector:(id)sender;
-- (IBAction) togglePartBrowserDrawer:(id)sender;
 - (IBAction) toggleFileContentsDrawer:(id)sender;
 - (IBAction) gridGranularityMenuChanged:(id)sender;
 - (IBAction) showDimensions:(id)sender;
@@ -137,6 +137,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (IBAction) addQuadrilateralClicked:(id)sender;
 - (IBAction) addConditionalClicked:(id)sender;
 - (IBAction) addCommentClicked:(id)sender;
+- (IBAction) addRawCommandClicked:(id)sender;
 - (void) modelSelected:(id)sender;
 
 //Undoable Activities

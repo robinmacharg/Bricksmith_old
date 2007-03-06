@@ -34,6 +34,7 @@
 #define LDRAW_VIEWER_BACKGROUND_COLOR_KEY			@"LDraw Viewer Background Color"
 #define PART_BROWSER_STYLE_KEY						@"Part Browser Style"
 #define PART_BROWSER_DRAWER_STATE					@"Part Browser Drawer State"
+#define PART_BROWSER_PANEL_SHOW_AT_LAUNCH			@"Part Browser Panel Show at Launch"
 #define PART_BROWSER_PREVIOUS_CATEGORY				@"Part Browser Previous Category"
 #define PART_BROWSER_PREVIOUS_SELECTED_ROW			@"Part Browser Previous Selected Row"
 #define PREFERENCES_LAST_TAB_DISPLAYED				@"Preferences Tab"

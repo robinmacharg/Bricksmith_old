@@ -73,8 +73,8 @@
 		NSTableColumn		*descriptionColumn	= [self->partsTable tableColumnWithIdentifier:PART_NAME_KEY];
 		NSSortDescriptor	*sortDescriptor		= [descriptionColumn sortDescriptorPrototype];
 		
-		NSLog(@"setting sort descriptors");
-		[self->partsTable setSortDescriptors:[NSArray arrayWithObject:sortDescriptor]];
+		if(sortDescriptor != nil)
+			[self->partsTable setSortDescriptors:[NSArray arrayWithObject:sortDescriptor]];
 	}
 	
 	

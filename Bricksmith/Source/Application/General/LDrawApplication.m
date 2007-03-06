@@ -16,7 +16,9 @@
 
 #import "Inspector.h"
 #import "LDrawColorPanel.h"
+#import "LDrawDocument.h"
 #import "MacLDraw.h"
+#import "PartBrowserPanel.h"
 #import "PartLibrary.h"
 #import "PreferencesDialogController.h"
 #import "ToolPalette.h"
@@ -36,78 +38,6 @@
 	[NSValueTransformer setValueTransformer:minus1Transformer
 									forName:@"TransformerIntMinus1" ];
 }//end initialize
-
-#pragma mark -
-#pragma mark ACTIONS
-#pragma mark -
-
-//========== doPreferences =====================================================
-//
-// Purpose:		Show the preferences window.
-//
-//==============================================================================
-- (IBAction)doPreferences:(id)sender
-{
-	[PreferencesDialogController doPreferences];
-}
-
-
-//========== doHelp: ===========================================================
-//
-// Purpose:		Apple's automatic help registration is worthless. I've tried the 
-//				program on numerous Macs; it refuses to load until the OS 
-//				finally realizes a new program is there, which takes either 
-//				a) 2 million years or b) voodoo/ritualistic sacrifice. So 
-//				I'm bypassing what it does for something much less magical.
-//
-// Note:		I did manage to do *something* on two computers that got it 
-//				working automatically (touching, copying, I don't know). But 
-//				it never just happened when the application was first installed.
-//
-//==============================================================================
-- (IBAction)doHelp:(id)sender
-{
-	NSBundle *applicationBundle = [NSBundle mainBundle];
-	NSString *helpRoot = [applicationBundle pathForResource:@"index"
-													 ofType:@"html"
-												inDirectory:@"Help"];
-	[[NSWorkspace sharedWorkspace] openFile:helpRoot withApplication:@"Help Viewer.app"];
-}
-
-
-//========== showColors: =======================================================
-//
-// Purpose:		Opens the colors panel.
-//
-//==============================================================================
-- (IBAction) showColors:(id)sender{
-	
-	LDrawColorPanel *colorPanel = [LDrawColorPanel sharedColorPanel];
-	[colorPanel makeKeyAndOrderFront:sender];
-}
-
-
-//========== showInspector: ====================================================
-//
-// Purpose:		Opens the inspector window. It may have something in it; it may 
-//				not. That's up to the document.
-//
-//==============================================================================
-- (IBAction) showInspector:(id)sender{
-	[inspector show:sender];
-}
-
-
-//========== showMouseTools: ===================================================
-//
-// Purpose:		Opens the mouse tools palette, used to control the mouse cursor 
-//				mode (e.g., selection, zooming, etc.).
-//
-//==============================================================================
-- (IBAction) showMouseTools:(id)sender {
-	[[ToolPalette sharedToolPalette] showToolPalette:sender];
-}
-
 
 #pragma mark -
 #pragma mark ACCESSORS
@@ -188,15 +118,140 @@
 //				Every LDrawGLView should share this context.
 //
 //==============================================================================
-- (NSOpenGLContext *) openGLContext {
+- (NSOpenGLContext *) openGLContext
+{
 	return self->sharedGLContext;
 }
+
+
+#pragma mark -
+#pragma mark ACTIONS
+#pragma mark -
+
+//#pragma mark -
+#pragma mark Application Menu
+
+//========== doPreferences =====================================================
+//
+// Purpose:		Show the preferences window.
+//
+//==============================================================================
+- (IBAction)doPreferences:(id)sender
+{
+	[PreferencesDialogController doPreferences];
+}
+
+
+#pragma mark -
+#pragma mark Tools Menu
+
+//========== showInspector: ====================================================
+//
+// Purpose:		Opens the inspector window. It may have something in it; it may 
+//				not. That's up to the document.
+//
+//==============================================================================
+- (IBAction) showInspector:(id)sender
+{
+	[inspector show:sender];
+}
+
+
+//========== doPartBrowser: ====================================================
+//
+// Purpose:		Show or toggle the Part Browser, depending on the user's style 
+//			    preference. 
+//
+//==============================================================================
+- (IBAction) doPartBrowser:(id)sender 
+{
+	NSUserDefaults			*userDefaults		= [NSUserDefaults standardUserDefaults];
+	PartBrowserStyleT		 newStyle			= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
+	NSDocumentController	*documentController	= [NSDocumentController sharedDocumentController];
+	PartBrowserPanel		*partBrowser		= nil;
+
+	switch(newStyle)
+	{
+		case PartBrowserShowAsDrawer:
+			
+			//toggle the part browser on the foremost document
+			[[[documentController currentDocument] partBrowserDrawer] toggle:sender];
+			
+			break;
+			
+		case PartBrowserShowAsPanel:
+			
+			//open the shared part browser.
+			partBrowser = [PartBrowserPanel sharedPartBrowserPanel];
+			[partBrowser makeKeyAndOrderFront:sender];
+			
+			break;
+	} 
+	
+}//end doPartBrowser:
+
+
+//========== showMouseTools: ===================================================
+//
+// Purpose:		Opens the mouse tools palette, used to control the mouse cursor 
+//				mode (e.g., selection, zooming, etc.).
+//
+//==============================================================================
+- (IBAction) showMouseTools:(id)sender
+{
+	[[ToolPalette sharedToolPalette] showToolPalette:sender];
+}
+
+
+#pragma mark -
+#pragma mark Part Menu
+
+//========== showColors: =======================================================
+//
+// Purpose:		Opens the colors panel.
+//
+//==============================================================================
+- (IBAction) showColors:(id)sender
+{
+	LDrawColorPanel *colorPanel = [LDrawColorPanel sharedColorPanel];
+	
+	[colorPanel makeKeyAndOrderFront:sender];
+	
+}//end showColors:
+
+
+#pragma mark -
+#pragma mark Help Menu
+
+//========== doHelp: ===========================================================
+//
+// Purpose:		Apple's automatic help registration is worthless. I've tried the 
+//				program on numerous Macs; it refuses to load until the OS 
+//				finally realizes a new program is there, which takes either 
+//				a) 2 million years or b) voodoo/ritualistic sacrifice. So 
+//				I'm bypassing what it does for something much less magical.
+//
+// Note:		I did manage to do *something* on two computers that got it 
+//				working automatically (touching, copying, I don't know). But 
+//				it never just happened when the application was first installed.
+//
+//==============================================================================
+- (IBAction) doHelp:(id)sender
+{
+	NSBundle *applicationBundle = [NSBundle mainBundle];
+	NSString *helpRoot = [applicationBundle pathForResource:@"index"
+													 ofType:@"html"
+												inDirectory:@"Help"];
+	[[NSWorkspace sharedWorkspace] openFile:helpRoot withApplication:@"Help Viewer.app"];
+
+}//end doHelp:
 
 
 #pragma mark -
 #pragma mark APPLICATION DELEGATE
 #pragma mark -
 
+//**** NSApplication ****
 //========== applicationWillFinishLaunching: ===================================
 //
 // Purpose:		The application has opened; this comes before anything else 
@@ -228,7 +283,8 @@
 	[self findLDrawPath];
 
 	//Load the parts into the library; see if they loaded properly.
-	if([partLibrary loadPartCatalog] == NO){
+	if([partLibrary loadPartCatalog] == NO)
+	{
 		//No path has been chosen yet.
 		// We must choose one now.
 		[self doPreferences:self];
@@ -247,6 +303,42 @@
 }
 
 
+//**** NSApplication ****
+//========== applicationDidFinishLaunching: ====================================
+//
+// Purpose:		The application has finished launching.
+//
+//==============================================================================
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification 
+{
+	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
+	BOOL				 showPartBrowser	= [userDefaults boolForKey:PART_BROWSER_PANEL_SHOW_AT_LAUNCH];
+	
+	if(showPartBrowser == YES)
+		[[PartBrowserPanel sharedPartBrowserPanel] makeKeyAndOrderFront:self];
+	
+}//end applicationDidFinishLaunching:
+
+
+//**** NSApplication ****
+//========== applicationWillTerminate: =========================================
+//
+// Purpose:		Bricksmith is quitting. Do any necessary pre-quit work, such as 
+//				saving out preferences.
+//
+//==============================================================================
+- (void)applicationWillTerminate:(NSNotification *)notification
+{
+	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
+	PartBrowserPanel	*partBrowserPanel	= [PartBrowserPanel sharedPartBrowserPanel];
+	
+	[userDefaults setBool:[partBrowserPanel isVisible]
+				   forKey:PART_BROWSER_PANEL_SHOW_AT_LAUNCH ];
+				   
+	[userDefaults synchronize];
+	
+}//end applicationWillTerminate:
+
 #pragma mark -
 #pragma mark NOTIFICATIONS
 #pragma mark -
@@ -259,24 +351,38 @@
 //==============================================================================
 - (void) partBrawserStyleDidChange:(NSNotification *)notification
 {
-	NSUserDefaults		*userDefaults	= [NSUserDefaults standardUserDefaults];
-	PartBrowserStyleT	 newStyle		= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
+	NSUserDefaults			*userDefaults		= [NSUserDefaults standardUserDefaults];
+	PartBrowserStyleT		 newStyle			= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
+	NSDocumentController	*documentController	= [NSDocumentController sharedDocumentController];
+	NSArray					*documents			= [documentController documents];
+	int						 documentCount		= [documents count];
+	int						 counter			= 0;
 	
 	switch(newStyle)
 	{
 		case PartBrowserShowAsDrawer:
 			
 			//close the shared part browser
+			[[PartBrowserPanel sharedPartBrowserPanel] close];
 			
-			//for each document, open the browser drawer
+			// open the browser drawer on each document
+			for(counter = 0; counter < documentCount; counter++)
+			{
+				[[[documents objectAtIndex:counter] partBrowserDrawer] open];
+			}
 			
 			break;
 			
 		case PartBrowserShowAsPanel:
 			
-			//for each document, close the browser drawer
+			//close the browser drawer on each document
+			for(counter = 0; counter < documentCount; counter++)
+			{
+				[[[documents objectAtIndex:counter] partBrowserDrawer] close];
+			}
 			
 			//open the shared part browser.
+			[[PartBrowserPanel sharedPartBrowserPanel] makeKeyAndOrderFront:self];
 			
 			break;
 	} 

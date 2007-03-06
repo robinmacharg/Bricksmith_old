@@ -42,10 +42,17 @@
                 changeLDrawColor = id; 
                 copy = id; 
                 delete = id; 
+                doMissingPiecesCheck = id; 
+                doMovedPiecesCheck = id; 
                 duplicate = id; 
+                exportSteps = id; 
                 gridGranularityMenuChanged = id; 
                 hideParts = id; 
+                insertLDrawPart = id; 
                 modelSelected = id; 
+                orderFrontRotationPanel = id; 
+                panelMoveParts = id; 
+                panelRotateParts = id; 
                 paste = id; 
                 showDimensions = id; 
                 showInspector = id; 
@@ -53,7 +60,6 @@
                 showPieceCount = id; 
                 snapSelectionToGrid = id; 
                 toggleFileContentsDrawer = id; 
-                togglePartBrowserDrawer = id; 
                 toggleStepDisplay = id; 
                 zoomActual = id; 
                 zoomIn = id; 

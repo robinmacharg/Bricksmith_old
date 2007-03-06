@@ -118,9 +118,14 @@ PreferencesDialogController *preferencesDialog = nil;
 - (void) setGeneralTabValues
 {
 	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
-	PartBrowserStyleT	 partBrowserStyle	= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
 	
-	[self->partBrowserStyleRadioButtons selectCellWithTag:partBrowserStyle];
+	//Grid Spacing.
+	float gridFine		= [userDefaults floatForKey:GRID_SPACING_FINE];
+	float gridMedium	= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
+	float gridCoarse	= [userDefaults floatForKey:GRID_SPACING_COARSE];
+	[[gridSpacingForm cellAtIndex:0] setFloatValue:gridFine];
+	[[gridSpacingForm cellAtIndex:1] setFloatValue:gridMedium];
+	[[gridSpacingForm cellAtIndex:2] setFloatValue:gridCoarse];
 	
 }//end setGeneralTabValues
 
@@ -159,11 +164,15 @@ PreferencesDialogController *preferencesDialog = nil;
 // Purpose:		Updates the data in the LDraw tab to match what is on the disk.
 //
 //==============================================================================
-- (void) setLDrawTabValues{
-	PartLibrary		*partLibrary	= [LDrawApplication sharedPartLibrary];
-	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
-	NSFileManager	*fileManager	= [NSFileManager defaultManager];
-	NSString		*ldrawPath		= [userDefaults stringForKey:LDRAW_PATH_KEY];
+- (void) setLDrawTabValues
+{
+	PartLibrary			*partLibrary		= [LDrawApplication sharedPartLibrary];
+	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
+	NSFileManager		*fileManager		= [NSFileManager defaultManager];
+	NSString			*ldrawPath			= [userDefaults stringForKey:LDRAW_PATH_KEY];
+	PartBrowserStyleT	 partBrowserStyle	= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
+	
+	[self->partBrowserStyleRadioButtons selectCellWithTag:partBrowserStyle];
 	
 	if(ldrawPath != nil){
 		[LDrawPathTextField setStringValue:ldrawPath];
@@ -171,14 +180,6 @@ PreferencesDialogController *preferencesDialog = nil;
 	//No folder selected yet.
 	else
 		[self chooseLDrawFolder:self];
-	
-	//Grid Spacing.
-	float gridFine		= [userDefaults floatForKey:GRID_SPACING_FINE];
-	float gridMedium	= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
-	float gridCoarse	= [userDefaults floatForKey:GRID_SPACING_COARSE];
-	[[gridSpacingForm cellAtIndex:0] setFloatValue:gridFine];
-	[[gridSpacingForm cellAtIndex:1] setFloatValue:gridMedium];
-	[[gridSpacingForm cellAtIndex:2] setFloatValue:gridCoarse];
 	
 }//end showPreferencesWindow
 

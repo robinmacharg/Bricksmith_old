@@ -66,7 +66,9 @@
 			if([parsedField intValue] == 0){
 				parsedLDrawMetaCommand = [[LDrawMetaCommand new] autorelease];
 		
-				[parsedLDrawMetaCommand setStringValue:workingLine];
+				NSString *command = [workingLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+		
+				[parsedLDrawMetaCommand setStringValue:command];
 			}
 			
 		NS_HANDLER

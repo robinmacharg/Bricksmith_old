@@ -169,6 +169,9 @@
 		0BC6AAEB0987296700505A88 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0BC6AACC0987296700505A88 /* Help */; };
 		0BCD0C6507FD0BA10066A536 /* LDrawContainer.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BCD0C6307FD0BA10066A536 /* LDrawContainer.h */; };
 		0BCD0C6607FD0BA10066A536 /* LDrawContainer.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BCD0C6407FD0BA10066A536 /* LDrawContainer.m */; };
+		0BDC145A0B9D04E2001D1FF1 /* PartBrowser.nib in Resources */ = {isa = PBXBuildFile; fileRef = 0BDC14540B9D04E1001D1FF1 /* PartBrowser.nib */; };
+		0BDC146F0B9D0502001D1FF1 /* PartBrowserPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BDC146D0B9D0502001D1FF1 /* PartBrowserPanel.h */; };
+		0BDC14700B9D0502001D1FF1 /* PartBrowserPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BDC146E0B9D0502001D1FF1 /* PartBrowserPanel.m */; };
 		0BF729B808AD849300E3DA53 /* DocumentToolbarController.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BF729A708AD849300E3DA53 /* DocumentToolbarController.h */; };
 		0BF729B908AD849300E3DA53 /* DocumentToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BF729A808AD849300E3DA53 /* DocumentToolbarController.m */; };
 		0BF729BA08AD849300E3DA53 /* LDrawDocument.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BF729A908AD849300E3DA53 /* LDrawDocument.h */; };
@@ -398,6 +401,9 @@
 		0BC6AACD0987296700505A88 /* English */ = {isa = PBXFileReference; lastKnownFileType = folder; name = English; path = English.lproj/Help; sourceTree = "<group>"; };
 		0BCD0C6307FD0BA10066A536 /* LDrawContainer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LDrawContainer.h; path = Source/LDraw/Files/LDrawContainer.h; sourceTree = SOURCE_ROOT; };
 		0BCD0C6407FD0BA10066A536 /* LDrawContainer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LDrawContainer.m; path = Source/LDraw/Files/LDrawContainer.m; sourceTree = SOURCE_ROOT; };
+		0BDC14550B9D04E1001D1FF1 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/PartBrowser.nib; sourceTree = "<group>"; };
+		0BDC146D0B9D0502001D1FF1 /* PartBrowserPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PartBrowserPanel.h; sourceTree = "<group>"; };
+		0BDC146E0B9D0502001D1FF1 /* PartBrowserPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PartBrowserPanel.m; sourceTree = "<group>"; };
 		0BF729A708AD849300E3DA53 /* DocumentToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentToolbarController.h; sourceTree = "<group>"; };
 		0BF729A808AD849300E3DA53 /* DocumentToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocumentToolbarController.m; sourceTree = "<group>"; };
 		0BF729A908AD849300E3DA53 /* LDrawDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LDrawDocument.h; sourceTree = "<group>"; };
@@ -621,6 +627,7 @@
 				0B8EBD5C09383CBB00D87E0C /* MainMenu.nib */,
 				2BF2E2D90AB0FC030026D5DB /* MinifigureGenerator.nib */,
 				2BF2E2F00AB0FC1E0026D5DB /* MovePanel.nib */,
+				0BDC14540B9D04E1001D1FF1 /* PartBrowser.nib */,
 				0B8EBD5E09383CBB00D87E0C /* PartChooser.nib */,
 				0B8EBD6009383CBB00D87E0C /* PieceCountPanel.nib */,
 				0B8EBD6209383CBB00D87E0C /* Preferences.nib */,
@@ -757,6 +764,8 @@
 				2BF2E30E0AB0FC840026D5DB /* MinifigureDialogController.m */,
 				0BF729B008AD849300E3DA53 /* PartBrowserDataSource.h */,
 				0BF729B108AD849300E3DA53 /* PartBrowserDataSource.m */,
+				0BDC146D0B9D0502001D1FF1 /* PartBrowserPanel.h */,
+				0BDC146E0B9D0502001D1FF1 /* PartBrowserPanel.m */,
 				0BF729B208AD849300E3DA53 /* PartChooserPanel.h */,
 				0BF729B308AD849300E3DA53 /* PartChooserPanel.m */,
 				0BF729B408AD849300E3DA53 /* PartLibrary.h */,
@@ -944,6 +953,7 @@
 				2BF2E30F0AB0FC840026D5DB /* MinifigureDialogController.h in Headers */,
 				2BF2E3150AB0FCAB0026D5DB /* MLCadIni.h in Headers */,
 				2BF2E3170AB0FCAB0026D5DB /* TransformerIntMinus1.h in Headers */,
+				0BDC146F0B9D0502001D1FF1 /* PartBrowserPanel.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1078,6 +1088,7 @@
 				2BF2E2F60AB0FC1E0026D5DB /* MovePanel.nib in Resources */,
 				2BF2E2FD0AB0FC300026D5DB /* RotationPanel.nib in Resources */,
 				0B14DB940B94D4710002C053 /* GeneralPreferences.tiff in Resources */,
+				0BDC145A0B9D04E2001D1FF1 /* PartBrowser.nib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1163,6 +1174,7 @@
 				2BF2E3100AB0FC840026D5DB /* MinifigureDialogController.m in Sources */,
 				2BF2E3160AB0FCAB0026D5DB /* MLCadIni.m in Sources */,
 				2BF2E3180AB0FCAB0026D5DB /* TransformerIntMinus1.m in Sources */,
+				0BDC14700B9D0502001D1FF1 /* PartBrowserPanel.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1351,6 +1363,14 @@
 				0BC6AACD0987296700505A88 /* English */,
 			);
 			name = Help;
+			sourceTree = "<group>";
+		};
+		0BDC14540B9D04E1001D1FF1 /* PartBrowser.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				0BDC14550B9D04E1001D1FF1 /* English */,
+			);
+			name = PartBrowser.nib;
 			sourceTree = "<group>";
 		};
 		2BF2E2D90AB0FC030026D5DB /* MinifigureGenerator.nib */ = {

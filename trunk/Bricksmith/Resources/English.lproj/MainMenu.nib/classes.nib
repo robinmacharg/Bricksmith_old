@@ -9,10 +9,12 @@
                 addModelClicked = id; 
                 addPartClicked = id; 
                 addQuadrilateralClicked = id; 
+                addRawCommandClicked = id; 
                 addStepClicked = id; 
                 addTriangleClicked = id; 
                 advanceOneStep = id; 
                 backOneStep = id; 
+                doPartBrowser = id; 
                 duplicate = id; 
                 exportSteps = id; 
                 gridGranularityMenuChanged = id; 
@@ -25,7 +27,6 @@
                 showPieceCount = id; 
                 snapSelectionToGrid = id; 
                 toggleFileContentsDrawer = id; 
-                togglePartBrowserDrawer = id; 
                 toggleStepDisplay = id; 
                 viewingAngleSelected = id; 
                 zoomActual = id; 

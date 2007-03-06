@@ -47,7 +47,7 @@
 							postNotificationName:LDrawKeyboardDidChangeNotification
 										  object:theEvent ];
 	}
-
+/*
 	//Intercept command-keyups, which NSApplication seems otherwise to 
 	// completely discard.	
 	if(		([theEvent modifierFlags] & NSCommandKeyMask) != 0
@@ -73,7 +73,7 @@
 		// this command-keyup hack had better check that they are the first 
 		// responder before acting.
 	}
-	
+*/	
 	//Send all events, even command-keyups, to the application to do whatever 
 	// it expects to do with them.
 	[super sendEvent:theEvent];

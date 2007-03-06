@@ -204,6 +204,93 @@ PreferencesDialogController *preferencesDialog = nil;
 #pragma mark -
 #pragma mark General Tab
 
+//========== gridSpacingChanged: ===============================================
+//
+// Purpose:		User updated the amounts by which parts are shifted in different 
+//				grid modes.
+//
+//==============================================================================
+- (IBAction) gridSpacingChanged:(id)sender
+{
+	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
+
+	//Grid Spacing.
+	float gridFine	= [[gridSpacingForm cellAtIndex:0] floatValue];
+	float gridMedium	= [[gridSpacingForm cellAtIndex:1] floatValue];
+	float gridCoarse	= [[gridSpacingForm cellAtIndex:2] floatValue];
+	
+	[userDefaults setFloat:gridFine		forKey:GRID_SPACING_FINE];
+	[userDefaults setFloat:gridMedium	forKey:GRID_SPACING_MEDIUM];
+	[userDefaults setFloat:gridCoarse	forKey:GRID_SPACING_COARSE];
+
+}//end gridSpacingChanged:
+
+
+#pragma mark -
+#pragma mark Parts Tab
+
+//========== chooseLDrawFolder =================================================
+//
+// Purpose:		Present a folder choose dialog to find the LDraw folder.
+//
+//==============================================================================
+- (IBAction)chooseLDrawFolder:(id)sender
+{
+	//Create a standard "Choose" dialog.
+	NSOpenPanel *folderChooser = [NSOpenPanel openPanel];
+	[folderChooser setCanChooseFiles:NO];
+	[folderChooser setCanChooseDirectories:YES];
+	
+	//Tell the poor user what this dialog does!
+	[folderChooser setTitle:NSLocalizedString(@"Choose LDraw Folder", nil)];
+	[folderChooser setMessage:NSLocalizedString(@"LDrawFolderChooserMessage", nil)];
+	[folderChooser setAccessoryView:folderChooserAccessoryView];
+	[folderChooser setPrompt:NSLocalizedString(@"Choose", nil)];
+	
+	//Run the dialog.
+	if([folderChooser runModalForTypes:nil] == NSOKButton){
+		//Get the folder selected.
+		NSString		*folderPath		= [[folderChooser filenames] objectAtIndex:0];
+		
+		[self changeLDrawFolderPath:folderPath];
+	}
+	
+}//end chooseLDrawFolder:
+
+
+//========== pathTextFieldChanged: =============================================
+//
+// Purpose:		The user has gone all geek on us and manually typed in a new 
+//				LDraw folder path.
+//
+//==============================================================================
+- (IBAction) pathTextFieldChanged:(id)sender
+{
+	NSString *newPath = [LDrawPathTextField stringValue];
+	
+	[self changeLDrawFolderPath:newPath];
+}
+
+
+//========== reloadParts: ======================================================
+//
+// Purpose:		Scans the contents of the LDraw/Parts folder and produces a 
+//				Mac-friendly index of parts.
+//
+//				Is it fast? No. Is it easy to code? Yes.
+//
+//==============================================================================
+- (IBAction)reloadParts:(id)sender
+{
+	PartLibrary			*partLibrary		= [LDrawApplication sharedPartLibrary];
+	
+	[partLibrary reloadParts:sender];
+	
+}//end reloadParts:
+
+
+#pragma mark -
+
 //========== partBrowserStyleChanged: ==========================================
 //
 // Purpose:		We have multiple ways of showing the part browser.
@@ -344,88 +431,6 @@ PreferencesDialogController *preferencesDialog = nil;
 	[[NSNotificationCenter defaultCenter] 
 			postNotificationName:LDrawSyntaxColorsDidChangeNotification
 						  object:NSApp ];
-}
-
-
-
-#pragma mark -
-#pragma mark LDraw Tab
-
-//========== chooseLDrawFolder =================================================
-//
-// Purpose:		Present a folder choose dialog to find the LDraw folder.
-//
-//==============================================================================
-- (IBAction)chooseLDrawFolder:(id)sender
-{
-	//Create a standard "Choose" dialog.
-	NSOpenPanel *folderChooser = [NSOpenPanel openPanel];
-	[folderChooser setCanChooseFiles:NO];
-	[folderChooser setCanChooseDirectories:YES];
-	
-	//Tell the poor user what this dialog does!
-	[folderChooser setTitle:NSLocalizedString(@"Choose LDraw Folder", nil)];
-	[folderChooser setMessage:NSLocalizedString(@"LDrawFolderChooserMessage", nil)];
-	[folderChooser setAccessoryView:folderChooserAccessoryView];
-	[folderChooser setPrompt:NSLocalizedString(@"Choose", nil)];
-	
-	//Run the dialog.
-	if([folderChooser runModalForTypes:nil] == NSOKButton){
-		//Get the folder selected.
-		NSString		*folderPath		= [[folderChooser filenames] objectAtIndex:0];
-		
-		[self changeLDrawFolderPath:folderPath];
-	}
-	
-}
-
-//========== pathTextFieldChanged: =============================================
-//
-// Purpose:		The user has gone all geek on us and manually typed in a new 
-//				LDraw folder path.
-//
-//==============================================================================
-- (IBAction) pathTextFieldChanged:(id)sender{
-	NSString *newPath = [LDrawPathTextField stringValue];
-	
-	[self changeLDrawFolderPath:newPath];
-}
-
-
-//========== reloadParts: ======================================================
-//
-// Purpose:		Scans the contents of the LDraw/Parts folder and produces a 
-//				Mac-friendly index of parts.
-//
-//				Is it fast? No. Is it easy to code? Yes.
-//
-//==============================================================================
-- (IBAction)reloadParts:(id)sender
-{
-	PartLibrary			*partLibrary		= [LDrawApplication sharedPartLibrary];
-	
-	[partLibrary reloadParts:sender];
-			
-}//end reloadParts:
-
-
-//========== gridSpacingChanged: ===============================================
-//
-// Purpose:		User updated the amounts by which parts are shifted in different 
-//				grid modes.
-//
-//==============================================================================
-- (IBAction) gridSpacingChanged:(id)sender {
-	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
-
-	//Grid Spacing.
-	float gridFine	= [[gridSpacingForm cellAtIndex:0] floatValue];
-	float gridMedium	= [[gridSpacingForm cellAtIndex:1] floatValue];
-	float gridCoarse	= [[gridSpacingForm cellAtIndex:2] floatValue];
-	
-	[userDefaults setFloat:gridFine		forKey:GRID_SPACING_FINE];
-	[userDefaults setFloat:gridMedium	forKey:GRID_SPACING_MEDIUM];
-	[userDefaults setFloat:gridCoarse	forKey:GRID_SPACING_COARSE];
 }
 
 

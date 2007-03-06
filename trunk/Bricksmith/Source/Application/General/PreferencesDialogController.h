@@ -27,11 +27,11 @@
 	IBOutlet NSView			*ldrawContentView;
 	
 	// General Tab
-    IBOutlet NSMatrix		*partBrowserStyleRadioButtons;
-
-	// LDraw Tab
-    IBOutlet NSTextField	*LDrawPathTextField;
 	IBOutlet NSForm			*gridSpacingForm;
+
+	// Parts Tab
+    IBOutlet NSTextField	*LDrawPathTextField;
+    IBOutlet NSMatrix		*partBrowserStyleRadioButtons;
 	
 	// Style Tab
 	IBOutlet NSColorWell	*backgroundColorWell;

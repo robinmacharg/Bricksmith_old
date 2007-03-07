@@ -166,12 +166,16 @@
 //				LDraw/parts/
 //				LDraw/parts/s/
 //
+//				LDraw/Unofficial/p/
+//				LDraw/Unofficial/p/48/
+//				LDraw/Unofficial/parts/
+//				LDraw/Unofficial/parts/s/
+//
 //				It is important that the part name added to the library bear 
 //				the correct reference style. For LDraw/p/ and LDraw/parts/, it 
 //				is simply the filename (in lowercase). But for subdirectories, 
 //				the filename must be prefixed with the subdirectory in DOS 
 //				format, i.e., "s\file.dat" or "48\file.dat".
-//				
 //
 //==============================================================================
 - (void)reloadParts:(id)sender
@@ -180,6 +184,8 @@
 	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
 	
 	NSString			*ldrawPath			= [userDefaults stringForKey:LDRAW_PATH_KEY];
+	NSString			*unofficialPath		= [ldrawPath stringByAppendingPathComponent:UNOFFICIAL_DIRECTORY_NAME]; //base for unofficial directories
+	
 	//make sure the LDraw folder is still valid; otherwise, why bother doing anything?
 	if([self validateLDrawFolder:ldrawPath] == NO)
 		return;
@@ -189,6 +195,12 @@
 	NSString			*primitives48Path	= [NSString stringWithFormat:@"%@/%@", primitivesPath, PRIMITIVES_48_DIRECTORY_NAME];
 	NSString			*partsPath			= [NSString stringWithFormat:@"%@/%@", ldrawPath, PARTS_DIRECTORY_NAME];
 	NSString			*subpartsPath		= [NSString stringWithFormat:@"%@/%@", partsPath, SUBPARTS_DIRECTORY_NAME];
+
+	//search unofficial directories as well.
+	NSString			*unofficialPrimitivesPath	= [NSString stringWithFormat:@"%@/%@", unofficialPath, PRIMITIVES_DIRECTORY_NAME];
+	NSString			*unofficialPrimitives48Path	= [NSString stringWithFormat:@"%@/%@", unofficialPrimitivesPath, PRIMITIVES_48_DIRECTORY_NAME];
+	NSString			*unofficialPartsPath		= [NSString stringWithFormat:@"%@/%@", unofficialPath, PARTS_DIRECTORY_NAME];
+	NSString			*unofficialSubpartsPath		= [NSString stringWithFormat:@"%@/%@", unofficialPartsPath, SUBPARTS_DIRECTORY_NAME];
 	
 	NSString			*partCatalogPath	= [NSString stringWithFormat:@"%@/%@", ldrawPath, PART_CATALOG_NAME];
 	NSMutableDictionary	*newPartCatalog		= [NSMutableDictionary dictionary];
@@ -200,7 +212,11 @@
 	[progressPanel setMaxValue:	[[fileManager directoryContentsAtPath:primitivesPath] count] + 
 								[[fileManager directoryContentsAtPath:primitives48Path] count] + 
 								[[fileManager directoryContentsAtPath:partsPath] count] + 
-								[[fileManager directoryContentsAtPath:subpartsPath] count]
+								[[fileManager directoryContentsAtPath:subpartsPath] count] +
+								[[fileManager directoryContentsAtPath:unofficialPrimitivesPath] count] +
+								[[fileManager directoryContentsAtPath:unofficialPrimitives48Path] count] +
+								[[fileManager directoryContentsAtPath:unofficialPartsPath] count] +
+								[[fileManager directoryContentsAtPath:unofficialSubpartsPath] count]
 	];
 	[progressPanel setMessage:@"Loading Parts"];
 	[progressPanel showProgressPanel];
@@ -236,6 +252,31 @@
 				namePrefix:[NSString stringWithFormat:@"%@\\", SUBPARTS_DIRECTORY_NAME] //prefix subpart numbers with the DOS path "s\"; that's just how it is. Yuck!
 			 progressPanel:progressPanel ];
 	
+	
+	//Scan unofficial part folders.
+	[self addPartsInFolder:unofficialPrimitivesPath
+				 toCatalog:newPartCatalog
+			 underCategory:NSLocalizedString(@"Primitives", nil) //groups unofficial primitives with official primitives
+			    namePrefix:nil //a directory deeper, but no DOS path separators to manage
+			 progressPanel:progressPanel ];
+	
+	[self addPartsInFolder:unofficialPrimitives48Path
+				 toCatalog:newPartCatalog
+			 underCategory:NSLocalizedString(@"Primitives", nil)
+				namePrefix:[NSString stringWithFormat:@"%@\\", PRIMITIVES_48_DIRECTORY_NAME]
+			 progressPanel:progressPanel ];
+	
+	[self addPartsInFolder:unofficialPartsPath
+				 toCatalog:newPartCatalog
+			 underCategory:nil
+				namePrefix:nil
+			 progressPanel:progressPanel ];
+	
+	[self addPartsInFolder:unofficialSubpartsPath
+				 toCatalog:newPartCatalog
+			 underCategory:NSLocalizedString(@"Subparts", nil) //groups unofficial subparts with official subparts
+				namePrefix:[NSString stringWithFormat:@"%@\\", SUBPARTS_DIRECTORY_NAME]
+			 progressPanel:progressPanel ];
 	
 	//Save the part catalog out for future reference.
 	[newPartCatalog writeToFile:partCatalogPath atomically:YES];
@@ -534,7 +575,7 @@
 // Not working for some reason. Why?
 //	NSArray				*readableFileTypes = [NSDocument readableTypes];
 //	NSLog(@"readable types: %@", readableFileTypes);
-	NSArray				*readableFileTypes	= [NSArray arrayWithObject:@"dat"];
+	NSArray				*readableFileTypes	= [NSArray arrayWithObjects:@"dat", @"ldr", nil];
 	
 	NSArray				*partNames			= [fileManager directoryContentsAtPath:folderPath];
 	int					 numberOfParts		= [partNames count];

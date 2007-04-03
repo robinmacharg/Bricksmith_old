@@ -1093,7 +1093,35 @@
 				[self->document rotateSelectionAround:V3Make(0,0,-1)];
 				break;
 				
-			default:
+			//viewing angle
+			case '4':
+				[self setProjectionMode:ProjectionModeOrthographic];
+				[self setViewingAngle:ViewingAngleLeft];
+				break;
+			case '6':
+				[self setProjectionMode:ProjectionModeOrthographic];
+				[self setViewingAngle:ViewingAngleRight];
+				break;
+			case '2':
+				[self setProjectionMode:ProjectionModeOrthographic];
+				[self setViewingAngle:ViewingAngleBottom];
+				break;
+			case '8':
+				[self setProjectionMode:ProjectionModeOrthographic];
+				[self setViewingAngle:ViewingAngleTop];
+				break;
+			case '5':
+				[self setProjectionMode:ProjectionModeOrthographic];
+				[self setViewingAngle:ViewingAngleFront];
+				break;
+			case '7':
+			case '9':
+				[self setProjectionMode:ProjectionModeOrthographic];
+				[self setViewingAngle:ViewingAngleBack];
+				break;
+			case '0':
+				[self setProjectionMode:ProjectionModePerspective];
+				[self setViewingAngle:ViewingAngle3D];
 				break;
 		}
 		
@@ -1690,7 +1718,6 @@
 	@synchronized([self openGLContext])
 	{
 		LDrawDirective	*clickedDirective	= nil;
-		NSView			*referenceView		= nil;
 		NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
 		NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
 		GLuint			 nameBuffer[512]	= {0};
@@ -1719,29 +1746,28 @@
 			// a very small rectangle around the mouse position.
 			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
-			
-			glLoadIdentity();
-			
+			{
+				glLoadIdentity();
+				
 				//Lastly, convert to viewport coordinates:
-			float pickX = viewClickedPoint.x - NSMinX(visibleRect);
-			float pickY = viewClickedPoint.y - NSMinY(visibleRect);
-			
-			gluPickMatrix(pickX,
-						  pickY,
-						  1, //width
-						  1, //height
-						  viewport);
-			
-			NSRect newFrame = [self frame];
+				float pickX = viewClickedPoint.x - NSMinX(visibleRect);
+				float pickY = viewClickedPoint.y - NSMinY(visibleRect);
+				
+				gluPickMatrix(pickX,
+							  pickY,
+							  1, //width
+							  1, //height
+							  viewport);
+				
 				//Now load the common viewing frame
-			[self makeProjection];
-			
-			glMatrixMode(GL_MODELVIEW);
-			
-			//draw all the requested directives
-			for(counter = 0; counter < [directives count]; counter++)
-				[[directives objectAtIndex:counter] draw:drawOptions parentColor:glColor];
-			
+				[self makeProjection];
+				
+				glMatrixMode(GL_MODELVIEW);
+				
+				//draw all the requested directives
+				for(counter = 0; counter < [directives count]; counter++)
+					[[directives objectAtIndex:counter] draw:drawOptions parentColor:glColor];
+			}
 			//Restore original viewing matrix after mangling for the hit area.
 			glMatrixMode(GL_PROJECTION);
 			glPopMatrix();

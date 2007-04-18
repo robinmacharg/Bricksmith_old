@@ -34,7 +34,6 @@ typedef enum {
 	
 	BOOL				hasDisplayList;
 	GLuint				displayListTag;	//list ID for normals in non-inverted matrix
-	GLuint				displayListInvertedNormalsTag; //list ID for normals in an inverted matrix
 	pthread_mutex_t		displayListMutex;
 
 	//Inherited from the superclasses:

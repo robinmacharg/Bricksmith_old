@@ -258,17 +258,17 @@
 	
 	LDrawModel *modelToDraw = [[LDrawApplication sharedPartLibrary] modelForPart:self];
 	
-	if(self->matrixIsReversed)
-		optionsMask ^= DRAW_REVERSE_NORMALS;
+	// no longer need to worry about reversed normals; we handle them with a 
+	// second light source. 
+//	if(self->matrixIsReversed)
+//		optionsMask ^= DRAW_REVERSE_NORMALS;
 	
 	//glMatrixMode(GL_MODELVIEW); //unnecessary, we set the matrix mode at the beginning of drawing.
 	glPushMatrix();
 		glMultMatrixf(glTransformation);
 		if((optionsMask & DRAW_BOUNDS_ONLY) == 0)
 		{
-			//Display lists only valid when not reversing normals.
-			if(		hasDisplayList == YES
-				&&	(optionsMask & DRAW_REVERSE_NORMALS) == 0)
+			if( hasDisplayList == YES )
 			{
 				//on the somewhat non-committal advice of an Apple engineer who should 
 				// know, I am wrapping my calls to shared-context display lists with 
@@ -710,22 +710,6 @@
 - (void) setTransformationMatrix:(Matrix4 *)newMatrix
 {
 	int row, column;
-	float determinant = det3x3( newMatrix->element[0][0],
-								newMatrix->element[1][0],
-								newMatrix->element[2][0],
-								
-								newMatrix->element[0][1],
-								newMatrix->element[1][1],
-								newMatrix->element[2][1],
-								
-								newMatrix->element[0][2],
-								newMatrix->element[1][2],
-								newMatrix->element[2][2]
-							);
-	if(determinant < 0)
-		self->matrixIsReversed = YES;
-	else
-		self->matrixIsReversed = NO;
 	
 	for(row = 0; row < 4; row++)
 		for(column = 0; column < 4; column++)
@@ -745,7 +729,8 @@
 //				actual part.
 //
 //==============================================================================
-- (void) collectPartReport:(PartReport *)report {
+- (void) collectPartReport:(PartReport *)report
+{
 	LDrawModel *referencedSubmodel = [self referencedMPDSubmodel];
 	//There's a bug here: -referencedMPDSubmodel doesn't necessarily tell you if 
 	// this actually *is* a submodel reference. It may actually resolve to 

@@ -13,7 +13,7 @@
 //					Special options to configure the program behavior.
 //
 ////////////////////////////////////////////////////////////////////////////////
-#define DEBUG_DRAWING							0
+#define DEBUG_DRAWING							1
 #define OPTIMIZE_STEPS							1
 
 
@@ -200,7 +200,7 @@
 #define DRAW_NO_OPTIONS							0
 #define DRAW_BEGUN								1 << 0
 #define DRAW_HIT_TEST_MODE						1 << 1
-#define DRAW_REVERSE_NORMALS					1 << 2
+//unused										1 << 2
 #define DRAW_BOUNDS_ONLY						1 << 3
 #define DRAW_IN_IMMEDIATE_MODE					1 << 4 //not compiling a display list.
 

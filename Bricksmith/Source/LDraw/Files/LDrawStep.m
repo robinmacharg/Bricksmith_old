@@ -145,10 +145,7 @@
 		// mutexes.
 		pthread_mutex_lock(&displayListMutex);
 			
-			if((optionsMask & DRAW_REVERSE_NORMALS) != 0)
-				glCallList(self->displayListInvertedNormalsTag);
-			else
-				glCallList(self->displayListTag);
+			glCallList(self->displayListTag);
 				
 		pthread_mutex_unlock(&displayListMutex);
 	
@@ -396,37 +393,18 @@
 	{
 		pthread_mutex_init(&displayListMutex, NULL);
 
-		if(stepColor == LDrawEdgeColor)
-		{	//create 1 new, empty display list. These are almost certainly 
-			// lines, and they don't care about normals.
-			self->displayListTag				= glGenLists(1);
-			self->displayListInvertedNormalsTag	= displayListTag;
-			
-			GLfloat glColor[4];
-			rgbafForCode(LDrawEdgeColor, glColor);
+		// Generate only one display list. I used to create two; one for regular 
+		// normals and another for normals drown inside an inverted 
+		// transformation matrix. We don't need to do that anymore because we 
+		// have two light sources, pointed in exactly opposite directions, so 
+		// that both kinds of normals will be illuminated. 
+		self->displayListTag	= glGenLists(1);
+		GLfloat glColor[4];
+		rgbafForCode(stepColor, glColor);
 
-			glNewList(displayListTag, GL_COMPILE);
-				[self draw:DRAW_NO_OPTIONS parentColor:glColor];
-			glEndList();
-		}
-		else
-		{
-			//Generate two sets of lists: non-inverted and inverted.
-			// This way, we can use display lists even with the state-dependent
-			// transformation matrix.
-			self->displayListTag				= glGenLists(2);
-			self->displayListInvertedNormalsTag	= displayListTag + 1;
-			GLfloat glColor[4];
-			rgbafForCode(stepColor, glColor);
-
-			glNewList(displayListTag, GL_COMPILE);
-				[self draw:DRAW_NO_OPTIONS parentColor:glColor];
-			glEndList();
-			
-			glNewList(displayListInvertedNormalsTag, GL_COMPILE);
-				[self draw:DRAW_REVERSE_NORMALS parentColor:glColor];
-			glEndList();
-		}
+		glNewList(displayListTag, GL_COMPILE);
+			[self draw:DRAW_NO_OPTIONS parentColor:glColor];
+		glEndList();
 		
 		//We have generated the list; we can now safely flag this step to be 
 		// henceforth drawn via the list.

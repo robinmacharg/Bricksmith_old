@@ -178,8 +178,12 @@
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glRotatef(180,1,0,0); //convert to standard, upside-down LDraw orientation.
-
+	
+	// We are going to have two lights, one in a standard position (LIGHT0) and 
+	// another pointing opposite to it (LIGHT1). The second light will 
+	// illuminate any inverted normals or backwards polygons. 
 	float position0[] = {0, -0.15, -1.0, 0};
+	float position1[] = {0,  0.15,  1.0, 0};
 	
 	float lightModelAmbient[4]    = {0.6, 0.6, 0.6, 0.0};
 	
@@ -207,14 +211,22 @@
 	glLightModeli( GL_LIGHT_MODEL_TWO_SIDE,		GL_TRUE );
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,		lightModelAmbient);
 	
+	//normal forward light
+	glLightfv(GL_LIGHT0, GL_POSITION, position0);
 	glLightfv(GL_LIGHT0, GL_AMBIENT,  light0Ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE,  light0Diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light0Specular);
 	
+	//opposing light to illuminate backward normals.
+	glLightfv(GL_LIGHT1, GL_POSITION, position1);
+	glLightfv(GL_LIGHT1, GL_AMBIENT,  light0Ambient);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE,  light0Diffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, light0Specular);
+	
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 	
-	glLightfv(GL_LIGHT0, GL_POSITION, position0);
 	
 	//Now that the light is positioned where we want it, we can restore the 
 	// correct viewing angle.

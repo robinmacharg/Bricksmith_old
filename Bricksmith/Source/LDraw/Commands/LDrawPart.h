@@ -28,7 +28,6 @@
 	NSString		*referenceName; //lower-case version of display name
 	
 	GLfloat			glTransformation[16];
-	BOOL			matrixIsReversed;
 
 	BOOL			hasDisplayList;
 	GLuint			displayListTag;	//list ID for normals in non-inverted matrix

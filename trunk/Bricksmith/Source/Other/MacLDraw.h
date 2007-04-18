@@ -13,7 +13,7 @@
 //					Special options to configure the program behavior.
 //
 ////////////////////////////////////////////////////////////////////////////////
-#define DEBUG_DRAWING							1
+#define DEBUG_DRAWING							0
 #define OPTIMIZE_STEPS							1
 
 

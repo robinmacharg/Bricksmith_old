@@ -1403,10 +1403,7 @@
 		2BB5974E09FEFD180077A885 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
+				ARCHS = "$(NATIVE_ARCH)";
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../AMSProgressBar/build/$(CONFIGURATION)";
 				GCC_DYNAMIC_NO_PIC = NO;

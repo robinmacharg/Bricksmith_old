@@ -352,7 +352,7 @@
 //==============================================================================
 - (void) optimize
 {
-#ifdef OPTIMIZE_STEPS
+#if OPTIMIZE_STEPS == 1
 	NSArray			*commandsInStep		= [self subdirectives];
 	int				 numberCommands		= [commandsInStep count];
 	id				 currentDirective	= nil;

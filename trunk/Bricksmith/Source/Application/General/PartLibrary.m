@@ -485,25 +485,40 @@
 //				same name and color in order to reduce memory space.				
 //
 //==============================================================================
-- (int) retainDisplayListForPart:(LDrawPart *)part
-						   color:(LDrawColorT)color
+- (GLuint) retainDisplayListForPart:(LDrawPart *)part
 {
-	int			 displayListTag	= 0;
-	NSString	*referenceName	= [part referenceName];
-	NSString	*keyPath		= nil;
-	NSNumber	*listTag		= nil;
+	GLuint				 displayListTag	= 0;
+	NSString			*referenceName	= [part referenceName];
+	LDrawColorT			 color			= [part LDrawColor];
+	NSMutableDictionary	*partRecord	= nil;
+	NSString			*keyPath		= nil;
+	NSNumber			*listTag		= nil;
 	
 	if([referenceName length] > 0)
 	{
-		if(listTag != nil)
-			displayListTag = [listTag intValue];
+		partRecord	= [self->fileDisplayLists objectForKey:referenceName];
+		
+		if(partRecord == nil)
+		{
+			// create a new record for hold list tags.
+			partRecord = [NSMutableDictionary dictionary];
+			[self->fileDisplayLists setObject:partRecord forKey:referenceName];
+		}
 		else
 		{
-			keyPath = [NSString stringWithFormat:@"%@.%d.displayListTag", [part referenceName], color];
-			listTag = [self->fileDisplayLists valueForKeyPath:keyPath];
-		
-			GLfloat glColor[4]; //OpenGL equivalent of the LDrawColor.
-			LDrawModel *modelToDraw = [self modelForPart:part];
+			// try to get a previously-cached list for this part/color
+			listTag = [partRecord objectForKey:[NSString stringWithFormat:@"%d", color]];
+		}
+	
+		if(listTag != nil)
+		{
+			displayListTag = [listTag intValue];
+//			NSLog(@"found %d for %@ %d", displayListTag, referenceName, color);
+		}
+		else
+		{
+			GLfloat		 glColor[4]; //OpenGL equivalent of the LDrawColor.
+			LDrawModel	*modelToDraw = [self modelForPart:part];
 			
 			rgbafForCode(color, glColor);
 
@@ -511,36 +526,27 @@
 			{
 				displayListTag = glGenLists(1); //create new list name
 				
-					//Don't ask the part to draw itself, either. Parts modify the 
-					// transformation matrix, and we want our display list to be 
-					// independent of the transformation. So we shortcut part 
-					// drawing and do the model itself.
+				//Don't ask the part to draw itself, either. Parts modify the 
+				//transformation matrix, and we want our display list to be 
+				//independent of the transformation. So we shortcut part drawing 
+				//and do the model itself. 
 				glNewList(displayListTag, GL_COMPILE);
-		//			glColor4fv(self->glColor); //set the color for this element.
+//					glColor4fv(glColor); //set the color for this element.
 					[modelToDraw draw:DRAW_NO_OPTIONS parentColor:glColor];
 				glEndList();
 				
-				[self->fileDisplayLists setValue:[NSNumber numberWithInt:displayListTag]
-									  forKeyPath:keyPath];
+				[partRecord setObject:[NSNumber numberWithUnsignedInt:displayListTag]
+							   forKey:[NSString stringWithFormat:@"%d", color] ];
+				
+//				NSLog(@"generated %d for %@ %d", displayListTag, referenceName, color);
 			}
 		}
-		
 	}
 	
 	
 	return displayListTag;
 	
-//	NSDictionary	*colorsForParts	= [self->fileDisplayLists objectForKey:partName];
-//	NSDictionary	*partWithColor	= nil;
-//	int				 displayListTag	= 0;
-//	
-//	if(colorsForParts != nil)
-//	{
-//		partWithColor = [colorsForParts objectForKey:[NSNumber numberWithInt:color];
-//		
-//		displayListTag = [partWithColor objectForKey:
-//	}
-}
+}//end retainDisplayListForPart:
 
 
 #pragma mark -

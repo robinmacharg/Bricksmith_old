@@ -657,7 +657,8 @@
 //				handle the s\ prefix.
 //
 //==============================================================================
--(void) setDisplayName:(NSString *)newPartName{
+-(void) setDisplayName:(NSString *)newPartName
+{
 	NSString *newReferenceName = [newPartName lowercaseString];
 
 	[newPartName retain];
@@ -1015,8 +1016,7 @@
 			{
 				
 				self->displayListTag = [[LDrawApplication sharedPartLibrary]
-														retainDisplayListForPart:self
-																		   color:self->color];
+														retainDisplayListForPart:self];
 				if(displayListTag != 0)
 					self->hasDisplayList = YES;
 			}

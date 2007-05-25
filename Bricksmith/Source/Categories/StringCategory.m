@@ -95,5 +95,39 @@
 	
 }//end separateStringByLine
 
+
+//========== stringByRemovingWhitespace ========================================
+//
+// Purpose:		Returns a new string equal to the receiver, except that it 
+//				contains no whitespace charaters. 
+//
+//==============================================================================
+- (NSString *) stringByRemovingWhitespace
+{
+	int				originalLength		= [self length];
+	unichar			*resultBuffer		= malloc( sizeof(unichar) * originalLength );
+	NSCharacterSet	*whitespaceSet		= [NSCharacterSet whitespaceCharacterSet];
+	unichar			 currentCharacter	= '\0';
+	int				 resultLength		= 0;
+	int				 counter			= 0;
+	NSString		*strippedString		= nil;
+	
+	// copy only non-whitespace characters into the new string.
+	for(counter = 0; counter < originalLength; counter++)
+	{
+		currentCharacter = [self characterAtIndex:counter];
+		if([whitespaceSet characterIsMember:currentCharacter] == NO)
+		{
+			resultBuffer[resultLength] = currentCharacter;
+			resultLength++;
+		}
+	}
+	
+	strippedString = [NSString stringWithCharacters:resultBuffer length:resultLength];
+	
+	return strippedString;
+	
+}//end stringByRemovingWhitespace
+
 @end
 

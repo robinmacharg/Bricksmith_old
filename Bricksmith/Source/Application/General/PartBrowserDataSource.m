@@ -542,32 +542,50 @@
 // Returns:		An array with all matching parts, or an empty array if no parts 
 //				match.
 //
+// Notes:		The nasty problem is that LDraw names are formed so that they 
+//				line up nicely in a monospaced font. Thus we have names like 
+//				"Brick  2 x  4" (note extra spaces!). I sidestep the problem by 
+//				stripping all the spaces from the search and find strings. It's 
+//				still lame, but probably okay for most uses.
+//
+//				Tiger has fantabulous search predicates that would reduce a 
+//				hefty hunk of this code to a 1-liner AND be whitespace neutral 
+//				too. But I don't have Tiger, so instead I'm going for the 
+//				cheeseball approach.  
+//
 //==============================================================================
 - (NSMutableArray *) filterParts:(NSArray *)partRecords
 				  bySearchString:(NSString *)searchString
 {
-	NSDictionary	*record				= nil;
-	int				 counter			= 0;
-	NSString		*partNumber			= nil;
-	NSString		*partDescription	= nil;
-	NSMutableArray	*matchingParts		= [NSMutableArray array];
+	NSDictionary	*record					= nil;
+	int				 counter				= 0;
+	NSString		*partNumber				= nil;
+	NSString		*partDescription		= nil;
+	NSString		*partSansWhitespace		= nil;
+	NSMutableArray	*matchingParts			= [NSMutableArray array];
+	NSString		*searchSansWhitespace	= [searchString stringByRemovingWhitespace];
 	
-	if([searchString length] == 0){
+	if([searchString length] == 0)
+	{
 		//Everybody's a winner here.
 		matchingParts = [NSMutableArray arrayWithArray:partRecords];
 	}
-	else {
+	else
+	{
 		matchingParts = [NSMutableArray array];
 		
-		//Search through all the given records and try to find matches on the search 
-		// string.
-		for(counter = 0; counter < [partRecords count]; counter++){
-			record			= [partRecords objectAtIndex:counter];
-			partNumber		= [record objectForKey:PART_NUMBER_KEY];
-			partDescription	= [record objectForKey:PART_NAME_KEY];
+		// Search through all the given records and try to find matches on the 
+		// search string. But search part names whitespace-neutral so as not to 
+		// be thrown off by goofy name spacing. 
+		for(counter = 0; counter < [partRecords count]; counter++)
+		{
+			record				= [partRecords objectAtIndex:counter];
+			partNumber			= [record objectForKey:PART_NUMBER_KEY];
+			partDescription		= [record objectForKey:PART_NAME_KEY];
+			partSansWhitespace	= [partDescription stringByRemovingWhitespace];
 			
 			if(		[partNumber			containsString:searchString options:NSCaseInsensitiveSearch]
-				||	[partDescription	containsString:searchString options:NSCaseInsensitiveSearch] )
+				||	[partSansWhitespace	containsString:searchSansWhitespace options:NSCaseInsensitiveSearch] )
 			{
 				[matchingParts addObject:record];
 			}
@@ -578,6 +596,7 @@
 	return matchingParts;
 	
 }//end filterParts:bySearchString:
+
 
 //========== syncSelectionAndPartDisplayed =====================================
 //

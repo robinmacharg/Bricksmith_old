@@ -11,6 +11,8 @@
 //==============================================================================
 #import "StringCategory.h"
 
+#include <stdlib.h>
+
 @implementation NSString (StringCategory)
 
 
@@ -32,21 +34,24 @@
 	}
 	else
 		return YES;
-}
+		
+}//end containsString:options:
 
 
-//========== CRLF ==============================================================
+//---------- CRLF ----------------------------------------------------[static]--
 //
 // Purpose:		Returns a DOS line-end marker, which is a hideous two characters 
 //				in length.
 //
-//==============================================================================
-+ (NSString *) CRLF{
+//------------------------------------------------------------------------------
++ (NSString *) CRLF
+{
 	unichar CRLFchars[] = {0x000D, 0x000A}; //DOS linefeed.
 	NSString *CRLF = [NSString stringWithCharacters:CRLFchars length:2];
 	
 	return CRLF;
-}
+	
+}//end CRLF
 
 
 //========== numericCompare: ===================================================
@@ -59,6 +64,7 @@
 {
 	return [self compare:string options:NSNumericSearch];
 }
+
 
 //========== separateByLine ====================================================
 //
@@ -112,7 +118,10 @@
 	int				 counter			= 0;
 	NSString		*strippedString		= nil;
 	
-	// copy only non-whitespace characters into the new string.
+	// Copy only non-whitespace characters into the new string.
+	//	* We'll assume the Unicode Consortium will never be sick enough to put 
+	//	  whitespace outside the BMP, or that our users will never employ such a 
+	//	  beast if they did. 
 	for(counter = 0; counter < originalLength; counter++)
 	{
 		currentCharacter = [self characterAtIndex:counter];
@@ -122,8 +131,10 @@
 			resultLength++;
 		}
 	}
-	
 	strippedString = [NSString stringWithCharacters:resultBuffer length:resultLength];
+	
+	// free memory
+	free(resultBuffer);
 	
 	return strippedString;
 	

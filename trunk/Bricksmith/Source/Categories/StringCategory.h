@@ -16,5 +16,6 @@
 + (NSString *) CRLF;
 - (NSComparisonResult)numericCompare:(NSString *)string;
 - (NSArray *) separateByLine;
+- (NSString *) stringByRemovingWhitespace;
 
 @end

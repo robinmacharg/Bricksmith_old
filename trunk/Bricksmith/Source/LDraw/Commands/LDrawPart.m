@@ -168,7 +168,8 @@
 // Purpose:		Creates an empty part.
 //
 //==============================================================================
-- (id) init {
+- (id) init
+{
 	self = [super init];
 	
 	[self setDisplayName:@""];
@@ -181,7 +182,8 @@
 	[self setTransformationComponents:identity];
 	
 	return self;
-}
+	
+}//end init
 
 
 //========== initWithCoder: ====================================================
@@ -204,7 +206,8 @@
 	memcpy(glTransformation, temporary, sizeof(GLfloat)*16 );
 	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== encodeWithCoder: ==================================================
@@ -223,7 +226,7 @@
 				  length:sizeof(GLfloat)*16
 				  forKey:@"glTransformation"];
 	
-}
+}//end encodeWithCoder:
 
 
 //========== copyWithZone: =====================================================
@@ -231,8 +234,8 @@
 // Purpose:		Returns a duplicate of this file.
 //
 //==============================================================================
-- (id) copyWithZone:(NSZone *)zone {
-	
+- (id) copyWithZone:(NSZone *)zone
+{
 	LDrawPart	*copied			= (LDrawPart *)[super copyWithZone:zone];
 	Matrix4		 transformation	= [self transformationMatrix];
 	
@@ -240,13 +243,13 @@
 	[copied setTransformationMatrix:&transformation];
 	
 	return copied;
-}
+	
+}//end copyWithZone:
 
 
 #pragma mark -
 #pragma mark DIRECTIVES
 #pragma mark -
-
 
 //========== drawElement =======================================================
 //
@@ -254,8 +257,8 @@
 //				subroutine of -draw: in LDrawDrawableElement.
 //
 //==============================================================================
-- (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor {
-	
+- (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor
+{
 	LDrawModel *modelToDraw = [[LDrawApplication sharedPartLibrary] modelForPart:self];
 	
 	// no longer need to worry about reversed normals; we handle them with a 
@@ -294,16 +297,16 @@
 // Purpose:		Draws the part's bounds as a solid box. Nonrecursive.
 //
 //==============================================================================
-- (void) drawBounds {
-
+- (void) drawBounds
+{
 	//Pull the bounds directly from the model; we can't use the part's because 
 	// it mangles them based on rotation. In this case, we want to do a raw 
 	// draw and let the model matrix transform our drawing appropriately.
 	LDrawModel	*modelToDraw	= [[LDrawApplication sharedPartLibrary] modelForPart:self];
 	
 	//If the model can't be found, we can't draw good bounds for it!
-	if(modelToDraw != nil) {
-		
+	if(modelToDraw != nil)
+	{
 		Box3		bounds			= [modelToDraw boundingBox3];
 		
 		GLfloat		vertices[8][3]	= {	
@@ -391,8 +394,8 @@
 //				+-       -+
 //
 //==============================================================================
-- (NSString *) write{
-
+- (NSString *) write
+{
 	Matrix4 transformation = [self transformationMatrix];
 
 	return [NSString stringWithFormat:
@@ -541,7 +544,8 @@
 //				Components.
 //
 //==============================================================================
-- (Point3) position {
+- (Point3) position
+{
 	TransformationComponents	components	= [self transformationComponents];
 	Point3						position	= {0};
 	
@@ -1006,15 +1010,17 @@
 	{
 		LDrawModel *referencedSubmodel	= [self referencedMPDSubmodel];
 		
+		// THIS IS NOT GLOBAL AS INTENDED WHEN USING THE PART LIBRARY LISTS.
+		// ***HOWEVER*** I believe all this to be wrong/unnecessary. See
+		// file://localhost/Developer/ADC%20Reference%20Library/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_threading/chapter_12_section_3.html#//apple_ref/doc/uid/TP40001987-CH409-DontLinkElementID_35
+		// http://developer.apple.com/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_threading/chapter_12_section_3.html
+		// which seem to indicate it's all a lost cause without CGLLockContext, 
+		// a TIGER-ONLY API. Sigh...
 		pthread_mutex_init(&displayListMutex, NULL);
 	
 		#if (OPTIMIZE_STEPS	== 0)
-			//Don't optimize MPD references. The user can change their referenced
-			// contents, and I don't want to have to keep track of invalidating 
-			// display lists when he does.
 			if(referencedSubmodel == nil)
 			{
-				
 				self->displayListTag = [[LDrawApplication sharedPartLibrary]
 														retainDisplayListForPart:self];
 				if(displayListTag != 0)
@@ -1022,7 +1028,9 @@
 			}
 			else
 			{
-				//blast.
+				// Don't optimize MPD references. The user can change their 
+				// referenced contents, and I don't want to have to keep track 
+				// of invalidating display lists when he does. 
 			}
 			
 		#else
@@ -1072,7 +1080,8 @@
 //				not to any superclass.
 //
 //==============================================================================
-- (void) registerUndoActions:(NSUndoManager *)undoManager {
+- (void) registerUndoActions:(NSUndoManager *)undoManager
+{
 	
 	[super registerUndoActions:undoManager];
 	
@@ -1104,7 +1113,9 @@
 	//give our display list back
 	if(self->hasDisplayList)
 	{
-		glDeleteLists(displayListTag, 1);
+		#if (OPTIMIZE_STEPS	== 1)
+			glDeleteLists(displayListTag, 1);
+		#endif
 		pthread_mutex_destroy(&displayListMutex);
 	}
 	

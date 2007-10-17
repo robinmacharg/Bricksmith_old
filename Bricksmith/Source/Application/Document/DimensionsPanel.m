@@ -19,8 +19,9 @@
 #define INCHES_ROW_INDEX		1
 #define CENTIMETERS_ROW_INDEX	2
 #define LEGONIAN_FEET_ROW_INDEX	3
+#define LDU_ROW_INDEX           4
 
-#define NUMBER_OF_UNITS			4
+#define NUMBER_OF_UNITS			5
 
 #define UNITS_COLUMN		@"UnitsIdentifier"
 #define WIDTH_COLUMN		@"WidthIdentifier"
@@ -192,6 +193,7 @@
 			case INCHES_ROW_INDEX:			object = NSLocalizedString(@"Inches", nil);			break;
 			case CENTIMETERS_ROW_INDEX:		object = NSLocalizedString(@"Centimeters", nil);	break;
 			case LEGONIAN_FEET_ROW_INDEX:	object = NSLocalizedString(@"LegonianFeet", nil);	break;
+			case LDU_ROW_INDEX:             object = NSLocalizedString(@"LDU", nil);            break;
 		}
 	}
 	//Dimension value, then.
@@ -218,6 +220,7 @@
 			case CENTIMETERS_ROW_INDEX:		value *= studsPerLDU * inchesPerStud * cmPerInch;		break;
 			case LEGONIAN_FEET_ROW_INDEX:	value *= studsPerLDU * inchesPerStud * legoInchPerInch;	break;
 		}
+		// nothing to convert for LDU
 		
 		//Now, how are we going to display it?
 		switch(rowIndex){
@@ -238,6 +241,10 @@
 														(int) floor(value / 12),	//feet
 														(int) fmod(value, 12)		//inches
 						];
+				break;
+			case LDU_ROW_INDEX:
+				object = [NSNumber numberWithFloat:value];
+				object = [floatFormatter stringForObjectValue:object];
 				break;
 		}
 		

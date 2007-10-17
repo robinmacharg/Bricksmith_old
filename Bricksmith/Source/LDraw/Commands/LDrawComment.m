@@ -5,6 +5,8 @@
 // Purpose:		A comment. It serves only as explanatory text in the model.
 //
 //				Line format:
+//				0 // message-text
+//					or
 //				0 WRITE message-text
 //					or
 //				0 PRINT message-text
@@ -67,7 +69,8 @@
 			//A comment must begin with a 
 			parsedField = [LDrawUtilities readNextField:  workingLine
 											  remainder: &workingLine ];
-			if([parsedField isEqualToString:LDRAW_COMMENT_WRITE] ||
+			if([parsedField isEqualToString:LDRAW_COMMENT_SLASH] ||
+			   [parsedField isEqualToString:LDRAW_COMMENT_WRITE] ||
 			   [parsedField isEqualToString:LDRAW_COMMENT_PRINT]    )
 			{
 				parsedComment = [[LDrawComment new] autorelease];
@@ -94,15 +97,17 @@
 //
 // Purpose:		Returns a line that can be written out to a file.
 //				Line format:
-//				0 WRITE comment-text
+//				0 // comment-text
 //
 // Notes:		Bricksmith only attempts to write out one style of comments.
+//				Per the LDraw File Format 1.0.0, the "0 // comment" form is
+//				preferred. http://ldraw.org/Article218.html#lt0
 //
 //==============================================================================
 - (NSString *) write{
 	return [NSString stringWithFormat:
 				@"0 %@ %@",
-				LDRAW_COMMENT_WRITE,
+				LDRAW_COMMENT_SLASH,
 				[self stringValue]
 			];
 }//end write

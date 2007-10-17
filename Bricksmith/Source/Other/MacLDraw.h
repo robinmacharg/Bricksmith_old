@@ -180,6 +180,7 @@
 //Comment markers
 #define LDRAW_COMMENT_WRITE						@"WRITE"
 #define LDRAW_COMMENT_PRINT						@"PRINT"
+#define LDRAW_COMMENT_SLASH						@"//"
 
 //File header
 #define LDRAW_HEADER_NAME						@"Name:"

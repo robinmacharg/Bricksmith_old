@@ -5,13 +5,17 @@
  * Version 1.0 - Andrew Glassner
  * from "Graphics Gems", Academic Press, 1990
  */
+#ifndef _MatrixMath_
+#define _MatrixMath_
 
-#import <OpenGL/GL.h>
+
+#include <OpenGL/GL.h>
+#include <stdbool.h>
 
 #pragma mark Data Types
 #pragma mark -
 
-//Transformation components; the data encoded in a transformation matrix.
+// Transformation components; the data encoded in a transformation matrix.
 typedef struct {
  	float scale_X;
  	float scale_Y;
@@ -29,7 +33,8 @@ typedef struct {
  	float perspective_Y;
  	float perspective_Z;
  	float perspective_W;
-} TransformationComponents;
+	
+} TransformComponents;
 
 
 /*********************/
@@ -77,8 +82,9 @@ typedef struct {
 #define PI				3.141592654
 #define SMALL_NUMBER	1.e-6		//"close enough" zero for floating-point. 1e-8 is too small.
 
-extern const Box3						InvalidBox;
-extern const TransformationComponents	IdentityComponents;
+extern const Box3					InvalidBox;
+extern const TransformComponents	IdentityComponents;
+extern const Point3					ZeroPoint3;
 
 #pragma mark -
 #pragma mark Macros
@@ -108,12 +114,23 @@ extern const TransformationComponents	IdentityComponents;
 /* swap a and b (see Gem by Wyvill) */
 #define SWAP(a,b)	{ a^=b; b^=a; a^=b; }
 
-/* linear interpolation from l (when a=0) to h (when a=1)*/
-/* (equal to (a*h)+((1-a)*l) */
-#define LERP(a,l,h)	((l)+(((h)-(l))*(a)))
+// Linear Interpolation
+// from a (when t=0) to b (when t=1)
+// (equivalent to a*(1 - t) + b*t
+#define LERP(t, a, b)					\
+(										\
+ (a) + ( ((b) - (a))*(t) )				\
+)
 
-/* clamp the input to the specified range */
-#define CLAMP(v,l,h)	((v)<(l) ? (l) : (v) > (h) ? (h) : v)
+/* clamp the input v to the specified range [l-h] */
+#define CLAMP(v, l, h)					\
+(										\
+	(v) < (l) ?							\
+		(l)								\
+	: (v) > (h) ?						\
+		(h)								\
+	: v									\
+)
 
 
 /****************************/
@@ -160,11 +177,12 @@ extern Matrix4*	V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c);
 extern void		V3Print(Point3 *point);
 extern float	det3x3( float, float, float, float, float, float, float, float, float );
 
+extern Vector4	V4Make(float x, float y, float z, float w);
 extern Vector4	V4FromV3(Vector3 *originalVector);
 extern Vector4*	V4MulPointByMatrix(Vector4 *, Matrix4 *, Vector4 *);
 extern Matrix4	Matrix4CreateFromGLMatrix4(const GLfloat *glMatrix);
-extern Matrix4	Matrix4CreateTransformation(TransformationComponents *);
-extern int		Matrix4DecomposeTransformation( Matrix4 *, TransformationComponents *);
+extern Matrix4	Matrix4CreateTransformation(TransformComponents *);
+extern int		Matrix4DecomposeTransformation( Matrix4 *, TransformComponents *);
 extern Matrix4*	Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result);
 extern Matrix4*	Matrix4Translate(Matrix4 *original, Vector3 *displacement, Matrix4 *result);
 extern Matrix4*	Matrix4Transpose(Matrix4 *, Matrix4 *);
@@ -172,3 +190,6 @@ extern void		Matrix4Invert( Matrix4 *, Matrix4 * );
 extern void		Matrix4Adjoint( Matrix4 *, Matrix4 * );
 extern float	Matrix4x4Determinant( Matrix4 * );
 extern void		Matrix4Print(Matrix4 *matrix);
+
+
+#endif // _MatrixMath_

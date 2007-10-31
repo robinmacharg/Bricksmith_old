@@ -21,6 +21,8 @@
 #import "PartBrowserDataSource.h"
 
 #import "LDrawApplication.h"
+#import "LDrawColorPanel.h"
+#import "LDrawPart.h"
 #import "MacLDraw.h"
 #import "PartLibrary.h"
 #import "StringCategory.h"
@@ -479,12 +481,49 @@
 //
 // Purpose:		It's time for drag-and-drop parts!
 //
+//				This method adds LDraw parts to the pasteboard.
+//
 //==============================================================================
 - (BOOL)tableView:(NSTableView *)tableView
 		writeRows:(NSArray *)rows
-	 toPasteboard:(NSPasteboard *)pboard
+	 toPasteboard:(NSPasteboard *)pasteboard
 {
-	//LDrawDraggingPboardType
+	NSMutableArray	*parts				= [NSMutableArray array];
+	NSDictionary	*partRecord			= nil;
+	NSString		*partName			= nil;
+	LDrawPart		*newPart			= [[[LDrawPart alloc] init] autorelease];
+	NSData			*partData			= nil;
+	LDrawColorT		 selectedColor		= [[LDrawColorPanel sharedColorPanel] LDrawColor];
+	int				 rowCount			= [rows count];
+	int				 counter			= 0;
+	
+	// well, we can only have one part selected in the part browser at a time, 
+	// but I'll go through the whole multiple-selection rigamarole here. 
+	for(counter = 0; counter < rowCount; counter++)
+	{
+		partRecord	= [self->tableDataSource objectAtIndex:[[rows objectAtIndex:counter] intValue]];
+		partName	= [partRecord objectForKey:PART_NUMBER_KEY];
+
+		//We got a part; let's add it!
+		if(partName != nil)
+		{
+			newPart			= [[[LDrawPart alloc] init] autorelease];
+			
+			//Set up the part attributes
+			[newPart setLDrawColor:selectedColor];
+			[newPart setDisplayName:partName];
+			
+			partData = [NSKeyedArchiver archivedDataWithRootObject:newPart];
+			
+			[parts addObject:partData];
+		}
+	}
+
+	[pasteboard declareTypes:[NSArray arrayWithObject:LDrawDraggingPboardType] owner:self];
+	[pasteboard setPropertyList:parts forType:LDrawDraggingPboardType];
+	
+	return YES;
+	
 }//end tableView:writeRows:toPasteboard:
 
 #pragma mark -

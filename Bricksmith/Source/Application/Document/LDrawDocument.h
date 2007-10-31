@@ -148,7 +148,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (void) rotatePart:(LDrawPart *)part byDegrees:(Tuple3)rotationDegrees aroundPoint:(Point3)rotationCenter;
 - (void) setElement:(LDrawDrawableElement *)element toHidden:(BOOL)hideFlag;
 - (void) setObject:(id <LDrawColorable> )object toColor:(LDrawColorT)newColor;
-- (void) setTransformation:(TransformationComponents) newComponents forPart:(LDrawPart *)part;
+- (void) setTransformation:(TransformComponents)newComponents forPart:(LDrawPart *)part;
 
 //Notifications
 - (void)partChanged:(NSNotification *)notification;

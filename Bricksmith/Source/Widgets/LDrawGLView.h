@@ -58,7 +58,7 @@ typedef enum {
 ////////////////////////////////////////////////////////////////////////////////
 @interface LDrawGLView : NSOpenGLView <LDrawColorable>
 {
-	IBOutlet LDrawDocument	*document;			//optional weak link. Enables editing capabilities.
+	IBOutlet id			 document;			//optional weak link. Enables editing capabilities.
 	
 	BOOL				 acceptsFirstResponder;	//YES if we can become key
 	NSString			*autosaveName;
@@ -132,6 +132,11 @@ typedef enum {
 - (void) scrollCenterToPoint:(NSPoint)newCenter;
 - (void) takeBackgroundColorFromUserDefaults;
 
+// - Geometry
+- (void) getModelAxesForViewX:(Vector3 *)outModelX Y:(Vector3 *)outModelY Z:(Vector3 *)outModelZ;
+- (Point3) modelPointForPoint:(NSPoint)viewPoint depthReferencePoint:(Point3)depthPoint;
+
+
 @end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -143,6 +148,10 @@ typedef enum {
 
 - (void) LDrawGLViewBecameFirstResponder:(LDrawGLView *)glView;
 
+- (void) LDrawGLView:(LDrawGLView *)glView acceptDrop:(NSArray *)directives;
+
+- (TransformComponents) LDrawGLViewPreferredPartTransform:(LDrawGLView *)glView;
+
 //Delegate method is called when the user has changed the selection of parts 
 // by clicking in the view. This does not actually do any selecting; that is 
 // left entirely to the delegate. Some may rightly question the design of this 
@@ -150,8 +159,5 @@ typedef enum {
 - (void)	LDrawGLView:(LDrawGLView *)glView
  wantsToSelectDirective:(LDrawDirective *)directiveToSelect
    byExtendingSelection:(BOOL) shouldExtend;
-
-- (void) LDrawGLViewWillBeginDrawing:(LDrawGLView *)glView;
-- (void) LDrawGLViewDidEndDrawing:(LDrawGLView *)glView;
 
 @end

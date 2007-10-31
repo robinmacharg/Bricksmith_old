@@ -384,6 +384,8 @@
 }//end partBrowserDrawer
 
 
+#pragma mark -
+
 //========== setDocumentContents: ==============================================
 //
 // Purpose:		Sets the logical representation of the LDraw file this 
@@ -397,7 +399,8 @@
 //				to sync the UI.
 //
 //==============================================================================
-- (void) setDocumentContents:(LDrawFile *)newContents{
+- (void) setDocumentContents:(LDrawFile *)newContents
+{
 	[newContents retain];
 	[documentContents release];
 	
@@ -774,8 +777,6 @@
 {
 	Vector3			movement		= [sender movementVector];
 	
-	NSLog(@"move");
-	
 	[self moveSelectionBy:movement];
 	
 }//end panelMoveParts
@@ -1102,7 +1103,8 @@
 	[self selectDirective:nil byExtendingSelection:NO];
 	
 	//Select everything now.
-	for(counter = 0; counter < [elements count]; counter++){
+	for(counter = 0; counter < [elements count]; counter++)
+	{
 		currentElement = [elements objectAtIndex:counter];
 		if(		[currentElement respondsToSelector:@selector(isHidden)] == NO
 			||	[currentElement isHidden] == NO)
@@ -1118,14 +1120,14 @@
 // Purpose:		Makes a copy of the selected object.
 //
 //==============================================================================
-- (IBAction) duplicate:(id)sender{
-	
-	//To take advantage of all the exceptionally cool copy/paste code we already 
-	// have, -duplicate: simply "copies" the selection onto a private pasteboard 
-	// then "pastes" it right back in. This avoids destroying the general 
-	// pasteboard, but allows us some fabulous code reuse.
-	// (In case you haven't noticed, I'm proud of this!)
-	NSPasteboard	*pasteboard			= [NSPasteboard pasteboardWithName:@"MacLDrawDuplicationPboard"];
+- (IBAction) duplicate:(id)sender
+{
+	// To take advantage of all the exceptionally cool copy/paste code we 
+	// already have, -duplicate: simply "copies" the selection onto a private 
+	// pasteboard then "pastes" it right back in. This avoids destroying the 
+	// general pasteboard, but allows us some fabulous code reuse. (In case you 
+	// haven't noticed, I'm proud of this!) 
+	NSPasteboard	*pasteboard			= [NSPasteboard pasteboardWithName:@"BricksmithDuplicationPboard"];
 	NSArray			*selectedObjects	= [self selectedObjects];
 	NSUndoManager	*undoManager		= [self undoManager];
 	
@@ -1134,7 +1136,8 @@
 	[self pasteFromPasteboard:pasteboard];
 
 	[undoManager setActionName:NSLocalizedString(@"UndoDuplicate", nil)];
-}
+	
+}//end duplicate:
 
 
 //========== orderFrontMovePanel: ==============================================
@@ -1395,38 +1398,42 @@
 // Purpose:		Aligns all selected parts to the current grid setting.
 //
 //==============================================================================
-- (void) snapSelectionToGrid:(id)sender {
-	
-	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
-	NSArray			*selectedObjects	= [self selectedObjects];
-	id				 currentObject		= nil;
-	float			 gridSpacing		= 0;
-	float			 degreesToRotate	= 0;
-	int				 counter			= 0;
-	
-	TransformationComponents snappedComponents;
+- (void) snapSelectionToGrid:(id)sender
+{	
+	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
+	NSArray				*selectedObjects	= [self selectedObjects];
+	id					 currentObject		= nil;
+	float				 gridSpacing		= 0;
+	float				 degreesToRotate	= 0;
+	int					 counter			= 0;
+	TransformComponents	snappedComponents	= IdentityComponents;
 	
 	//Determine granularity of grid.
-	switch([self gridSpacingMode]) {
+	switch([self gridSpacingMode])
+	{
 		case gridModeFine:
-			gridSpacing = [userDefaults floatForKey:GRID_SPACING_FINE];
-			degreesToRotate = GRID_ROTATION_FINE;	//15 degrees
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_FINE];
+			degreesToRotate	= GRID_ROTATION_FINE;	//15 degrees
 			break;
+		
 		case gridModeMedium:
-			gridSpacing = [userDefaults floatForKey:GRID_SPACING_MEDIUM];
-			degreesToRotate = GRID_ROTATION_MEDIUM;	//45 degrees
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
+			degreesToRotate	= GRID_ROTATION_MEDIUM;	//45 degrees
 			break;
+		
 		case gridModeCoarse:
-			gridSpacing = [userDefaults floatForKey:GRID_SPACING_COARSE];
-			degreesToRotate = GRID_ROTATION_COARSE;	//90 degrees
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_COARSE];
+			degreesToRotate	= GRID_ROTATION_COARSE;	//90 degrees
 			break;
 	}
 	
 	//nudge everything that can be rotated. That would be parts and only parts.
-	for(counter = 0; counter < [selectedObjects count]; counter++){
+	for(counter = 0; counter < [selectedObjects count]; counter++)
+	{
 		currentObject = [selectedObjects objectAtIndex:counter];
 		
-		if([currentObject isKindOfClass:[LDrawPart class]]){
+		if([currentObject isKindOfClass:[LDrawPart class]])
+		{
 			snappedComponents = [currentObject 
 										componentsSnappedToGrid:gridSpacing
 												   minimumAngle:degreesToRotate];
@@ -1921,16 +1928,16 @@
 //				This is an important step in snapping a part to the grid.
 //
 //==============================================================================
-- (void) setTransformation:(TransformationComponents) newComponents
+- (void) setTransformation:(TransformComponents)newComponents
 				   forPart:(LDrawPart *)part
 {
-	NSUndoManager				*undoManager		= [self undoManager];
-	TransformationComponents	 currentComponents	= [part transformationComponents];
+	NSUndoManager		*undoManager		= [self undoManager];
+	TransformComponents	 currentComponents	= [part transformComponents];
 	
 	[[self documentContents] lockForEditing];
 	{
 		[[self documentContents] unlockEditor];
-		[part setTransformationComponents:newComponents];
+		[part setTransformComponents:newComponents];
 		
 		//Be ready to restore the old components.
 		[[undoManager prepareWithInvocationTarget:self]
@@ -1940,7 +1947,9 @@
 		[undoManager setActionName:NSLocalizedString(@"UndoSnapToGrid", nil)];
 	}
 	[self updateInspector];
-}
+	
+}//end setTransformation:forPart:
+
 
 #pragma mark -
 #pragma mark OUTLINE VIEW
@@ -2050,7 +2059,7 @@
 #pragma mark Drag and Drop
 
 //**** NSOutlineViewDataSource ****
-//========== outlineView:willDisplayCell:forTableColumn:item: ==================
+//========== outlineView:writeItems:toPasteboard: ==============================
 //
 // Purpose:		Initiates a drag. We drag directives by copying them at the 
 //				outset. Upon the successful completion of the drag, we "paste" 
@@ -2084,7 +2093,9 @@
 	[pboard setPropertyList:rowIndexes forType:LDrawDragSourceRowsPboardType];
 	
 	return YES;
-}
+	
+}//end outlineView:writeItems:toPasteboard:
+
 
 //**** NSOutlineViewDataSource ****
 //========== outlineView:validateDrop:proposedItem:proposedChildIndex: =========
@@ -2108,13 +2119,16 @@
 	
 	//We must make sure we have the proper pasteboard type available.
 	if(		index != NSOutlineViewDropOnItemIndex //not a "drop-on" operation.
-	   &&	[[pasteboard types] containsObject:LDrawDirectivePboardType]) {
+	   &&	[[pasteboard types] containsObject:LDrawDirectivePboardType])
+	{
 		
 		//This drag is acceptable. Now figure out the operation.
 		if(sourceView == outlineView)
 			dragOperation = NSDragOperationMove;
 		else
 			dragOperation = NSDragOperationCopy;
+		
+		//---------- Eliminate Illegal Positions -------------------------------
 		
 		//Read the first object off the pasteboard so we can figure 
 		// out where this drop is allowed to happen.
@@ -2125,9 +2139,6 @@
 		//Unarchive.
 		data			= [objects objectAtIndex:0];
 		currentObject	= [NSKeyedUnarchiver unarchiveObjectWithData:data];
-			
-	if([currentObject isKindOfClass:[LDrawStep class]])
-//		NSLog(@"step drag to %@ : %d", [newParent class], index);
 		
 		//Now pop the data into our file.
 		if(		[currentObject	isKindOfClass:[LDrawModel class]] == YES
@@ -2158,7 +2169,6 @@
 	}
 	return dragOperation;
 
-	return NSDragOperationMove;
 }//end outlineView:validateDrop:proposedItem:proposedChildIndex:
 
 
@@ -2204,9 +2214,9 @@
 		selectionTarget = newParent;
 	}
 	
-	//Select the item. Watch out--drops at the very top of the file will be 
+	// Select the item. Watch out--drops at the very top of the file will be 
 	// asking to select the LDrawFile itself, which is impossible. So we 
-	// deselect all; that conveys the concept implicitly.
+	// deselect all; that conveys the concept implicitly. 
 	selectionIndex = [outlineView rowForItem:selectionTarget];
 	if(selectionIndex < 0) //selectionTarget not displayed in outline. That means the root object--the File.
 		[outlineView deselectAll:self];
@@ -2218,7 +2228,8 @@
 	// objects *directly below* the selection--effectively doing the drag.
 	
 	
-	if(sourceView == outlineView) {
+	if(sourceView == outlineView)
+	{
 		//We dragged within the same table. That means we expect the original 
 		// objects dragged to "mave" to the new position. Well, we can't 
 		// actually *move* them, since our drag is implemented as a copy-and-paste.
@@ -2233,7 +2244,8 @@
 		
 		//Gather up the objects we'll be removing.
 		rowsToDelete = [pasteboard propertyListForType:LDrawDragSourceRowsPboardType];
-		for(counter = 0; counter < [rowsToDelete count]; counter++) {
+		for(counter = 0; counter < [rowsToDelete count]; counter++)
+		{
 			doomedIndex = [[rowsToDelete objectAtIndex:counter] intValue];
 			objectToDelete = [outlineView itemAtRow:doomedIndex];
 			[doomedObjects addObject:objectToDelete];
@@ -2243,21 +2255,21 @@
 	
 	//     Do The Move.
 	//
-	//Due to more lack of foresight, we need to include a special flag if the 
-	// move is happening at position 0 in newParent. The trouble is: in a 
-	// normal copy/paste or new-part operation, we want to insert the new 
-	// element at the *bottom* of the list in the absence of a different 
-	// selection. But in a drag, we want to add the  items in the explicit 
-	// position indicated by the user. If that position happens to be at the 
-	// top of the list, then we are in a pickle. So we set up the insertionMode
-	// flag to change the behavior of the -addDirective:toParent: method just 
-	// for this drag.
+	// Due to more lack of foresight, we need to include a special flag if the 
+	// move is happening at position 0 in newParent. The trouble is: in a normal 
+	// copy/paste or new-part operation, we want to insert the new element at 
+	// the *bottom* of the list in the absence of a different selection. But in 
+	// a drag, we want to add the  items in the explicit position indicated by 
+	// the user. If that position happens to be at the top of the list, then we 
+	// are in a pickle. So we set up the insertionMode flag to change the 
+	// behavior of the -addDirective:toParent: method just for this drag. 
 	self->insertionMode = insertAtBeginning;
 	pastedObjects = [self pasteFromPasteboard:pasteboard];
 	self->insertionMode = insertAtEnd; //revert back to normal behavior.
 	
 	
-	if(sourceView == outlineView) {
+	if(sourceView == outlineView)
+	{
 		//Now that we've inserted the new objects, we need to delete the 
 		// old ones.
 		for(counter = 0; counter < [doomedObjects count]; counter++)
@@ -2270,7 +2282,8 @@
 	[(LDrawFileOutlineView*)outlineView selectObjects:pastedObjects];
 
 	return YES;
-}
+	
+}//end outlineView:acceptDrop:item:childIndex:
 
 
 
@@ -2354,14 +2367,40 @@
 #pragma mark -
 
 //**** LDrawGLView ****
+//========== LDrawGLView:acceptDrop: ===========================================
+//
+// Purpose:		The user has deposited some drag-anddrop parts into an 
+//			    LDrawGLView. Now they need to be imported into the model. 
+//
+// Notes:		Just like in -duplicate: and 
+//				-outlineView:acceptDrop:item:childIndex:, we appropriate the 
+//				pasting architecture to simplify importing the parts.
+//
+//==============================================================================
+- (void) LDrawGLView:(LDrawGLView *)glView
+		  acceptDrop:(NSArray *)directives
+{
+	NSPasteboard	*pasteboard			= [NSPasteboard pasteboardWithName:@"BricksmithDragAndDropPboard"];
+	NSUndoManager	*undoManager		= [self undoManager];
+	
+	[self writeDirectives:directives
+			 toPasteboard:pasteboard];
+	[self pasteFromPasteboard:pasteboard];
+	
+	[undoManager setActionName:NSLocalizedString(@"UndoDrop", nil)];
+	
+}//end LDrawGLView:acceptDrop:
+
+
+//**** LDrawGLView ****
 //========== LDrawGLViewBecameFirstResponder: ==================================
 //
 // Purpose:		One of our model views just became active, so we need to update 
 //				our display to represent that view's characteristics.
 //
 //==============================================================================
-- (void) LDrawGLViewBecameFirstResponder:(LDrawGLView *)glView {
-	
+- (void) LDrawGLViewBecameFirstResponder:(LDrawGLView *)glView
+{	
 	//We used bindings to sync up the ever-in-limbo zoom control. Since 
 	// mostRecentLDrawView is a private variable, we manually trigger the 
 	// key-value observing updates for it.
@@ -2369,7 +2408,27 @@
 	self->mostRecentLDrawView = glView;
 	[self didChangeValueForKey:@"mostRecentLDrawView"];
 
-}
+}//end LDrawGLViewBecameFirstResponder:
+
+
+//========== LDrawGLViewPreferredPartTransform: ================================
+//
+// Purpose:		Returns the part transform which would be nice applied to new 
+//			    parts. This is used during Drag-and-Drop to unpack directives 
+//			    and show them in the right place. 
+//
+//==============================================================================
+- (TransformComponents) LDrawGLViewPreferredPartTransform:(LDrawGLView *)glView
+{
+	TransformComponents	components	 = IdentityComponents;
+	
+	// If we have a previously-selected part, honor it.
+	if(self->lastSelectedPart != nil)
+		components = [self->lastSelectedPart transformComponents];
+		
+	return components;
+	
+}//end LDrawGLViewPreferredPartTransform:
 
 
 //**** LDrawGLView ****
@@ -2387,6 +2446,7 @@
 	[self selectDirective:directiveToSelect byExtendingSelection:shouldExtend];
 	
 }//end LDrawGLView:wantsToSelectDirective:byExtendingSelection:
+
 
 #pragma mark -
 #pragma mark SPLIT VIEW
@@ -2913,23 +2973,25 @@
 //				currently-displayed model.
 //
 //==============================================================================
-- (void) addPartNamed:(NSString *)partName {
-	
-	LDrawPart		*newPart		= [[[LDrawPart alloc] init] autorelease];
-	NSUndoManager	*undoManager	= [self undoManager];
-	LDrawColorT		 selectedColor	= [[LDrawColorPanel sharedColorPanel] LDrawColor];
-	
+- (void) addPartNamed:(NSString *)partName
+{
+	LDrawPart			*newPart		= [[[LDrawPart alloc] init] autorelease];
+	NSUndoManager		*undoManager	= [self undoManager];
+	LDrawColorT			 selectedColor	= [[LDrawColorPanel sharedColorPanel] LDrawColor];
+	TransformComponents	 transformation	= IdentityComponents;
 	//We got a part; let's add it!
-	if(partName != nil){
+	if(partName != nil)
+	{
 		//Set up the part attributes
 		[newPart setLDrawColor:selectedColor];
 		[newPart setDisplayName:partName];
-		if(self->lastSelectedPart != nil){
-			//Collect the transformation from the previous part and apply it to the 
-			// new one.
-			TransformationComponents transformation = [lastSelectedPart transformationComponents];
-			[newPart setTransformationComponents:transformation];
-			
+		
+		if(self->lastSelectedPart != nil)
+		{
+			// Collect the transformation from the previous part and apply it to 
+			// the new one. 
+			transformation = [lastSelectedPart transformComponents];
+			[newPart setTransformComponents:transformation];
 		}
 		
 		[self addStepComponent:newPart];
@@ -2949,12 +3011,14 @@
 //						include parts, geometric primitives, and comments.
 //
 //==============================================================================
-- (void) addStepComponent:(LDrawDirective *)newDirective {
-	
+- (void) addStepComponent:(LDrawDirective *)newDirective
+{
 	LDrawDirective	*selectedComponent	= [self selectedStepComponent];
 	LDrawStep		*selectedStep		= [self selectedStep];
 	LDrawMPDModel	*selectedModel		= [self selectedModel];
 	NSUndoManager	*undoManager		= [self undoManager];
+	int				 indexOfElement		= 0;
+	int				 rowForItem			= 0;
 	
 	//We need to synchronize our addition with the model currently active.
 	if(selectedModel == nil)
@@ -2970,25 +3034,33 @@
 	//It is also possible we have the step itself selected, in which case the 
 	// new coponent will be added to the bottom of the step.
 	if(selectedComponent == nil)
+	{
 		[self addDirective:newDirective
 				  toParent:selectedStep ];
+	}
 	//Otherwise, we add the new element right after the selected element.
-	else {
-		int indexOfElement = [selectedStep indexOfDirective:selectedComponent];
+	else
+	{
+		indexOfElement = [selectedStep indexOfDirective:selectedComponent];
 		[self addDirective:newDirective
 				  toParent:selectedStep
 				   atIndex:indexOfElement+1 ];
 	}
 
-	//Select the new element.
+	// Show the new element.
 	[fileContentsOutline expandItem:selectedModel];
 	[fileContentsOutline expandItem:selectedStep];
-	int rowForItem = [fileContentsOutline rowForItem:newDirective];
+	
+	// Select it too.
+	rowForItem = [fileContentsOutline rowForItem:newDirective];
 	[fileContentsOutline selectRowIndexes:[NSIndexSet indexSetWithIndex:rowForItem]
 					 byExtendingSelection:NO];
-	[[self foremostWindow] makeFirstResponder:mostRecentLDrawView]; //so we can move it immediately.
+					 
+	// Allow us to immediately use the keyboard to move the new part.
+	[[self foremostWindow] makeFirstResponder:mostRecentLDrawView];
 	
 }//end addStepComponent:
+
 
 #pragma mark -
 
@@ -3048,7 +3120,8 @@
 //				requested visibility. 
 //
 //==============================================================================
-- (BOOL) elementsAreSelectedOfVisibility:(BOOL)visibleFlag {
+- (BOOL) elementsAreSelectedOfVisibility:(BOOL)visibleFlag
+{
 	NSArray			*selectedObjects	= [self selectedObjects];
 	id				 currentObject		= nil;
 	BOOL			 currentVisibility	= NO;
@@ -3057,9 +3130,11 @@
 	BOOL			 visibleSelected	= NO;
 	
 	
-	for(counter = 0; counter < [selectedObjects count]; counter++){
+	for(counter = 0; counter < [selectedObjects count]; counter++)
+	{
 		currentObject = [selectedObjects objectAtIndex:counter];
-		if([currentObject isKindOfClass:[LDrawDrawableElement class]]){
+		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
+		{
 			invisibleSelected	= invisibleSelected || [currentObject isHidden];
 			visibleSelected		= visibleSelected   || ([currentObject isHidden] == NO);
 		}
@@ -3069,6 +3144,7 @@
 		return visibleSelected;
 	else
 		return invisibleSelected;
+		
 }//end elementsAreSelectedOfVisibility:
 
 
@@ -3425,11 +3501,12 @@
 	int				 counter		= 0;
 	
 	//We must make sure we have the proper pasteboard type available.
-	if([[pasteboard types] containsObject:LDrawDirectivePboardType]) {
-		
+	if([[pasteboard types] containsObject:LDrawDirectivePboardType])
+	{
 		//Unarchived everything and dump it into our file.
 		objects = [pasteboard propertyListForType:LDrawDirectivePboardType];
-		for(counter = 0; counter < [objects count]; counter++) {
+		for(counter = 0; counter < [objects count]; counter++)
+		{
 			data			= [objects objectAtIndex:counter];
 			currentObject	= [NSKeyedUnarchiver unarchiveObjectWithData:data];
 			

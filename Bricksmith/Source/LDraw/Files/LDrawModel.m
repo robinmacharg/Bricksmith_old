@@ -221,23 +221,38 @@
 #pragma mark DIRECTIVES
 #pragma mark -
 
-//========== draw ==============================================================
+//========== draw:parentColor: =================================================
 //
 // Purpose:		Simply draw all the steps; they will worry about drawing all 
 //				their constituents.
 //
 //==============================================================================
-- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
-	NSArray			*steps			= [self subdirectives];
-	int				 maxStep		= [self maxStepIndexToOutput];
-	LDrawStep		*currentStep	= nil;
-	int				 counter		= 0;
+- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor
+{
+	NSArray			*steps				= [self subdirectives];
+	int				 maxIndex			= [self maxStepIndexToOutput];
+	LDrawStep		*currentDirective	= nil;
+	int				 counter			= 0;
 	
-	for(counter = 0; counter <= maxStep; counter++){
-		currentStep = [steps objectAtIndex:counter];
-		[currentStep draw:optionsMask parentColor:parentColor];
+	// Draw all the steps in the model
+	for(counter = 0; counter <= maxIndex; counter++)
+	{
+		currentDirective = [steps objectAtIndex:counter];
+		[currentDirective draw:optionsMask parentColor:parentColor];
 	}
-}
+	
+	// Draw Drag-and-Drop pieces if we've got 'em.
+	if(self->draggingDirectives != nil)
+	{
+		maxIndex = [self->draggingDirectives count];
+		
+		for(counter = 0; counter < maxIndex; counter++)
+		{
+			currentDirective	= [self->draggingDirectives objectAtIndex:counter];
+			[currentDirective draw:optionsMask parentColor:parentColor];
+		}
+	}
+}//end draw:parentColor:
 
 
 //========== write =============================================================
@@ -321,12 +336,14 @@
 //				known to be constant--parts from the library, for instance.
 //
 //==============================================================================
-- (Box3) boundingBox3 {
+- (Box3) boundingBox3
+{
 	if(self->cachedBounds != NULL)
 		return *cachedBounds;
 	else
 		return [super boundingBox3];
-}
+		
+}//end boundingBox3
 
 
 //========== category ==========================================================
@@ -341,10 +358,10 @@
 //				description "Brick  2 x  4".
 //
 //==============================================================================
-- (NSString *) category {
-	
+- (NSString *) category
+{
 	NSString	*category	= nil;
-	NSRange		 firstSpace;			//range of the category string in the first line.
+	NSRange		 firstSpace;	//range of the category string in the first line.
 	
 	//The category name is the first word in the description.
 	firstSpace = [(self->modelDescription) rangeOfString:@" "];
@@ -360,6 +377,19 @@
 	return category;
 	
 }//end category
+
+
+//========== draggingDirectives ================================================
+//
+// Purpose:		Returns the objects that are currently being displayed as part 
+//			    of drag-and-drop. 
+//
+//==============================================================================
+- (NSArray *) draggingDirectives
+{
+	return self->draggingDirectives;
+	
+}//end draggingDirectives
 
 
 //========== enclosingFile =====================================================
@@ -409,7 +439,8 @@
 // Purpose:		Returns whether or not this is an official LDraw.org model.
 //
 //==============================================================================
-- (LDrawDotOrgModelStatusT) ldrawRepositoryStatus{
+- (LDrawDotOrgModelStatusT) ldrawRepositoryStatus
+{
 	return ldrawDotOrgStatus;
 }//end ldrawRepositoryStatus
 
@@ -420,9 +451,11 @@
 //				meaning if the model is in step-display mode.
 //
 //==============================================================================
-- (int) maximumStepDisplayed {
+- (int) maximumStepDisplayed
+{
 	return self->currentStepDisplayed;
 }
+
 
 //========== stepDisplay =======================================================
 //
@@ -430,7 +463,8 @@
 //				the index of the currentStepDisplayed instance variable.
 //
 //==============================================================================
-- (BOOL) stepDisplay {
+- (BOOL) stepDisplay
+{
 	return self->stepDisplayActive;
 }
 
@@ -452,9 +486,10 @@
 //				drawn right now.
 //
 //==============================================================================
-- (LDrawStep *) visibleStep {
-	NSArray *steps = [self steps];
-	LDrawStep *lastStep = nil;
+- (LDrawStep *) visibleStep
+{
+	NSArray		*steps		= [self steps];
+	LDrawStep	*lastStep	= nil;
 	
 	if([self stepDisplay] == YES)
 		lastStep = [steps objectAtIndex:[self maxStepIndexToOutput]];
@@ -462,17 +497,35 @@
 		lastStep = [steps lastObject];
 	
 	return lastStep;
-}
+	
+}//end visibleStep
 
 
 #pragma mark -
+
+//========== setDraggingDirectives: ============================================
+//
+// Purpose:		Sets the parts which are being manipulated in the model via 
+//			    drag-and-drop. 
+//
+//==============================================================================
+- (void) setDraggingDirectives:(NSArray *)directives
+{
+	[directives retain];
+	[self->draggingDirectives release];
+	
+	self->draggingDirectives = directives;
+	
+}//end setDraggingDirectives:
+
 
 //========== setModelDescription: ==============================================
 //
 // Purpose:		Sets a new model description.
 //
 //==============================================================================
-- (void) setModelDescription:(NSString *)newDescription{
+- (void) setModelDescription:(NSString *)newDescription
+{
 	[newDescription retain];
 	[modelDescription release];
 	
@@ -488,7 +541,8 @@
 //				actual filesystem name.
 //
 //==============================================================================
-- (void) setFileName:(NSString *)newName{
+- (void) setFileName:(NSString *)newName
+{
 	[newName retain];
 	[fileName release];
 	
@@ -501,7 +555,8 @@
 // Purpose:		Changes the name of the person who created the model.
 //
 //==============================================================================
-- (void) setAuthor:(NSString *)newAuthor{
+- (void) setAuthor:(NSString *)newAuthor
+{
 	[newAuthor retain];
 	[author release];
 	

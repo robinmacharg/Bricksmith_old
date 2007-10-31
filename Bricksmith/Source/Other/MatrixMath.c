@@ -20,7 +20,7 @@ const Box3 InvalidBox = {	INFINITY,
 							-INFINITY,
 							-INFINITY   };
 							
-const TransformationComponents IdentityComponents = {
+const TransformComponents IdentityComponents = {
 							1, //scale_X;
 							1, //scale_Y;
 							1, //scale_Z;
@@ -39,6 +39,7 @@ const TransformationComponents IdentityComponents = {
 							0, //perspective_W;
 						};
 
+const Point3 ZeroPoint3 = {0.0, 0.0, 0.0};
 
 #pragma mark 2-D LIBRARY
 #pragma mark -
@@ -400,6 +401,19 @@ float a1, a2, a3, b1, b2, b3, c1, c2, c3;
 #pragma mark 4-D LIBRARY
 #pragma mark -
 
+//========== V4Make ============================================================
+//
+// Purpose:		Makes a new 4-dimensional vector.
+//
+//==============================================================================
+Vector4 V4Make(float x, float y, float z, float w)
+{
+	Vector4 v;
+	v.x = x;  v.y = y;  v.z = z; v.w = w;
+	return(v);
+}
+
+
 //========== V3FromV4 ==========================================================
 //
 // Purpose:		Create a new 4D vector whose components match the given 3D 
@@ -483,10 +497,10 @@ Matrix4 Matrix4CreateFromGLMatrix4(const GLfloat *glMatrix)
 // Source:		Allen Smith, after too much handwork.
 //
 //==============================================================================
-Matrix4 Matrix4CreateTransformation(TransformationComponents *components) {
-
-	Matrix4 transformation = {0}; //zero out the whole thing.
-	float rotation[3][3];
+Matrix4 Matrix4CreateTransformation(TransformComponents *components)
+{
+	Matrix4	transformation = {0}; //zero out the whole thing.
+	float	rotation[3][3];
 	
 	//Create the rotation matrix.
 	double sinX = sin(components->rotate_X);
@@ -533,7 +547,8 @@ Matrix4 Matrix4CreateTransformation(TransformationComponents *components) {
 	transformation.element[3][3] = 1;
 	
 	return transformation;
-}
+	
+}//end Matrix4CreateTransformation
 
 
 //========== Matrix4DecomposeTransformation() ==================================
@@ -552,7 +567,7 @@ Matrix4 Matrix4CreateTransformation(TransformationComponents *components) {
 //
 //==============================================================================
 int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
-									TransformationComponents *decomposed )
+									TransformComponents *decomposed )
 {
 	int			counter, j;
 	Matrix4		localMatrix;
@@ -717,9 +732,9 @@ int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
 //==============================================================================
 Matrix4* Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result)
 {
-	TransformationComponents	rotateComponents	= IdentityComponents;
-	Matrix4						addedRotation		= {0};
-	Matrix4						newMatrix			= {0};
+	TransformComponents	rotateComponents	= IdentityComponents;
+	Matrix4				addedRotation		= {0};
+	Matrix4				newMatrix			= {0};
 
 	//Create a new matrix that causes the rotation we want.
 	//  (start with identity matrix)

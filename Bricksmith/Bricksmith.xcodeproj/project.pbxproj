@@ -19,6 +19,10 @@
 		0B2700E7098203320058A7BE /* Hand.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 0B2700E5098203320058A7BE /* Hand.tiff */; };
 		0B2700E8098203320058A7BE /* Arrow.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 0B2700E6098203320058A7BE /* Arrow.tiff */; };
 		0B2AB7C507C7E93B00085145 /* LDrawDirective.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B2AB7C307C7E93B00085145 /* LDrawDirective.m */; };
+		0B2DD14A0CD810DC0093E8E5 /* PartBrowserTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B2DD1480CD810DC0093E8E5 /* PartBrowserTableView.h */; };
+		0B2DD14B0CD810DC0093E8E5 /* PartBrowserTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B2DD1490CD810DC0093E8E5 /* PartBrowserTableView.m */; };
+		0B2DD14E0CD810F20093E8E5 /* BezierPathCategory.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B2DD14C0CD810F20093E8E5 /* BezierPathCategory.h */; };
+		0B2DD14F0CD810F20093E8E5 /* BezierPathCategory.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B2DD14D0CD810F20093E8E5 /* BezierPathCategory.m */; };
 		0B34306708B2E93D00A06A40 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0B34306508B2E93D00A06A40 /* Localizable.strings */; };
 		0B34B52E090B07AE00F3A001 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0B34B52D090B07AE00F3A001 /* Carbon.framework */; };
 		0B356A9708D371EE00695EEB /* PartReport.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B356A9508D371EE00695EEB /* PartReport.h */; };
@@ -254,6 +258,10 @@
 		0B2AAA4407C1D22A00085145 /* MacLDraw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MacLDraw.h; sourceTree = "<group>"; };
 		0B2AB7C207C7E93B00085145 /* LDrawDirective.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LDrawDirective.h; sourceTree = "<group>"; };
 		0B2AB7C307C7E93B00085145 /* LDrawDirective.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LDrawDirective.m; sourceTree = "<group>"; };
+		0B2DD1480CD810DC0093E8E5 /* PartBrowserTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PartBrowserTableView.h; sourceTree = "<group>"; };
+		0B2DD1490CD810DC0093E8E5 /* PartBrowserTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PartBrowserTableView.m; sourceTree = "<group>"; };
+		0B2DD14C0CD810F20093E8E5 /* BezierPathCategory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BezierPathCategory.h; sourceTree = "<group>"; };
+		0B2DD14D0CD810F20093E8E5 /* BezierPathCategory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BezierPathCategory.m; sourceTree = "<group>"; };
 		0B34306608B2E93D00A06A40 /* Localizable.strings */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
 		0B34B52D090B07AE00F3A001 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		0B356A9508D371EE00695EEB /* PartReport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PartReport.h; sourceTree = "<group>"; };
@@ -531,6 +539,8 @@
 		0B6F38FD07C84E79007B1075 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				0B2DD14C0CD810F20093E8E5 /* BezierPathCategory.h */,
+				0B2DD14D0CD810F20093E8E5 /* BezierPathCategory.m */,
 				0B8EBE96093C102E00D87E0C /* FormCategory.h */,
 				0B8EBE97093C102E00D87E0C /* FormCategory.m */,
 				0B8EBE98093C102E00D87E0C /* StringCategory.h */,
@@ -603,6 +613,8 @@
 				0B8EBE7A093C100100D87E0C /* LDrawFileOutlineView.m */,
 				0B8EBE7B093C100100D87E0C /* LDrawGLView.h */,
 				0B8EBE7C093C100100D87E0C /* LDrawGLView.m */,
+				0B2DD1480CD810DC0093E8E5 /* PartBrowserTableView.h */,
+				0B2DD1490CD810DC0093E8E5 /* PartBrowserTableView.m */,
 			);
 			name = Widgets;
 			path = Source/Widgets;
@@ -954,6 +966,8 @@
 				2BF2E3150AB0FCAB0026D5DB /* MLCadIni.h in Headers */,
 				2BF2E3170AB0FCAB0026D5DB /* TransformerIntMinus1.h in Headers */,
 				0BDC146F0B9D0502001D1FF1 /* PartBrowserPanel.h in Headers */,
+				0B2DD14A0CD810DC0093E8E5 /* PartBrowserTableView.h in Headers */,
+				0B2DD14E0CD810F20093E8E5 /* BezierPathCategory.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1175,6 +1189,8 @@
 				2BF2E3160AB0FCAB0026D5DB /* MLCadIni.m in Sources */,
 				2BF2E3180AB0FCAB0026D5DB /* TransformerIntMinus1.m in Sources */,
 				0BDC14700B9D0502001D1FF1 /* PartBrowserPanel.m in Sources */,
+				0B2DD14B0CD810DC0093E8E5 /* PartBrowserTableView.m in Sources */,
+				0B2DD14F0CD810F20093E8E5 /* BezierPathCategory.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

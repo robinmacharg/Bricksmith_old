@@ -173,13 +173,7 @@
 	self = [super init];
 	
 	[self setDisplayName:@""];
-	//Come up with a blank transformation; all it does is show the part at 
-	// the origin, rotation <0,0,0>.
-	TransformationComponents identity = {0}; //zero out all components.
-	identity.scale_X = 1;
-	identity.scale_Y = 1;
-	identity.scale_Z = 1;
-	[self setTransformationComponents:identity];
+	[self setTransformComponents:IdentityComponents];
 	
 	return self;
 	
@@ -546,8 +540,8 @@
 //==============================================================================
 - (Point3) position
 {
-	TransformationComponents	components	= [self transformationComponents];
-	Point3						position	= {0};
+	TransformComponents	components	= [self transformComponents];
+	Point3				position	= {0};
 	
 	//Position must be extracted from transformation components.
 	position.x = components.translate_X;
@@ -598,23 +592,24 @@
 }//end referencedMPDSubmodel
 
 
-//========== setTransformationComponents: ======================================
+//========== transformComponents ===============================================
 //
-// Purpose:		Converts the given componets (rotation, scaling, etc.) into an 
-//				internal transformation matrix represenation.
+// Purpose:		Returns the individual components of the transformation matrix 
+//			    applied to this part. 
 //
 //==============================================================================
-- (TransformationComponents) transformationComponents
+- (TransformComponents) transformComponents
 {
-	Matrix4						transformation = [self transformationMatrix];
-	TransformationComponents	components = {0};
+	Matrix4				transformation	= [self transformationMatrix];
+	TransformComponents	components		= IdentityComponents;
 	
 	//This is a pretty darn neat little function. I wish I could say I wrote it.
 	// It will extract all the user-friendly components out of this nasty matrix.
 	Matrix4DecomposeTransformation( &transformation, &components );
 
 	return components;
-}
+	
+}//end transformComponents
 
 
 //========== transformationMatrix ==============================================
@@ -678,21 +673,22 @@
 }//end setPartName
 
 
-//========== setTransformationComponents: ======================================
+//========== setTransformComponents: ===========================================
 //
 // Purpose:		Converts the given componets (rotation, scaling, etc.) into an 
 //				internal transformation matrix represenation.
 //
 //==============================================================================
-- (void) setTransformationComponents:(TransformationComponents)newComponents
+- (void) setTransformComponents:(TransformComponents)newComponents
 {
 	Matrix4 transformation = Matrix4CreateTransformation(&newComponents);
+	
 	[self setTransformationMatrix:&transformation];
 
 	[[NSNotificationCenter defaultCenter]
 			postNotificationName:LDrawDirectiveDidChangeNotification
 						  object:self];
-}
+}//end setTransformComponents:
 
 
 //========== setTransformationMatrix: ==========================================
@@ -851,13 +847,16 @@
 //				The part's rotation angles will be adjusted to multiples of the 
 //				minimum angle specified.
 //
+// Parameters:	gridSpacing	- the grid line interval along stud widths.
+//				degrees		- angle granularity. Pass 0 to leave angle 
+//							  unchanged. 
+//
 //==============================================================================
-- (TransformationComponents) componentsSnappedToGrid:(float) gridSpacing
-										minimumAngle:(float)degrees
+- (TransformComponents) componentsSnappedToGrid:(float) gridSpacing
+								   minimumAngle:(float)degrees
 {
-	
-	TransformationComponents	components		= [self transformationComponents];
-	float						rotationRadians	= radians(degrees);
+	TransformComponents	components		= [self transformComponents];
+	float				rotationRadians	= radians(degrees);
 	
 	Matrix4 transformationMatrix	= {0};
 	Matrix4 inverseMatrix			= {0};
@@ -865,7 +864,13 @@
 	Vector4 yAxisOfPart				= {0, 1, 0, 1};
 	Vector4 worldY					= {0, 0, 0, 1}; //yAxisOfPart converted to world coordinates
 	Vector3 worldY3					= {0, 0, 0};
+	float	gridSpacingYAxis		= 0.0;
+	float	gridX					= 0.0;
+	float	gridY					= 0.0;
+	float	gridZ					= 0.0;
 	
+	//---------- Adjust position to grid ---------------------------------------
+
 	//Figure out which direction the y-axis is facing in world coordinates:
 	transformationMatrix = [self transformationMatrix];
 	transformationMatrix.element[3][0] = 0; //zero out the translation part, leaving only rotation etc.
@@ -880,19 +885,20 @@
 	//Get the adjusted grid spacing along the y direction. Remember that Lego 
 	// bricks are not cubical, so the grid along the brick's y-axis should be 
 	// spaced differently from the grid along its other sides.
-	float gridSpacingYAxis = gridSpacing;
+	gridSpacingYAxis = gridSpacing;
 	
 	if(fmod(gridSpacing, 20) == 0)
 		gridSpacingYAxis *= 24.0 / 20.0;
+	
 	else if(fmod(gridSpacing, 10) == 0)
 		gridSpacingYAxis *= 8.0 / 10.0;
 		
 	//The actual grid spacing, in world coordinates. We will adjust the approrpiate 
 	// x, y, or z based on which one the part's y-axis is aligned.
-	float gridX = gridSpacing;
-	float gridY = gridSpacing;
-	float gridZ = gridSpacing;
-	
+	gridX = gridSpacing;
+	gridY = gridSpacing;
+	gridZ = gridSpacing;
+
 	//Find the direction of the part's Y-axis, and change its grid.
 	if(worldY3.x != 0)
 		gridX = gridSpacingYAxis;
@@ -905,21 +911,23 @@
 	
 	// Snap to the Grid!
 	// Figure the closest grid line and bump the part to it.
-	// Logically, this is a rounding operation with a granularity of the 
-	// grid size. So all we need to do is normalize, round, then expand 
-	// back to the original size.
+	// Logically, this is a rounding operation with a granularity of the grid 
+	// size. So all we need to do is normalize, round, then expand back to the 
+	// original size. 
 	
 	components.translate_X = roundf(components.translate_X/gridX) * gridX;
 	components.translate_Y = roundf(components.translate_Y/gridY) * gridY;
 	components.translate_Z = roundf(components.translate_Z/gridZ) * gridZ;
 	
-	//
-	// Snap angles.
-	//
+
+	//---------- Snap angles ---------------------------------------------------
 	
-	components.rotate_X = roundf(components.rotate_X/rotationRadians) * rotationRadians;
-	components.rotate_Y = roundf(components.rotate_Y/rotationRadians) * rotationRadians;
-	components.rotate_Z = roundf(components.rotate_Z/rotationRadians) * rotationRadians;
+	if(rotationRadians != 0)
+	{
+		components.rotate_X = roundf(components.rotate_X/rotationRadians) * rotationRadians;
+		components.rotate_Y = roundf(components.rotate_Y/rotationRadians) * rotationRadians;
+		components.rotate_Z = roundf(components.rotate_Z/rotationRadians) * rotationRadians;
+	}
 	
 	//round-off errors here? Potential for trouble.
 	return components;
@@ -1082,14 +1090,14 @@
 //==============================================================================
 - (void) registerUndoActions:(NSUndoManager *)undoManager
 {
-	
 	[super registerUndoActions:undoManager];
 	
-	[[undoManager prepareWithInvocationTarget:self] setTransformationComponents:[self transformationComponents]];
+	[[undoManager prepareWithInvocationTarget:self] setTransformComponents:[self transformComponents]];
 	[[undoManager prepareWithInvocationTarget:self] setDisplayName:[self displayName]];
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAttributesPart", nil)];
-}
+
+}//end registerUndoActions:
 
 
 #pragma mark -

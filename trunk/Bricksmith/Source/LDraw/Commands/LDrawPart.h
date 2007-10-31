@@ -48,16 +48,15 @@
 - (Point3) position;
 - (NSString *) referenceName;
 - (LDrawModel *) referencedMPDSubmodel;
-- (TransformationComponents) transformationComponents;
+- (TransformComponents) transformComponents;
 - (Matrix4) transformationMatrix;
 - (void) setDisplayName:(NSString *)newPartName;
-- (void) setTransformationComponents:(TransformationComponents)newComponents;
+- (void) setTransformComponents:(TransformComponents)newComponents;
 - (void) setTransformationMatrix:(Matrix4 *)newMatrix;
 
 //Actions
 - (void) collectPartReport:(PartReport *)report;
-- (TransformationComponents) componentsSnappedToGrid:(float) gridSpacing
-										minimumAngle:(float)degrees;
+- (TransformComponents) componentsSnappedToGrid:(float) gridSpacing minimumAngle:(float)degrees;
 - (void) rotateByDegrees:(Tuple3)degreesToRotate;
 - (void) rotateByDegrees:(Tuple3)degreesToRotate centerPoint:(Point3)center;
 

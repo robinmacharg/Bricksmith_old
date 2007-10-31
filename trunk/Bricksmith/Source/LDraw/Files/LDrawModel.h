@@ -18,8 +18,14 @@ typedef enum {
 	LDrawUnofficialModel = 2
 } LDrawDotOrgModelStatusT;
 
-@interface LDrawModel : LDrawContainer <NSCoding> {
-	
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// class LDrawModel
+//
+////////////////////////////////////////////////////////////////////////////////
+@interface LDrawModel : LDrawContainer <NSCoding>
+{	
 	NSString				*modelDescription;
 	NSString				*fileName;
 	NSString				*author;
@@ -30,6 +36,9 @@ typedef enum {
 	int						 currentStepDisplayed; //display up to and including this step index
 	
 	//steps are stored in the superclass.
+	
+	// Drag and Drop
+	NSArray					*draggingDirectives;
 }
 
 //Initialization
@@ -40,6 +49,7 @@ typedef enum {
 
 //Accessors
 - (NSString *) category;
+- (NSArray *) draggingDirectives;
 - (LDrawFile *)enclosingFile;
 - (NSString *)modelDescription;
 - (NSString *)fileName;
@@ -50,6 +60,7 @@ typedef enum {
 - (NSArray *) steps;
 - (LDrawStep *) visibleStep;
 
+- (void) setDraggingDirectives:(NSArray *)directives;
 - (void) setModelDescription:(NSString *)newDescription;
 - (void) setFileName:(NSString *)newName;
 - (void) setAuthor:(NSString *)newAuthor;

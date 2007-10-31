@@ -651,6 +651,62 @@
 			settings = {
 			};
 		};
+		0B6D733F0C1DE01900B9CF40 = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = PartBrowserTableView.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B6D73400C1DE01900B9CF40 = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.objc;
+			path = PartBrowserTableView.m;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B6D73410C1DE01900B9CF40 = {
+			fileRef = 0B6D733F0C1DE01900B9CF40;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B6D73420C1DE01900B9CF40 = {
+			fileRef = 0B6D73400C1DE01900B9CF40;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B6D73CA0C1E5A8700B9CF40 = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = BezierPathCategory.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B6D73CB0C1E5A8700B9CF40 = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.objc;
+			path = BezierPathCategory.m;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0B6D73CC0C1E5A8700B9CF40 = {
+			fileRef = 0B6D73CA0C1E5A8700B9CF40;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B6D73CD0C1E5A8700B9CF40 = {
+			fileRef = 0B6D73CB0C1E5A8700B9CF40;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		0B6F383B07C81F6D007B1075 = {
 			children = (
 				0B6771A8081764E60044A0E0,
@@ -767,6 +823,8 @@
 		};
 		0B6F38FD07C84E79007B1075 = {
 			children = (
+				0B6D73CA0C1E5A8700B9CF40,
+				0B6D73CB0C1E5A8700B9CF40,
 				0B8EBE96093C102E00D87E0C,
 				0B8EBE97093C102E00D87E0C,
 				0B8EBE98093C102E00D87E0C,
@@ -988,9 +1046,10 @@
 				0B8EBE50093C0FAD00D87E0C,
 			);
 			isa = PBXGroup;
-			path = Inspector;
-			refType = 4;
-			sourceTree = "<group>";
+			name = Inspector;
+			path = Source/Application/Inspector;
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
 		};
 		0B6F48EA07D1882F007B1075 = {
 			fileEncoding = 4;
@@ -1040,6 +1099,8 @@
 				0B8EBE7A093C100100D87E0C,
 				0B8EBE7B093C100100D87E0C,
 				0B8EBE7C093C100100D87E0C,
+				0B6D733F0C1DE01900B9CF40,
+				0B6D73400C1DE01900B9CF40,
 			);
 			isa = PBXGroup;
 			name = Widgets;
@@ -3010,6 +3071,8 @@
 				0B3B89810AA23A16007EFE29,
 				0B3B8AAF0AA2A350007EFE29,
 				0B55F46A0B9903DC00DF88A4,
+				0B6D73410C1DE01900B9CF40,
+				0B6D73CC0C1E5A8700B9CF40,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3698,7 +3761,7 @@
 			buildRules = (
 			);
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = /Users/allensmith/Programs/AMSProgressBar/build;
+				FRAMEWORK_SEARCH_PATHS = ../AMSProgressBar/build;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -3861,6 +3924,8 @@
 				0B3B89820AA23A16007EFE29,
 				0B3B8AB00AA2A350007EFE29,
 				0B55F46B0B9903DC00DF88A4,
+				0B6D73420C1DE01900B9CF40,
+				0B6D73CD0C1E5A8700B9CF40,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

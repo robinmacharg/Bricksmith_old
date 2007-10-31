@@ -262,6 +262,8 @@
 {
 	NSOpenGLPixelFormatAttribute	pixelAttributes[]	= { NSOpenGLPFADoubleBuffer,
 															NSOpenGLPFADepthSize, 32,
+															NSOpenGLPFASampleBuffers, 1,
+															NSOpenGLPFASamples, 2,
 															nil};
 	NSOpenGLPixelFormat				*pixelFormat		= nil;
 	

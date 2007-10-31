@@ -109,7 +109,8 @@
                 searchField = NSSearchField; 
             }; 
             SUPERCLASS = NSObject; 
-        }
+        }, 
+        {CLASS = PartBrowserTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }
     ); 
     IBVersion = 1; 
 }

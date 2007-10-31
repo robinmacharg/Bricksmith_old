@@ -40,6 +40,7 @@
 #import "LDrawDocument.h"
 #import "LDrawFile.h"
 #import "LDrawModel.h"
+#import "LDrawPart.h"
 #import "LDrawStep.h"
 #import "MacLDraw.h"
 #import "UserDefaultsCategory.h"
@@ -61,7 +62,8 @@
 	NSRect	visibleRect	= [self visibleRect];
 	NSRect	frame		= [self frame];
 	
-	if([superview isKindOfClass:[NSClipView class]]){
+	if([superview isKindOfClass:[NSClipView class]])
+	{
 		//Center the view inside its scrollers.
 		[self scrollCenterToPoint:NSMakePoint( NSWidth(frame)/2, NSHeight(frame)/2 )];
 		[superview setCopiesOnScroll:NO];
@@ -80,6 +82,11 @@
 							   name:LDrawViewBackgroundColorDidChangeNotification
 							 object:nil ];
 	
+	// Drag and Drop support. We only accept drags if we have a document to add 
+	// them to. 
+	if(self->document != nil)
+		[self registerForDraggedTypes:[NSArray arrayWithObject:LDrawDraggingPboardType]];
+	
 	//Machinery needed to draw Quartz overtop OpenGL. Sadly, it caused our view 
 	// to become transparent when minimizing to the dock. In the end, I didn't 
 	// need it anyway.
@@ -95,7 +102,8 @@
 ////		[[self superview] setDrawsBackground:NO];
 ////		[scrollView setDrawsBackground:NO];
 //	}
-}
+	
+}//end awakeFromNib
 
 #pragma mark -
 #pragma mark INITIALIZATION
@@ -106,11 +114,13 @@
 // Purpose:		Set up the beatiful OpenGL view.
 //
 //==============================================================================
-- (id) initWithCoder: (NSCoder *) coder{
-	
+- (id) initWithCoder: (NSCoder *) coder
+{	
 	NSOpenGLPixelFormatAttribute	pixelAttributes[]	= { NSOpenGLPFADoubleBuffer,
 															NSOpenGLPFADepthSize, 32,
-															nil};
+															NSOpenGLPFASampleBuffers, 1,
+															NSOpenGLPFASamples, 2,
+															0};
 	NSOpenGLContext					*context			= nil;
 	NSOpenGLPixelFormat				*pixelFormat		= nil;
 	long							swapInterval		= 15;
@@ -146,7 +156,8 @@
 	[pixelFormat release];
 	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== prepareOpenGL =====================================================
@@ -160,8 +171,7 @@
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	glEnable(GL_LINE_SMOOTH); //makes lines transparent! Bad!
-//	glEnable(GL_POLYGON_SMOOTH); //what's the difference?
+	glEnable(GL_MULTISAMPLE); //antialiasing
 	glLineWidth(1);
 	
 	[self takeBackgroundColorFromUserDefaults]; //glClearColor()
@@ -1160,47 +1170,19 @@
 		if([characters length] > 0)
 		{
 			unichar firstCharacter	= [characters characterAtIndex:0]; //the key pressed
-			
-			Vector4 xVector = {1,0,0,1};
-			Vector4 yVector = {0,1,0,1};
-			Vector4 xModel, yModel; //the vectors in the model which are projected onto x,y on screen
 			Vector3 xNudge, yNudge, zNudge; //the closest model axes to which the screen's x,y,z align
 			Vector3 actualNudge	= {0,0,0}; //the final nudge vector for the key pressed
 			
-			//Translate the x, y, and z vectors on the surface of the screen 
-			// into the axes to which they most closely align in the model 
-			// itself.
-			//This requires the inverse of the current transformation matrix, so 
-			// we can convert projection-coordinates back to the model 
-			// coordinates they are displaying.
-			Matrix4 inversed = [self getInverseMatrix];
-			
-			//find the vectors in the model which project onto the screen's axes
-			// (We only care about x and y because this is a two-dimensional 
-			// projection, and the third axis is consquently ambiguous. See below.) 
-			V4MulPointByMatrix(&xVector, &inversed, &xModel);
-			V4MulPointByMatrix(&yVector, &inversed, &yModel);
-			
-			//find the actual axes closest to those model vectors
-			xNudge	= V3FromV4(&xModel);
-			yNudge	= V3FromV4(&yModel);
-			V3IsolateGreatestComponent(&xNudge);
-			V3IsolateGreatestComponent(&yNudge);
-			V3Normalize(&xNudge);
-			V3Normalize(&yNudge);
-			
-			//the z-axis is often ambiguous because we are working backwards 
-			// from a two-dimensional screen. Thankfully, while the process used 
-			// for deriving the x and y vectors is perhaps somewhat arbitrary, 
-			// it always yields sensible and unique results. Thus we can simply 
-			// derive the z-vector, which will be whatever axis x and y 
-			// *didn't* land on.
-			V3Cross(&xNudge, &yNudge, &zNudge);
-			
-			//By holding down the option key, we transcend the two-plane limitation 
-			// presented by the arrow keys. Option-presses mean movement along the 
-			// z-axis. Note that move "in" to the screen (up arrow, left arrow?) 
-			// is a movement along the screen's negative z-axis.
+			// find which model-coordinate directions our screen axes lie.
+			[self getModelAxesForViewX:&xNudge
+									 Y:&yNudge
+									 Z:&zNudge ];
+				
+			// By holding down the option key, we transcend the two-plane 
+			// limitation presented by the arrow keys. Option-presses mean 
+			// movement along the z-axis. Note that move "in" to the screen (up 
+			// arrow, left arrow?) is a movement along the screen's negative 
+			// z-axis. 
 			BOOL	isZMovement		= ([theEvent modifierFlags] & NSAlternateKeyMask) != 0;
 			BOOL	isNudge			= NO;
 			
@@ -1566,8 +1548,275 @@
 		
 	[self setZoomPercentage:newZoom];
 	[self scrollCenterToPoint:newCenter];
+	
 }//end mouseZoomClick:
 
+
+#pragma mark -
+#pragma mark DRAG AND DROP
+#pragma mark -
+
+//========== draggingEntered: ==================================================
+//
+// Purpose:		A drag-and-drop part operation entered this view. We need to 
+//			    initiate interactive dragging. 
+//
+//==============================================================================
+- (NSDragOperation) draggingEntered:(id <NSDraggingInfo>)info
+{
+	NSPasteboard		*pasteboard			= [info draggingPasteboard];
+	id					 sourceView			= [info draggingSource];
+	NSDragOperation		 dragOperation		= NSDragOperationNone;
+	NSArray				*archivedDirectives	= nil;
+	NSMutableArray		*directives			= nil;
+	NSData				*data				= nil;
+	id					currentObject		= nil;
+	int					directiveCount		= 0;
+	int					counter				= 0;
+	NSPoint				dragPointInWindow	= NSZeroPoint;
+	NSPoint				dragPointInView		= NSZeroPoint;
+	Matrix4				inverseMatrix		= [self getInverseMatrix];
+	Point4				dragPoint4;
+	Point4				entryPointInModel;
+	TransformComponents	partTransform		= IdentityComponents;
+	Point3				modelReferencePoint	= ZeroPoint3;
+	Point3				modelPoint			= ZeroPoint3;
+	
+	// local drag?
+	if(sourceView == self)
+		dragOperation = NSDragOperationMove;
+	else
+		dragOperation = NSDragOperationCopy;
+	
+	
+	//---------- unarchive the directives --------------------------------------
+	
+	archivedDirectives	= [pasteboard propertyListForType:LDrawDraggingPboardType];
+	directiveCount		= [archivedDirectives count];
+	directives			= [NSMutableArray arrayWithCapacity:directiveCount];
+	
+	for(counter = 0; counter < directiveCount; counter++)
+	{
+		data			= [archivedDirectives objectAtIndex:counter];
+		currentObject	= [NSKeyedUnarchiver unarchiveObjectWithData:data];
+		
+		[currentObject setSelected:YES];
+		
+		[directives addObject:currentObject];
+	}
+
+//	NSLog(@"entered dragging %@", directives);
+	
+	
+	//---------- Find Location -------------------------------------------------
+	
+	// Where are we?
+	dragPointInWindow	= [info draggingLocation];
+	dragPointInView		= [self convertPoint:dragPointInWindow fromView:nil];
+	
+	// ask the document roughly where it wants us to be
+	if([self->document respondsToSelector:@selector(LDrawGLViewPreferredPartTransform:)])
+		partTransform = [self->document LDrawGLViewPreferredPartTransform:self];
+	
+	// and adjust.
+	modelReferencePoint	= V3Make(partTransform.translate_X, partTransform.translate_Y, partTransform.translate_Z);
+	modelPoint	= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
+	
+	partTransform.translate_X	= modelPoint.x;
+	partTransform.translate_Y	= modelPoint.y;
+	partTransform.translate_Z	= modelPoint.z;
+	
+//	NSLog(@"%@ -> %f %f %f", NSStringFromPoint(dragPointInView), modelPoint.x, modelPoint.y, modelPoint.z);
+//	NSLog(@"field depth = %f", MAX(NSHeight([self frame]), NSWidth([self frame])));
+	
+	//Determine granularity of grid.
+	NSUserDefaults *userDefaults	= [NSUserDefaults standardUserDefaults];
+	float			gridSpacing		= 0.0;
+	switch([self->document gridSpacingMode])
+	{
+		case gridModeFine:
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_FINE];
+			break;
+			
+		case gridModeMedium:
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
+			break;
+			
+		case gridModeCoarse:
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_COARSE];
+			break;
+	}
+	
+	// At the moment, I'm just going to try and get this working with one part 
+	// before extending it to multiple parts. 
+	[[directives objectAtIndex:0] setTransformComponents:partTransform];
+	partTransform = [[directives objectAtIndex:0] componentsSnappedToGrid:gridSpacing
+															 minimumAngle:0];
+	[[directives objectAtIndex:0] setTransformComponents:partTransform];
+	
+	if([self->fileBeingDrawn respondsToSelector:@selector(setDraggingDirectives:)])
+	{
+		[(id)self->fileBeingDrawn setDraggingDirectives:directives];
+		[self setNeedsDisplay:YES];
+	}
+	
+	return dragOperation;
+	
+}//end draggingEntered:
+
+
+//========== draggingUpdated: ==================================================
+//
+// Purpose:		As the mouse moves around the screen, we need to update the 
+//			    location of the parts being drug. 
+//
+//==============================================================================
+- (NSDragOperation) draggingUpdated:(id <NSDraggingInfo>)info
+{
+	NSArray				*directives				= nil;
+	LDrawPart			*firstDirective			= nil;
+	NSPasteboard		*pasteboard				= [info draggingPasteboard];
+	id					 sourceView				= [info draggingSource];
+	NSPoint				 dragPointInWindow		= NSZeroPoint;
+	NSPoint				 dragPointInView		= NSZeroPoint;
+	TransformComponents	 partTransform			= IdentityComponents;
+	TransformComponents	 newPartTransform		= IdentityComponents;
+	Point3				 modelReferencePoint	= ZeroPoint3;
+	Point3				 modelPoint				= ZeroPoint3;
+	Point3				 oldPosition			= ZeroPoint3;
+	Point3				 newPosition			= ZeroPoint3;
+	Vector3				 displacement			= ZeroPoint3;
+	int					 counter				= 0;
+	NSDragOperation		 dragOperation			= NSDragOperationNone;
+	
+	// local drag?
+	if(sourceView == self)
+		dragOperation = NSDragOperationMove;
+	else
+		dragOperation = NSDragOperationCopy;
+	
+	if([self->fileBeingDrawn respondsToSelector:@selector(draggingDirectives)])
+	{
+		directives		= [(id)self->fileBeingDrawn draggingDirectives];
+		firstDirective	= [directives objectAtIndex:0];
+		
+		
+		//---------- Find Location -------------------------------------------------
+		
+		// Where are we?
+		dragPointInWindow	= [info draggingLocation];
+		dragPointInView		= [self convertPoint:dragPointInWindow fromView:nil];
+		
+		partTransform		= [firstDirective transformComponents];
+		
+		// and adjust.
+		modelReferencePoint	= [firstDirective position];
+		modelPoint			= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
+		
+		partTransform.translate_X	= modelPoint.x;
+		partTransform.translate_Y	= modelPoint.y;
+		partTransform.translate_Z	= modelPoint.z;
+		
+		//Determine granularity of grid.
+		NSUserDefaults *userDefaults	= [NSUserDefaults standardUserDefaults];
+		float			gridSpacing		= 0.0;
+		switch([self->document gridSpacingMode])
+		{
+			case gridModeFine:
+				gridSpacing		= [userDefaults floatForKey:GRID_SPACING_FINE];
+				break;
+				
+			case gridModeMedium:
+				gridSpacing		= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
+				break;
+				
+			case gridModeCoarse:
+				gridSpacing		= [userDefaults floatForKey:GRID_SPACING_COARSE];
+				break;
+		}
+		
+		
+		//---------- Update the parts' positions  ------------------------------
+		// At the moment, I'm just going to try and get this working with one part 
+		// before extending it to multiple parts. 
+		
+		[[directives objectAtIndex:0] setTransformComponents:partTransform];
+		newPartTransform = [[directives objectAtIndex:0] componentsSnappedToGrid:gridSpacing
+																	minimumAngle:0];
+		
+		// How much did the first part move?
+		oldPosition		= V3Make(partTransform.translate_X, partTransform.translate_Y, partTransform.translate_Z);
+		newPosition		= V3Make(newPartTransform.translate_X, newPartTransform.translate_Y, newPartTransform.translate_Z);
+		
+		V3Sub(&newPosition, &oldPosition, &displacement);
+		
+		// Move all the parts by that amount.
+		for(counter = 0; counter < [directives count]; counter++)
+		{
+			[[directives objectAtIndex:counter] moveBy:displacement];
+		}
+		
+		[self setNeedsDisplay:YES];
+	}
+	
+	return dragOperation;
+	
+}//end draggingUpdated:
+
+
+//========== draggingExited: ===================================================
+//
+// Purpose:		The drag has left the building.
+//
+//==============================================================================
+- (void)draggingExited:(id <NSDraggingInfo>)sender
+{
+	[self concludeDragOperation:sender];
+
+}//end draggingExited:
+
+
+//========== performDragOperation: =============================================
+//
+// Purpose:		Okay, we're done. It's time to import the directives which are 
+//			    on the dragging pasteboard into the model itself. 
+//
+// Notes:		Fortunately, we have already unpacked all the directives when 
+//			    dragging first entered the view, so all we need to do is move 
+//			    those directives from the file's drag list and dump them in the 
+//			    main model. 
+//
+//==============================================================================
+- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
+{
+	NSArray *directives = nil;
+	
+	if([self->fileBeingDrawn respondsToSelector:@selector(draggingDirectives)])
+	{
+		directives = [(id)self->fileBeingDrawn draggingDirectives];
+		
+		if([self->document respondsToSelector:@selector(LDrawGLView:acceptDrop:)])
+		   [self->document LDrawGLView:self acceptDrop:directives];
+	}
+	return YES;
+	
+}//end performDragOperation:
+
+
+//========== concludeDragOperation: ============================================
+//
+// Purpose:		The drag is accepted, imported, and over with. Clean up the 
+//			    display to remove the dragging directives from the display.
+//
+//==============================================================================
+- (void)concludeDragOperation:(id <NSDraggingInfo>)sender
+{
+	if([self->fileBeingDrawn respondsToSelector:@selector(setDraggingDirectives:)])
+	{
+		[(id)self->fileBeingDrawn setDraggingDirectives:nil];
+		[self setNeedsDisplay:YES];
+	}
+}//end concludeDragOperation:
 
 #pragma mark -
 #pragma mark MENUS
@@ -2149,8 +2398,8 @@
 //				autosave name has been specified.
 //
 //==============================================================================
-- (void) saveConfiguration {
-
+- (void) saveConfiguration
+{
 	if(self->autosaveName != nil){
 		
 		NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
@@ -2223,6 +2472,211 @@
 	[self setNeedsDisplay:YES];
 	
 }//end takeBackgroundColorFromUserDefaults
+
+
+#pragma mark -
+#pragma mark Geometry
+
+//========== getModelAxesForViewX:Y:Z: =========================================
+//
+// Purpose:		Finds the axes in the model coordinate system which most closely 
+//			    project onto the X, Y, Z axes of the view. 
+//
+// Notes:		The screen coordinate system is right-handed:
+//
+//					 +y
+//					|
+//					|
+//					*-- +x
+//				   /
+//				  +z
+//
+//				The choice between what is the "closest" axis in the model is 
+//			    often arbitrary, but it will always be a unique and 
+//			    sensible-looking choice. 
+//
+//==============================================================================
+- (void) getModelAxesForViewX:(Vector3 *)outModelX
+							Y:(Vector3 *)outModelY
+							Z:(Vector3 *)outModelZ
+{
+	Vector4 screenX = {1,0,0,1};
+	Vector4 screenY = {0,1,0,1};
+	Vector4 unprojectedX, unprojectedY; //the vectors in the model which are projected onto x,y on screen
+	Vector3 modelX, modelY, modelZ; //the closest model axes to which the screen's x,y,z align
+	Vector3 actualNudge	= {0,0,0}; //the final nudge vector for the key pressed
+	
+	// Translate the x, y, and z vectors on the surface of the screen into the 
+	// axes to which they most closely align in the model itself. 
+	// This requires the inverse of the current transformation matrix, so we can 
+	// convert projection-coordinates back to the model coordinates they are 
+	// displaying. 
+	Matrix4 inversed = [self getInverseMatrix];
+	
+	//find the vectors in the model which project onto the screen's axes
+	// (We only care about x and y because this is a two-dimensional 
+	// projection, and the third axis is consquently ambiguous. See below.) 
+	V4MulPointByMatrix(&screenX, &inversed, &unprojectedX);
+	V4MulPointByMatrix(&screenY, &inversed, &unprojectedY);
+	
+	//find the actual axes closest to those model vectors
+	modelX	= V3FromV4(&unprojectedX);
+	modelY	= V3FromV4(&unprojectedY);
+	V3IsolateGreatestComponent(&modelX);
+	V3IsolateGreatestComponent(&modelY);
+	V3Normalize(&modelX);
+	V3Normalize(&modelY);
+	
+	// The z-axis is often ambiguous because we are working backwards from a 
+	// two-dimensional screen. Thankfully, while the process used for deriving 
+	// the x and y vectors is perhaps somewhat arbitrary, it always yields 
+	// sensible and unique results. Thus we can simply derive the z-vector, 
+	// which will be whatever axis x and y *didn't* land on. 
+	V3Cross(&modelX, &modelY, &modelZ);
+	
+	if(outModelX != NULL)
+		*outModelX = modelX;
+	if(outModelY != NULL)
+		*outModelY = modelY;
+	if(outModelZ != NULL)
+		*outModelZ = modelZ;
+	
+}//end getModelAxesForViewX:Y:Z:
+
+
+//========== modelPointForPoint:depthReferencePoint: ===========================
+//
+// Purpose:		Unprojects the given point (in view coordinates) back into a 
+//			    point in the model which projects there. 
+//
+// Notes:		Any point on the screen represents the projected location of an 
+//			    infinite number of model points, extending on a line from the 
+//			    near to the far clipping plane. 
+//
+//				It's impossible to boil that down to a single point without 
+//			    being given some known point in the model to determine the 
+//			    desired depth. (Hence the depthPoint parameter.) The returned 
+//			    point will lie on a plane which contains depthPoint and is 
+//			    perpendicular to the model axis most closely aligned to the 
+//			    computer screen's z-axis. 
+//
+//										* * * *
+//
+//				When viewing the model with an orthogonal projection the the 
+//			    camera pointing parallel to one of the model's coordinate axes, 
+//				this method is useful for determining two of the three 
+//			    coordinates over which the mouse is hovering. To find which 
+//			    coordinate is bogus, call -getModelAxesForViewX:Y:Z:. The 
+//			    returned z-axis indicates the unreliable point. 
+//
+//==============================================================================
+- (Point3) modelPointForPoint:(NSPoint)viewPoint
+		  depthReferencePoint:(Point3)depthPoint
+{
+	GLdouble	modelViewGLMatrix	[16];
+	GLdouble	projectionGLMatrix	[16];
+	GLint		viewport			[4];
+	GLdouble	glNearModelPoint	[3];
+	GLdouble	glFarModelPoint		[3];
+	Point3		modelPoint				= ZeroPoint3;
+	float		scaleFactor				= [self zoomPercentage] * 100;
+	NSRect		contextRectInWindow		= [self convertRect:[self visibleRect] toView:nil];
+	NSPoint		windowPoint				= [self convertPoint:viewPoint toView:nil];
+	NSPoint		contextPoint			= NSZeroPoint;
+	Vector3		modelZ;
+	float		t						= 0; //parametric variable
+	
+	// To map the 2D view point back into a 3D model coordinate, we'll use the 
+	// gluUnProject convenience function. It takes values in "window 
+	// coordinates," which are really coordinates relative to the OpenGL 
+	// context's drawing area. The context is always as big as the visible area 
+	// of the NSOpenGLView, and is basically splattered up on the window. So the 
+	// easiest way to get coordinates is to express both the view point and 
+	// context area in window coordinates. That frees us from worrying about 
+	// view scaling. 
+	
+	// need to get viewPoint in terms of the viewport!
+	contextPoint.x = windowPoint.x - NSMinX(contextRectInWindow);
+	contextPoint.y = windowPoint.y - NSMinY(contextRectInWindow);
+	
+	glGetDoublev(GL_PROJECTION_MATRIX, projectionGLMatrix);
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelViewGLMatrix);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	
+	// gluUnProject takes a window "z" coordinate. These values range from 0.0 
+	// (on the near clipping plane) to 1.0 (the far clipping plane). 
+	
+	// - Near clipping plane unprojection
+	gluUnProject( contextPoint.x,
+				  contextPoint.y,
+				  0.0, //z
+				  modelViewGLMatrix,
+				  projectionGLMatrix,
+				  viewport,
+				  &glNearModelPoint[0],
+				  &glNearModelPoint[1],
+				  &glNearModelPoint[2] );
+	
+	// - Far clipping plane unprojection
+	gluUnProject( contextPoint.x,
+				  contextPoint.y,
+				  1.0, //z
+				  modelViewGLMatrix,
+				  projectionGLMatrix,
+				  viewport,
+				  &glFarModelPoint[0],
+				  &glFarModelPoint[1],
+				  &glFarModelPoint[2] );
+	
+	//---------- Derive the actual point from the depth point ------------------
+	//
+	// We now have two accurate unprojected coordinates: the near (P1) and far 
+	// (P2) points of the line through 3-D space which projects onto the single 
+	// screen point. 
+	//
+	// The parametric equation for a line given two points is:
+	//
+	//		 /      \
+	//	 L = | 1 - t | P  + t P        (see? at t=0, L = P1 and at t=1, L = P2.
+	//		 \      /   1      2
+	//
+	// So for example,	z = (1-t)*z1 + t*z2
+	//					z = z1 - t*z1 + t*z2
+	//
+	//								/       \
+	//					 z = z  - t | z - z  |
+	//						  1     \  1   2/
+	//
+	//
+	//						  z  - z
+	//						   1			No need to worry about dividing by 0
+	//					 t = ---------		because the axis we are inspecting 
+	//						  z  - z		will never be perpendicular to the 
+	//						   1    2		screen.
+
+	// Which axis are we going to use from the reference point?
+	[self getModelAxesForViewX:NULL Y:NULL Z:&modelZ];
+	
+	// Find the value of the parameter at the depth point.
+	if(modelZ.x != 0)
+		t = (glNearModelPoint[0] - depthPoint.x) / (glNearModelPoint[0] - glFarModelPoint[0]);
+	
+	else if(modelZ.y != 0)
+		t = (glNearModelPoint[1] - depthPoint.y) / (glNearModelPoint[1] - glFarModelPoint[1]);
+	
+	else if(modelZ.z != 0)
+		t = (glNearModelPoint[2] - depthPoint.z) / (glNearModelPoint[2] - glFarModelPoint[2]);
+	
+	// Evaluate the equation of the near-to-far line at the parameter for the 
+	// depth point. 
+	modelPoint.x = LERP(t, glNearModelPoint[0], glFarModelPoint[0]);
+	modelPoint.y = LERP(t, glNearModelPoint[1], glFarModelPoint[1]);
+	modelPoint.z = LERP(t, glNearModelPoint[2], glFarModelPoint[2]);
+
+	return modelPoint;
+	
+}//end modelPointForPoint:depthReferencePoint:
+
 
 #pragma mark -
 #pragma mark DESTRUCTOR

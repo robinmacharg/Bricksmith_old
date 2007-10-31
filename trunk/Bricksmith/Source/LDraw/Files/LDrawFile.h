@@ -11,10 +11,18 @@
 
 #import "LDrawDirective.h"
 #import "LDrawContainer.h"
+
+// forward declarations
 @class LDrawMPDModel;
 
 
-@interface LDrawFile : LDrawContainer {
+////////////////////////////////////////////////////////////////////////////////
+//
+// class LDrawFile
+//
+////////////////////////////////////////////////////////////////////////////////
+@interface LDrawFile : LDrawContainer
+{
 	LDrawMPDModel		*activeModel;
 	NSString			*filePath;			//where this file came from on disk.
 	unsigned			 drawCount;			//number of threads currently drawing us
@@ -33,13 +41,16 @@
 - (void) unlockEditor;
 
 //Accessors
+- (LDrawMPDModel *) activeModel;
 - (void) addSubmodel:(LDrawMPDModel *)newSubmodel;
+- (NSArray *) draggingDirectives;
 - (NSArray *) modelNames;
 - (LDrawMPDModel *) modelWithName:(NSString *)soughtName;
 - (NSString *)path;
 - (NSArray *) submodels;
-- (LDrawMPDModel *) activeModel;
+
 - (void) setActiveModel:(LDrawMPDModel *)newModel;
+- (void) setDraggingDirectives:(NSArray *)directives;
 - (void) setPath:(NSString *)newPath;
 
 //Utilities

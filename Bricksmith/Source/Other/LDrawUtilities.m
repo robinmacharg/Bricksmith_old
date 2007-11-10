@@ -39,16 +39,19 @@
 //				could do bounds testing on ad-hoc collections of directives.
 //
 //==============================================================================
-+ (Box3) boundingBox3ForDirectives:(NSArray *)directives {
++ (Box3) boundingBox3ForDirectives:(NSArray *)directives
+{
 	Box3	bounds				= InvalidBox;
-	Box3	partBounds			= {0};
+	Box3	partBounds			= InvalidBox;
 	id		currentDirective	= nil;
 	int		numberOfDirectives	= [directives count];
 	int		counter				= 0;
 	
-	for(counter = 0; counter < numberOfDirectives; counter++){
+	for(counter = 0; counter < numberOfDirectives; counter++)
+	{
 		currentDirective = [directives objectAtIndex:counter];
-		if([currentDirective respondsToSelector:@selector(boundingBox3)]) {
+		if([currentDirective respondsToSelector:@selector(boundingBox3)])
+		{
 			partBounds = [currentDirective boundingBox3];
 			
 			bounds.min.x = MIN(bounds.min.x, partBounds.min.x);
@@ -195,7 +198,6 @@
 + (void) updateNameForMovedPart:(LDrawPart *)movedPart
 {
 	NSString	*description	= [[LDrawApplication sharedPartLibrary] descriptionForPart:movedPart];
-	NSScanner	*nameScanner	= [NSScanner scannerWithString:description];
 	NSString	*newName		= nil;
 	
 	if([description hasPrefix:LDRAW_MOVED_DESCRIPTION_PREFIX])

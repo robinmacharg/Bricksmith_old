@@ -72,6 +72,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 //Accessors
 - (LDrawFile *) documentContents;
 - (NSWindow *)foremostWindow;
+- (float) gridSpacing;
 - (gridSpacingModeT) gridSpacingMode;
 - (NSDrawer *) partBrowserDrawer;
 - (void) setDocumentContents:(LDrawFile *)newContents;

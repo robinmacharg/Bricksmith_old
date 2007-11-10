@@ -403,9 +403,9 @@
 //				a folder for us if the one we have defined doesn't pan out.
 //
 //==============================================================================
-- (NSString *) findLDrawPath {
+- (NSString *) findLDrawPath
+{
 	NSUserDefaults	*userDefaults		= [NSUserDefaults standardUserDefaults];
-	NSFileManager	*fileManager		= [NSFileManager defaultManager];
 	int				 counter			= 0;
 	BOOL			 foundAPath			= NO;
 	
@@ -418,7 +418,6 @@
 	//Try User Defaults first; maybe we've already saved one.
 	NSString		*preferencePath		= [userDefaults stringForKey:LDRAW_PATH_KEY];
 	NSString		*ldrawPath			= preferencePath;
-	BOOL			 prefsPathValid		= NO;
 	
 	if(preferencePath == nil)
 		preferencePath = @""; //we're going to add this to an array. Can't have a nil object.
@@ -435,16 +434,19 @@
 														library,
 														userLibrary,
 														nil ];
-	for(counter = 0; counter < [potentialPaths count] && foundAPath == NO; counter++){
+	for(counter = 0; counter < [potentialPaths count] && foundAPath == NO; counter++)
+	{
 		ldrawPath = [potentialPaths objectAtIndex:counter];
 		foundAPath = [partLibrary validateLDrawFolder:ldrawPath];
 	}
 
 	//We found one.
-	if(foundAPath == YES){
+	if(foundAPath == YES)
+	{
 		[userDefaults setObject:ldrawPath forKey:LDRAW_PATH_KEY];
 	}
-	else{ //never mind.
+	else
+	{	//never mind.
 		//If they *thought* they had a selection then display a message 
 		// telling them their selection is no good.
 		if([preferencePath length] >= 0)

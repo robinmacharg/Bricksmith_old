@@ -103,14 +103,13 @@
 //==============================================================================
 - (id)initWithCoder:(NSCoder *)decoder
 {
-	const uint8_t *temporary = NULL; //pointer to a temporary buffer returned by the decoder.
-	
 	self = [super initWithCoder:decoder];
 	
 	commandString	= [[decoder decodeObjectForKey:@"commandString"] retain];
 	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== encodeWithCoder: ==================================================

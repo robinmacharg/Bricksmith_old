@@ -490,8 +490,7 @@
 	GLuint				 displayListTag	= 0;
 	NSString			*referenceName	= [part referenceName];
 	LDrawColorT			 color			= [part LDrawColor];
-	NSMutableDictionary	*partRecord	= nil;
-	NSString			*keyPath		= nil;
+	NSMutableDictionary	*partRecord		= nil;
 	NSNumber			*listTag		= nil;
 	
 	if([referenceName length] > 0)
@@ -577,7 +576,6 @@
 			progressPanel:(AMSProgressPanel	*)progressPanel
 {
 	NSFileManager		*fileManager		= [NSFileManager defaultManager];
-	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
 // Not working for some reason. Why?
 //	NSArray				*readableFileTypes = [NSDocument readableTypes];
 //	NSLog(@"readable types: %@", readableFileTypes);
@@ -588,14 +586,11 @@
 	int					 counter;
 	
 	NSString			*currentPath		= nil;
-	NSString			*fileContents		= nil;
 	NSString			*category			= nil;
 	NSString			*partName			= nil;
 	NSString			*partNumber			= nil;
-	NSData				*archivedModel		= nil;
 	
 	NSMutableDictionary	*categoryRecord		= nil;
-	NSMutableDictionary *partListRecord		= nil;
 	
 	//Get the subreference tables out of the main catalog (the should already exist!).
 	NSMutableDictionary *partNumberList		= [catalog objectForKey:PARTS_LIST_KEY]; //lookup parts by number

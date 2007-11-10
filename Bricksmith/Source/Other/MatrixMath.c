@@ -12,13 +12,8 @@
 //Box which represents no bounds. It is defined in such a way that it can 
 // be used transparently in size comparisons -- its minimum is inifinity,
 // so any valid point will be smaller than that!
-const Box3 InvalidBox = {	INFINITY,
-							INFINITY,
-							INFINITY,
-							
-							-INFINITY,
-							-INFINITY,
-							-INFINITY   };
+const Box3 InvalidBox = {	{ INFINITY,  INFINITY,  INFINITY},
+							{-INFINITY, -INFINITY, -INFINITY}   };
 							
 const TransformComponents IdentityComponents = {
 							1, //scale_X;
@@ -38,6 +33,11 @@ const TransformComponents IdentityComponents = {
 							0, //perspective_Z;
 							0, //perspective_W;
 						};
+
+const Matrix4 IdentityMatrix4 = {{	{1, 0, 0, 0},
+									{0, 1, 0, 0},
+									{0, 0, 1, 0},
+									{0, 0, 0, 1} }};
 
 const Point3 ZeroPoint3 = {0.0, 0.0, 0.0};
 
@@ -174,12 +174,24 @@ Vector3 *V3Add(Vector3 *a, Vector3 *b, Vector3 *c)
 	return(c);
 }
 
-/* return vector difference c = a-b */
-Vector3 *V3Sub(Vector3 *a, Vector3 *b, Vector3 *c)
+
+//========== V3Sub =============================================================
+//
+// Purpose:		return vector difference c = a-b
+//
+//==============================================================================
+Vector3 V3Sub(Vector3 a, Vector3 b)
 {
-	c->x = a->x-b->x;  c->y = a->y-b->y;  c->z = a->z-b->z;
-	return(c);
-}
+	Vector3 result;
+
+	result.x = a.x - b.x;
+	result.y = a.y - b.y;
+	result.z = a.z - b.z;
+	
+	return result;
+	
+}//end V3Sub
+
 
 /* return the dot product of vectors a and b */
 float V3Dot(Vector3 *a, Vector3 *b) 
@@ -276,15 +288,16 @@ Box3 *V3BoundsFromPoints(Point3 *point1, Point3 *point2, Box3 *bounds) {
 // Purpose:		Returns 1 (YES) if the two boxes are equal; 0 otherwise.
 //
 //==============================================================================
-int V3EqualsBoxes(const Box3 *box1, const Box3 *box2){
-	return (	box1->min.x == box2->min.x,
-				box1->min.y == box2->min.y,
-				box1->min.z == box2->min.z,
+int V3EqualsBoxes(const Box3 *box1, const Box3 *box2)
+{
+	return (	box1->min.x == box2->min.x
+			&&	box1->min.y == box2->min.y
+			&&	box1->min.z == box2->min.z
 				
-				box1->max.x == box2->max.x,
-				box1->max.y == box2->max.y,
-				box1->max.z == box2->max.z  );
-}
+			&&	box1->max.x == box2->max.x
+			&&	box1->max.y == box2->max.y
+			&&	box1->max.z == box2->max.z  );
+}//end V3EqualsBoxes
 
 
 //========== V3IsolateGreatestComponent ========================================
@@ -499,7 +512,7 @@ Matrix4 Matrix4CreateFromGLMatrix4(const GLfloat *glMatrix)
 //==============================================================================
 Matrix4 Matrix4CreateTransformation(TransformComponents *components)
 {
-	Matrix4	transformation = {0}; //zero out the whole thing.
+	Matrix4	transformation = IdentityMatrix4; //zero out the whole thing.
 	float	rotation[3][3];
 	
 	//Create the rotation matrix.
@@ -733,8 +746,8 @@ int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
 Matrix4* Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result)
 {
 	TransformComponents	rotateComponents	= IdentityComponents;
-	Matrix4				addedRotation		= {0};
-	Matrix4				newMatrix			= {0};
+	Matrix4				addedRotation		= IdentityMatrix4;
+	Matrix4				newMatrix			= IdentityMatrix4;
 
 	//Create a new matrix that causes the rotation we want.
 	//  (start with identity matrix)

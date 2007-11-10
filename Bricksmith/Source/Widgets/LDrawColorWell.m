@@ -191,7 +191,9 @@ static LDrawColorWell *sharedActiveColorWell = nil;
 //
 //==============================================================================
 - (BOOL)sendAction:(SEL)theAction to:(id)theTarget
-{
+{	
+	BOOL handledAction	= NO;
+	
 	//in any event open the color panel.
 	[[LDrawColorPanel sharedColorPanel] orderFront:self];
 	
@@ -199,7 +201,7 @@ static LDrawColorWell *sharedActiveColorWell = nil;
 	if([[self cell] showsStateBy] == NSNoCellMask) //not a toggle button
 	{
 		//just pass the action along.
-		[super sendAction:theAction to:theTarget];
+		handledAction = [super sendAction:theAction to:theTarget];
 	}
 	else
 	{
@@ -211,19 +213,22 @@ static LDrawColorWell *sharedActiveColorWell = nil;
 			if([LDrawColorWell activeColorWell] != self)
 			{
 				[LDrawColorWell setActiveColorWell:self];
+				handledAction = YES;
 			}
 				
 			//already active; this must be a color-change action!
 			else
-				[super sendAction:theAction to:theTarget];
+				handledAction = [super sendAction:theAction to:theTarget];
 		}
 		//we deactivate?
 		else if([self state] == NSOffState && [LDrawColorWell activeColorWell] == self)
 		{
 			[LDrawColorWell setActiveColorWell:nil];
+			handledAction = YES;
 		}
 	}
-
+	
+	return handledAction;
 
 }//end sendAction:to:
 

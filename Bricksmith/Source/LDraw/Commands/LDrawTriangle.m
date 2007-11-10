@@ -416,14 +416,16 @@
 // Purpose:		Finds the normal vector for this surface.
 //
 //==============================================================================
-- (void) recomputeNormal {
+- (void) recomputeNormal
+{
 	Vector3 vector1, vector2;
 	
-	V3Sub(&(self->vertex2), &(self->vertex1), &vector1);
-	V3Sub(&(self->vertex3), &(self->vertex1), &vector2);
+	vector1 = V3Sub(self->vertex2, self->vertex1);
+	vector2 = V3Sub(self->vertex3, self->vertex1);
 	
 	V3Cross(&vector1, &vector2, &(self->normal));
-}
+	
+}//end recomputeNormal
 
 
 //========== registerUndoActions ===============================================
@@ -432,8 +434,8 @@
 //				not to any superclass.
 //
 //==============================================================================
-- (void) registerUndoActions:(NSUndoManager *)undoManager {
-	
+- (void) registerUndoActions:(NSUndoManager *)undoManager
+{	
 	[super registerUndoActions:undoManager];
 	
 	[[undoManager prepareWithInvocationTarget:self] setVertex3:[self vertex3]];

@@ -302,10 +302,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 //==============================================================================
 - (void) updateSelectionWithObjects:(NSArray *)selectedObjects
 {
-	id currentObject = [selectedObjects lastObject];
-	LDrawColorT objectColor = [self LDrawColor];
-	int rowToSelect;
-	int counter;
+	id			currentObject	= [selectedObjects lastObject];
+	LDrawColorT	objectColor		= [self LDrawColor];
 	
 	//Find the color code of the last object selected. I suppose this is rather 
 	// tacky to do such a simple search, but I would prefer not to write the 

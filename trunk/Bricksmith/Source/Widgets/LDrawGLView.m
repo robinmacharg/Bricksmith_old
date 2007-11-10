@@ -59,7 +59,6 @@
 - (void) awakeFromNib
 {
 	id		superview	= [self superview];
-	NSRect	visibleRect	= [self visibleRect];
 	NSRect	frame		= [self frame];
 	
 	if([superview isKindOfClass:[NSClipView class]])
@@ -537,11 +536,11 @@
 //==============================================================================
 - (Matrix4) getMatrix
 {
+	GLfloat	currentMatrix[16];
+	Matrix4	transformation;
+	
 	@synchronized([self openGLContext])
 	{
-		GLfloat	currentMatrix[16];
-		Matrix4	transformation;
-		Matrix4	inversed;
 		
 		glGetFloatv(GL_MODELVIEW_MATRIX, currentMatrix);
 		transformation = Matrix4CreateFromGLMatrix4(currentMatrix); //convert to our utility library format
@@ -553,8 +552,8 @@
 		transformation.element[3][1] = 0; //translation is in the bottom row of the matrix.
 		transformation.element[3][2] = 0;
 		
-		return transformation;
 	}
+	return transformation;
 }//end getMatrix
 
 
@@ -677,7 +676,6 @@
 //==============================================================================
 - (void) setLDrawDirective:(LDrawDirective *) newFile
 {
-	NSPoint scrollCenter	= [self centerPoint];
 	BOOL	firstDirective	= (self->fileBeingDrawn == nil);
 	
 	//we lock around the drawing context in case the current directive is being 
@@ -1353,8 +1351,8 @@
 //				drags into 3-dimensional rotations.
 //
 //		 +---------------------------------+       ///  /- -\ \\\   (This thing is a sphere.)
-//		 |             y /|\               |      /     /   \    \
-//		 |                |                |    //      /   \     \\
+//		 |             y /|\               |      /     /   \    \				.
+//		 |                |                |    //      /   \     \\			.
 //		 |                |vertical        |    |   /--+-----+-\   |
 //		 |                |motion (around x)   |///    |     |   \\\|
 //		 |                |              x |   |       |     |      |
@@ -1394,9 +1392,6 @@
 		// explicitly indicate that we are drawing into ourself. Weird yes, but 
 		// horrible things happen without this call.
 		[[self openGLContext] makeCurrentContext];
-
-		//Find the mouse displacement from the last known mouse point.
-		NSPoint	newPoint		= [theEvent locationInWindow];
 		float	deltaX			=   [theEvent deltaX];
 		float	deltaY			= - [theEvent deltaY]; //Apple's delta is backwards, for some reason.
 		float	viewWidth		= NSWidth([self frame]);
@@ -1575,12 +1570,10 @@
 	int					counter				= 0;
 	NSPoint				dragPointInWindow	= NSZeroPoint;
 	NSPoint				dragPointInView		= NSZeroPoint;
-	Matrix4				inverseMatrix		= [self getInverseMatrix];
-	Point4				dragPoint4;
-	Point4				entryPointInModel;
 	TransformComponents	partTransform		= IdentityComponents;
 	Point3				modelReferencePoint	= ZeroPoint3;
 	Point3				modelPoint			= ZeroPoint3;
+	float				gridSpacing			= [self->document gridSpacing];
 	
 	// local drag?
 	if(sourceView == self)
@@ -1626,26 +1619,6 @@
 	partTransform.translate_Y	= modelPoint.y;
 	partTransform.translate_Z	= modelPoint.z;
 	
-//	NSLog(@"%@ -> %f %f %f", NSStringFromPoint(dragPointInView), modelPoint.x, modelPoint.y, modelPoint.z);
-//	NSLog(@"field depth = %f", MAX(NSHeight([self frame]), NSWidth([self frame])));
-	
-	//Determine granularity of grid.
-	NSUserDefaults *userDefaults	= [NSUserDefaults standardUserDefaults];
-	float			gridSpacing		= 0.0;
-	switch([self->document gridSpacingMode])
-	{
-		case gridModeFine:
-			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_FINE];
-			break;
-			
-		case gridModeMedium:
-			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
-			break;
-			
-		case gridModeCoarse:
-			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_COARSE];
-			break;
-	}
 	
 	// At the moment, I'm just going to try and get this working with one part 
 	// before extending it to multiple parts. 
@@ -1675,17 +1648,15 @@
 {
 	NSArray				*directives				= nil;
 	LDrawPart			*firstDirective			= nil;
-	NSPasteboard		*pasteboard				= [info draggingPasteboard];
 	id					 sourceView				= [info draggingSource];
 	NSPoint				 dragPointInWindow		= NSZeroPoint;
 	NSPoint				 dragPointInView		= NSZeroPoint;
-	TransformComponents	 partTransform			= IdentityComponents;
-	TransformComponents	 newPartTransform		= IdentityComponents;
+	TransformComponents	 displacementTransform	= IdentityComponents;
 	Point3				 modelReferencePoint	= ZeroPoint3;
 	Point3				 modelPoint				= ZeroPoint3;
 	Point3				 oldPosition			= ZeroPoint3;
-	Point3				 newPosition			= ZeroPoint3;
 	Vector3				 displacement			= ZeroPoint3;
+	float				 gridSpacing			= [self->document gridSpacing];
 	int					 counter				= 0;
 	NSDragOperation		 dragOperation			= NSDragOperationNone;
 	
@@ -1701,62 +1672,50 @@
 		firstDirective	= [directives objectAtIndex:0];
 		
 		
-		//---------- Find Location -------------------------------------------------
+		//---------- Find Location ---------------------------------------------
 		
 		// Where are we?
 		dragPointInWindow	= [info draggingLocation];
 		dragPointInView		= [self convertPoint:dragPointInWindow fromView:nil];
-		
-		partTransform		= [firstDirective transformComponents];
+		oldPosition			= [firstDirective position];
 		
 		// and adjust.
 		modelReferencePoint	= [firstDirective position];
 		modelPoint			= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
+		displacement		= V3Sub(modelPoint, oldPosition);
 		
-		partTransform.translate_X	= modelPoint.x;
-		partTransform.translate_Y	= modelPoint.y;
-		partTransform.translate_Z	= modelPoint.z;
 		
-		//Determine granularity of grid.
-		NSUserDefaults *userDefaults	= [NSUserDefaults standardUserDefaults];
-		float			gridSpacing		= 0.0;
-		switch([self->document gridSpacingMode])
-		{
-			case gridModeFine:
-				gridSpacing		= [userDefaults floatForKey:GRID_SPACING_FINE];
-				break;
+		//---------- Find Actual Displacement ----------------------------------
+		// When dragging, we want to move IN grid increments, not move TO grid 
+		// increments. That means we snap the displacement vector itself to the 
+		// grid, not part's location. That's because the part may not have been 
+		// grid-aligned to begin with. 
+
+		displacementTransform.translate_X	= displacement.x;
+		displacementTransform.translate_Y	= displacement.y;
+		displacementTransform.translate_Z	= displacement.z;
+		
+		// Snap the displacement to the grid.
+		displacementTransform = [firstDirective components:displacementTransform
+										snappedToGrid:gridSpacing
+										 minimumAngle:0];
+		displacement = V3Make(displacementTransform.translate_X, displacementTransform.translate_Y, displacementTransform.translate_Z);
 				
-			case gridModeMedium:
-				gridSpacing		= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
-				break;
-				
-			case gridModeCoarse:
-				gridSpacing		= [userDefaults floatForKey:GRID_SPACING_COARSE];
-				break;
-		}
-		
-		
+
 		//---------- Update the parts' positions  ------------------------------
 		// At the moment, I'm just going to try and get this working with one part 
 		// before extending it to multiple parts. 
 		
-		[[directives objectAtIndex:0] setTransformComponents:partTransform];
-		newPartTransform = [[directives objectAtIndex:0] componentsSnappedToGrid:gridSpacing
-																	minimumAngle:0];
-		
-		// How much did the first part move?
-		oldPosition		= V3Make(partTransform.translate_X, partTransform.translate_Y, partTransform.translate_Z);
-		newPosition		= V3Make(newPartTransform.translate_X, newPartTransform.translate_Y, newPartTransform.translate_Z);
-		
-		V3Sub(&newPosition, &oldPosition, &displacement);
-		
-		// Move all the parts by that amount.
-		for(counter = 0; counter < [directives count]; counter++)
+		if(V3EqualPoints(displacement, ZeroPoint3) == NO)
 		{
-			[[directives objectAtIndex:counter] moveBy:displacement];
+			// Move all the parts by that amount.
+			for(counter = 0; counter < [directives count]; counter++)
+			{
+				[[directives objectAtIndex:counter] moveBy:displacement];
+			}
+			
+			[self setNeedsDisplay:YES];
 		}
-		
-		[self setNeedsDisplay:YES];
 	}
 	
 	return dragOperation;
@@ -1896,7 +1855,6 @@
 		[[self openGLContext] makeCurrentContext];
 
 		NSRect	visibleRect	= [self visibleRect];
-		NSRect	frame		= [self frame];
 		float	scaleFactor	= [self zoomPercentage] / 100;
 		
 		glMatrixMode(GL_PROJECTION); //we are changing the projection, NOT the model!
@@ -1978,7 +1936,6 @@
 
 	@synchronized([self openGLContext])
 	{
-		LDrawDirective	*clickedDirective	= nil;
 		NSPoint			 viewClickedPoint	= [theEvent locationInWindow]; //window coordinates
 		NSRect			 visibleRect		= [self convertRect:[self visibleRect] toView:nil]; //window coordinates.
 		GLuint			 nameBuffer[512]	= {0};
@@ -2424,12 +2381,11 @@
 //==============================================================================
 - (void) scrollCenterToPoint:(NSPoint)newCenter
 {
-	id		clipView		= [self superview];
 	NSRect	visibleRect		= [self visibleRect];
 	
 	[self scrollPoint: NSMakePoint( newCenter.x - NSWidth(visibleRect)/2,
 									newCenter.y - NSHeight(visibleRect)/2) ];
-}
+}//end scrollCenterToPoint:
 
 
 //========== takeBackgroundColorFromUserDefaults ===============================
@@ -2500,11 +2456,10 @@
 							Y:(Vector3 *)outModelY
 							Z:(Vector3 *)outModelZ
 {
-	Vector4 screenX = {1,0,0,1};
-	Vector4 screenY = {0,1,0,1};
+	Vector4 screenX		= {1,0,0,1};
+	Vector4 screenY		= {0,1,0,1};
 	Vector4 unprojectedX, unprojectedY; //the vectors in the model which are projected onto x,y on screen
 	Vector3 modelX, modelY, modelZ; //the closest model axes to which the screen's x,y,z align
-	Vector3 actualNudge	= {0,0,0}; //the final nudge vector for the key pressed
 	
 	// Translate the x, y, and z vectors on the surface of the screen into the 
 	// axes to which they most closely align in the model itself. 
@@ -2579,7 +2534,6 @@
 	GLdouble	glNearModelPoint	[3];
 	GLdouble	glFarModelPoint		[3];
 	Point3		modelPoint				= ZeroPoint3;
-	float		scaleFactor				= [self zoomPercentage] * 100;
 	NSRect		contextRectInWindow		= [self convertRect:[self visibleRect] toView:nil];
 	NSPoint		windowPoint				= [self convertPoint:viewPoint toView:nil];
 	NSPoint		contextPoint			= NSZeroPoint;
@@ -2636,14 +2590,14 @@
 	//
 	// The parametric equation for a line given two points is:
 	//
-	//		 /      \
+	//		 /      \															/
 	//	 L = | 1 - t | P  + t P        (see? at t=0, L = P1 and at t=1, L = P2.
 	//		 \      /   1      2
 	//
 	// So for example,	z = (1-t)*z1 + t*z2
 	//					z = z1 - t*z1 + t*z2
 	//
-	//								/       \
+	//								/       \									/
 	//					 z = z  - t | z - z  |
 	//						  1     \  1   2/
 	//

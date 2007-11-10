@@ -602,7 +602,7 @@
 //				a crawl.
 //
 //==============================================================================
-- (BOOL)validateToolbarItem:(NSToolbarItem *)item
+- (BOOL) validateToolbarItem:(NSToolbarItem *)item
 {
 	LDrawPart		*selectedPart	= [self->document selectedPart];
 	NSArray			*selectedItems	= [self->document selectedObjects];
@@ -634,7 +634,9 @@
 	else
 		enabled = YES;
 	
-}
+	return enabled;
+	
+}//end validateToolbarItem:
 
 
 #pragma mark -

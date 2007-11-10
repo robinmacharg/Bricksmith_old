@@ -166,9 +166,7 @@ PreferencesDialogController *preferencesDialog = nil;
 //==============================================================================
 - (void) setLDrawTabValues
 {
-	PartLibrary			*partLibrary		= [LDrawApplication sharedPartLibrary];
 	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
-	NSFileManager		*fileManager		= [NSFileManager defaultManager];
 	NSString			*ldrawPath			= [userDefaults stringForKey:LDRAW_PATH_KEY];
 	PartBrowserStyleT	 partBrowserStyle	= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
 	

@@ -40,7 +40,8 @@
 //				4 colour x1 y1 z1 x2 y2 z2 x3 y3 z3 x4 y4 z4 
 //
 //==============================================================================
-+ (LDrawQuadrilateral *) quadrilateralWithDirectiveText:(NSString *)directive{
++ (LDrawQuadrilateral *) quadrilateralWithDirectiveText:(NSString *)directive
+{
 	return [LDrawQuadrilateral directiveWithString:directive];
 }
 
@@ -51,8 +52,8 @@
 //				of LDraw code from a file.
 //
 //==============================================================================
-+ (id) directiveWithString:(NSString *)lineFromFile{
-	
++ (id) directiveWithString:(NSString *)lineFromFile
+{
 	LDrawQuadrilateral	*parsedQuadrilateral = nil;
 	NSString			*workingLine = lineFromFile;
 	NSString			*parsedField;
@@ -209,7 +210,7 @@
 #pragma mark DIRECTIVES
 #pragma mark -
 
-//========== drawElement =======================================================
+//========== drawElement:parentColor: ==========================================
 //
 // Purpose:		Draws the graphic of the element represented. This call is a 
 //				subroutine of -draw: in LDrawDrawableElement.
@@ -243,7 +244,7 @@
 			glVertex3f(vertex4.x, vertex4.y, vertex4.z);
 		glEnd();
 	}
-}
+}//end drawElement:parentColor:
 
 
 //========== write =============================================================
@@ -253,7 +254,8 @@
 //				4 colour x1 y1 z1 x2 y2 z2 x3 y3 z3 x4 y4 z4 
 //
 //==============================================================================
-- (NSString *) write{
+- (NSString *) write
+{
 	return [NSString stringWithFormat:
 				@"4 %3d %12f %12f %12f %12f %12f %12f %12f %12f %12f %12f %12f %12f",
 				color,
@@ -299,7 +301,8 @@
 //				object, or nil if there is no icon.
 //
 //==============================================================================
-- (NSString *) iconName{
+- (NSString *) iconName
+{
 	return @"Quadrilateral";
 }
 
@@ -309,7 +312,8 @@
 // Purpose:		Returns the name of the class used to inspect this one.
 //
 //==============================================================================
-- (NSString *) inspectorClassName{
+- (NSString *) inspectorClassName
+{
 	return @"InspectionQuadrilateral";
 }
 
@@ -324,8 +328,8 @@
 //				perfectly contains this object.
 //
 //==============================================================================
-- (Box3) boundingBox3 {
-	
+- (Box3) boundingBox3
+{
 	Box3 bounds12, bounds34, bounds;
 	
 	V3BoundsFromPoints(&vertex1, &vertex2, &bounds12);
@@ -489,12 +493,12 @@
 	Vector3 vector4_1, vector4_3;
 	Vector3 cross1, cross3, cross4;
 	
-	V3Sub(&(self->vertex2), &(self->vertex1), &vector1_2);
-	V3Sub(&(self->vertex4), &(self->vertex1), &vector1_4);
-	V3Sub(&(self->vertex4), &(self->vertex3), &vector3_4);
-	V3Sub(&(self->vertex2), &(self->vertex3), &vector3_2);
-	V3Sub(&(self->vertex1), &(self->vertex4), &vector4_1);
-	V3Sub(&(self->vertex3), &(self->vertex4), &vector4_3);
+	vector1_2 = V3Sub(self->vertex2, self->vertex1);
+	vector1_4 = V3Sub(self->vertex4, self->vertex1);
+	vector3_4 = V3Sub(self->vertex4, self->vertex3);
+	vector3_2 = V3Sub(self->vertex2, self->vertex3);
+	vector4_1 = V3Sub(self->vertex1, self->vertex4);
+	vector4_3 = V3Sub(self->vertex3, self->vertex4);
 	
 	V3Cross(&vector1_2, &vector1_4, &cross1);
 	V3Cross(&vector3_4, &vector3_2, &cross3);
@@ -506,14 +510,16 @@
 	// vectors (since the denominator is always positive, we can ignore it).
 	
 	//If 1 & 4 point opposite directions, we have a case 1 bowtie
-	if(V3Dot(&cross1, &cross4) < 0) {
+	if(V3Dot(&cross1, &cross4) < 0)
+	{
 		//vectors point in opposite directions
 		Point3 swapPoint = self->vertex3;
 		vertex3 = vertex4;
 		vertex4 = swapPoint;
 	}
 	//If 3 & 4 point opposite directions, we have a case 2 bowtie
-	else if(V3Dot(&cross3, &cross4) < 0){
+	else if(V3Dot(&cross3, &cross4) < 0)
+	{
 		Point3 swapPoint = self->vertex2;
 		vertex2 = vertex3;
 		vertex3 = swapPoint;
@@ -527,14 +533,16 @@
 // Purpose:		Finds the normal vector for this surface.
 //
 //==============================================================================
-- (void) recomputeNormal {
+- (void) recomputeNormal
+{
 	Vector3 vector1, vector2;
 	
-	V3Sub(&(self->vertex2), &(self->vertex1), &vector1);
-	V3Sub(&(self->vertex4), &(self->vertex1), &vector2);
+	vector1 = V3Sub(self->vertex2, self->vertex1);
+	vector2 = V3Sub(self->vertex4, self->vertex1);
 	
 	V3Cross(&vector1, &vector2, &(self->normal));
-}
+	
+}//end recomputeNormal
 
 
 //========== registerUndoActions ===============================================
@@ -543,8 +551,8 @@
 //				not to any superclass.
 //
 //==============================================================================
-- (void) registerUndoActions:(NSUndoManager *)undoManager {
-	
+- (void) registerUndoActions:(NSUndoManager *)undoManager
+{	
 	[super registerUndoActions:undoManager];
 	
 	[[undoManager prepareWithInvocationTarget:self] setVertex4:[self vertex4]];

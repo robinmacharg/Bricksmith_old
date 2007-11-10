@@ -11,12 +11,19 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/GL.h>
 
+#import "ObjectInspectionController.h"
+
 @class LDrawContainer;
 @class LDrawFile;
 
-@protocol Inspectable;
 
-@interface LDrawDirective : NSObject <NSCoding, NSCopying, Inspectable> {
+////////////////////////////////////////////////////////////////////////////////
+//
+// LDrawDirective
+//
+////////////////////////////////////////////////////////////////////////////////
+@interface LDrawDirective : NSObject <NSCoding, NSCopying, Inspectable>
+{
 
 	LDrawContainer *enclosingDirective; //LDraw files are a hierarchy.
 	BOOL			isSelected;

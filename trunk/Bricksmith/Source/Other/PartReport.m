@@ -307,7 +307,6 @@
 	PartLibrary		*partLibrary		= [LDrawApplication sharedPartLibrary];
 	NSMutableString	*text				= [NSMutableString stringWithCapacity:1024];
 	NSString		*lineFormat			= @"%@\t%@\t%@\t%@\n";
-	NSString		*line				= nil;
 	NSDictionary	*partRecord			= nil;
 	NSString		*partNumber			= nil;
 	LDrawColorT		 partColor			= LDrawColorBogus;

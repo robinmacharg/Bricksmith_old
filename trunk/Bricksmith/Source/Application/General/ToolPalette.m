@@ -217,10 +217,9 @@ ToolPalette *sharedToolPalette = nil;
 - (void) keyboardDidChange:(NSNotification *)notification
 {
 	NSEvent		*theEvent	= [notification object];
-	NSString	*characters	= nil;
 	
-	switch([theEvent type]){
-		
+	switch([theEvent type])
+	{
 		case NSKeyDown:
 			[self->currentKeyCharacters release];
 			self->currentKeyCharacters = [[theEvent charactersIgnoringModifiers] retain];

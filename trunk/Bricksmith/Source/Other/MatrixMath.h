@@ -84,6 +84,7 @@ typedef struct {
 
 extern const Box3					InvalidBox;
 extern const TransformComponents	IdentityComponents;
+extern const Matrix4				IdentityMatrix4;
 extern const Point3					ZeroPoint3;
 
 #pragma mark -
@@ -160,7 +161,7 @@ extern Vector3*	V3Negate(Vector3 *v);
 extern Vector3*	V3Normalize(Vector3 *);
 extern Vector3*	V3Scale(Vector3 *, float);
 extern Vector3*	V3Add(Vector3 *a, Vector3 *b, Vector3 *c);
-extern Vector3*	V3Sub(Vector3 *a, Vector3 *b, Vector3 *c);
+extern Vector3	V3Sub(Vector3 a, Vector3 b);
 extern float	V3Dot(Vector3 *a, Vector3 *b);
 extern Vector3*	V3Lerp(Vector3 *lo, Vector3 *hi, float alpha, Vector3 *result);
 extern Vector3*	V3Combine(Vector3 *a, Vector3 *b, Vector3 *result, float ascl, float bscl);

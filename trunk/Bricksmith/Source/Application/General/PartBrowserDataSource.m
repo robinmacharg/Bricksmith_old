@@ -293,7 +293,7 @@
 - (IBAction) addPartClicked:(id)sender
 {
 	//anyone who implements this message will know what to do.
-	BOOL success = [NSApp sendAction:@selector(insertLDrawPart:) to:nil from:self];
+	[NSApp sendAction:@selector(insertLDrawPart:) to:nil from:self];
 
 }//end addPartClicked:
 
@@ -337,14 +337,13 @@
 //				part library.
 //
 //==============================================================================
-- (IBAction) searchFieldChanged:(id)sender;
+- (IBAction) searchFieldChanged:(id)sender
 {
-	NSString *searchString = [searchField stringValue];
-	
+	// Setting the category will filter the results.
 	[self setCategory:NSLocalizedString(@"All Categories", nil)];
 	[self syncSelectionAndPartDisplayed];
 
-}
+}//end searchFieldChanged:
 
 
 #pragma mark -

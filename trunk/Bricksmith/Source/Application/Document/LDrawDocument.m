@@ -242,12 +242,18 @@
 //==============================================================================
 - (BOOL)revertToSavedFromFile:(NSString *)fileName ofType:(NSString *)type
 {
-	//Causes loadDataRepresentation:ofType: to be invoked.
-	[super revertToSavedFromFile:fileName ofType:type];
+	BOOL success = NO;
 	
-	//Display the new document contents. 
-	//		(Alas. This doesn't happen automatically.)
-	[self loadDataIntoDocumentUI];
+	//Causes loadDataRepresentation:ofType: to be invoked.
+	success = [super revertToSavedFromFile:fileName ofType:type];
+	if(success == YES)
+	{
+		//Display the new document contents. 
+		//		(Alas. This doesn't happen automatically.)
+		[self loadDataIntoDocumentUI];
+	}
+	
+	return success;
 	
 }//end revertToSavedFromFile:ofType:
 
@@ -358,13 +364,47 @@
 }
 
 
+//========== gridSpacing =======================================================
+//
+// Purpose:		Resolves the current grid spacing into an actual value.
+//
+// Notes:		This value represents distances "along the studs"--that is, 
+//			    horizontal along the brick. Vertical distances may be adjusted. 
+//
+//==============================================================================
+- (float) gridSpacing
+{
+	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
+	float			 gridSpacing	= 0.0;
+
+	switch(self->gridMode)
+	{
+		case gridModeFine:
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_FINE];
+			break;
+			
+		case gridModeMedium:
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_MEDIUM];
+			break;
+			
+		case gridModeCoarse:
+			gridSpacing		= [userDefaults floatForKey:GRID_SPACING_COARSE];
+			break;
+	}
+	
+	return gridSpacing;
+	
+}//end gridSpacing
+
+
 //========== gridSpacingMode ===================================================
 //
 // Purpose:		Returns the current granularity of the positioning grid being 
 //				used in this document.
 //
 //==============================================================================
-- (gridSpacingModeT) gridSpacingMode {
+- (gridSpacingModeT) gridSpacingMode
+{
 	return gridMode;
 }
 
@@ -454,7 +494,6 @@
 - (void) moveSelectionBy:(Vector3) movementVector
 {
 	NSArray			*selectedObjects	= [self selectedObjects];
-	NSMutableArray	*nudgables			= [NSMutableArray array];
 	LDrawDirective	*currentObject		= nil;
 	int				 counter			= 0;
 	
@@ -542,13 +581,9 @@
 - (void) rotateSelectionAround:(Vector3)rotationAxis
 {
 	NSArray			*selectedObjects	= [self selectedObjects]; //array of LDrawDirectives.
-	id				 currentObject		= nil;
-	Box3			 selectionBounds	= [LDrawUtilities boundingBox3ForDirectives:selectedObjects];
 	RotationModeT	 rotationMode		= RotateAroundSelectionCenter;
 	Tuple3			 rotation			= {0};
-	Point3			 rotationCenter		= {0};
 	float			 degreesToRotate	= 0;
-	int				 counter			= 0;
 	
 	//Determine magnitude of nudge.
 	switch([self gridSpacingMode])
@@ -607,7 +642,6 @@
 	id				 currentObject		= nil;
 	Box3			 selectionBounds	= [LDrawUtilities boundingBox3ForDirectives:selectedObjects];
 	Point3			 rotationCenter		= {0};
-	float			 degreesToRotate	= 0;
 	int				 counter			= 0;
 	
 	if(mode == RotateAroundSelectionCenter)
@@ -649,13 +683,13 @@
 	byExtendingSelection:(BOOL) shouldExtend
 {
 	NSArray			*ancestors			= [directiveToSelect ancestors];
-	LDrawDirective	*currentAncestor	= nil;
 	int				 indexToSelect		= 0;
 	int				 counter			= 0;
 	
 	if(directiveToSelect == nil)
 		[fileContentsOutline deselectAll:nil];
-	else {
+	else
+	{
 		//Expand the hierarchy all the way down to the directive we are about to 
 		// select.
 		for(counter = 0; counter < [ancestors count]; counter++)
@@ -1490,7 +1524,6 @@
 {	
 	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
 	PartBrowserStyleT	 partBrowserStyle	= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
-	NSString			*partName			= nil;
 	PartBrowserPanel	*partBrowserPanel	= nil;
 	
 	switch(partBrowserStyle)
@@ -1728,7 +1761,6 @@
 			  atIndex:(int)index
 {
 	NSUndoManager	*undoManager	= [self undoManager];
-	NSString		*undoString		= nil;
 	
 	[[self documentContents] lockForEditing];
 	{
@@ -1753,7 +1785,6 @@
 - (void) deleteDirective:(LDrawDirective *)doomedDirective
 {
 	NSUndoManager	*undoManager	= [self undoManager];
-	NSString		*undoString		= nil;
 	LDrawContainer	*parent			= [doomedDirective enclosingDirective];
 	int				 index			= [[parent subdirectives] indexOfObject:doomedDirective];
 	
@@ -1990,8 +2021,6 @@
 //==============================================================================
 - (BOOL)outlineView:(NSOutlineView *)outlineView isItemExpandable:(id)item
 {
-	Class itemClass = [item class];
-	
 	//You can expand models and steps.
 	if([item isKindOfClass:[LDrawContainer class]] )
 		return YES;
@@ -2877,9 +2906,6 @@
 	NSMenu			*modelMenu		= [[mainMenu itemWithTag:modelsMenuTag] submenu];
 	NSMenu			*referenceMenu	= [[modelMenu itemWithTag:insertReferenceMenuTag] submenu];
 	int				 separatorIndex	= [modelMenu indexOfItemWithTag:modelsSeparatorMenuTag];
-	NSMenuItem		*modelItem		= nil;
-	NSArray			*models			= [[self documentContents] submodels];
-	LDrawMPDModel	*currentModel	= nil;
 	int				 counter		= 0;
 	
 	//Kill all model menu items.
@@ -3016,7 +3042,6 @@
 	LDrawDirective	*selectedComponent	= [self selectedStepComponent];
 	LDrawStep		*selectedStep		= [self selectedStep];
 	LDrawMPDModel	*selectedModel		= [self selectedModel];
-	NSUndoManager	*undoManager		= [self undoManager];
 	int				 indexOfElement		= 0;
 	int				 rowForItem			= 0;
 	
@@ -3124,7 +3149,6 @@
 {
 	NSArray			*selectedObjects	= [self selectedObjects];
 	id				 currentObject		= nil;
-	BOOL			 currentVisibility	= NO;
 	int				 counter			= 0;
 	BOOL			 invisibleSelected	= NO;
 	BOOL			 visibleSelected	= NO;

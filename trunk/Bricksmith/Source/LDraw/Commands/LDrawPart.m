@@ -70,14 +70,13 @@
 //				+-       -+
 //
 //==============================================================================
-+ (id) directiveWithString:(NSString *)lineFromFile{
-	LDrawPart		*parsedPart		= nil;
-	NSString		*workingLine	= lineFromFile;
-	NSString		*parsedField	= nil;
++ (id) directiveWithString:(NSString *)lineFromFile
+{
+	LDrawPart		*parsedPart				= nil;
+	NSString		*workingLine			= lineFromFile;
+	NSString		*parsedField			= nil;
 	
-	Matrix4			 transformation = {0};
-	Point3			 workingPosition;
-	Vector3			 transformationVector;
+	Matrix4			 transformation			= IdentityMatrix4;
 	
 	//A malformed part could easily cause a string indexing error, which would 
 	// raise an exception. We don't want this to happen here.
@@ -466,21 +465,21 @@
 //				cannot be found.
 //
 //==============================================================================
-- (Box3) boundingBox3 {
-	LDrawModel *modelToDraw = [[LDrawApplication sharedPartLibrary] modelForPart:self];
-
-	Box3	bounds			= InvalidBox;
-	Box3	partBounds		= {0};
-	Matrix4	transformation	= [self transformationMatrix];
+- (Box3) boundingBox3
+{
+	LDrawModel	*modelToDraw	= [[LDrawApplication sharedPartLibrary] modelForPart:self];
+	Box3		 bounds			= InvalidBox;
+	Matrix4		 transformation	= [self transformationMatrix];
 	
-	Point4	originalMin		= {0};
-	Point4	originalMax		= {0};
-	Point4	rotatedMin		= {0};
-	Point4	rotatedMax		= {0};
+	Point4		 originalMin	= {0};
+	Point4		 originalMax	= {0};
+	Point4		 rotatedMin		= {0};
+	Point4		 rotatedMax		= {0};
 	
 	//We need to have an actual model here. Blithely calling boundingBox3 will 
 	// result in most of our Box3 structure being garbage data!
-	if(modelToDraw != nil) {
+	if(modelToDraw != nil)
+	{
 		bounds		= [modelToDraw boundingBox3];
 		originalMin	= V4FromV3( &(bounds.min) );
 		originalMax	= V4FromV3( &(bounds.max) );
@@ -758,8 +757,8 @@
 //==============================================================================
 - (Vector3) displacementForNudge:(Vector3)nudgeVector
 {
-	Matrix4 transformationMatrix	= {0};
-	Matrix4 inverseMatrix			= {0};
+	Matrix4 transformationMatrix	= IdentityMatrix4;
+	Matrix4 inverseMatrix			= IdentityMatrix4;
 	Vector4 worldNudge				= {0, 0, 0, 1};
 	Vector4 brickNudge				= {0};
 	
@@ -820,7 +819,7 @@
 //==============================================================================
 - (void) moveBy:(Vector3)moveVector
 {	
-	Matrix4 transformationMatrix	= {0};
+	Matrix4 transformationMatrix	= IdentityMatrix4;
 
 	transformationMatrix = [self transformationMatrix];
 
@@ -838,11 +837,28 @@
 
 //========== componentsSnappedToGrid:minimumAngle: =============================
 //
-// Purpose:		Aligns the receiver to an imaginary grid along lines separated 
-//				by a distance of gridSpacing. This is done intelligently:
-//				if gridSpacing == 20, that is assumed to mean "1 stud," so the 
-//				y-axis (up) of the part will be aligned along a grid spacing of 
-//				24 (1 stud vertically).
+// Purpose:		Returns a copy of the part's current components, but snapped to 
+//			    the grid. Kinda a weird legacy API. 
+//
+//==============================================================================
+- (TransformComponents) componentsSnappedToGrid:(float) gridSpacing
+								   minimumAngle:(float)degrees
+{
+	TransformComponents	components		= [self transformComponents];
+	
+	return [self components:components snappedToGrid:gridSpacing minimumAngle:degrees];
+	
+}//end componentsSnappedToGrid:minimumAngle:
+
+
+//========== components:snappedToGrid:minimumAngle: ============================
+//
+// Purpose:		Aligns the given components to an imaginary grid along lines 
+//			    separated by a distance of gridSpacing. This is done 
+//			    intelligently based on the current orientation of the receiver: 
+//			    if gridSpacing == 20, that is assumed to mean "1 stud," so the 
+//			    y-axis (up) of the part will be aligned along a grid spacing of 
+//			    24 (1 stud vertically). 
 //
 //				The part's rotation angles will be adjusted to multiples of the 
 //				minimum angle specified.
@@ -852,15 +868,13 @@
 //							  unchanged. 
 //
 //==============================================================================
-- (TransformComponents) componentsSnappedToGrid:(float) gridSpacing
-								   minimumAngle:(float)degrees
+- (TransformComponents) components:(TransformComponents)components
+					 snappedToGrid:(float) gridSpacing
+					  minimumAngle:(float)degrees
 {
-	TransformComponents	components		= [self transformComponents];
-	float				rotationRadians	= radians(degrees);
+	float	rotationRadians			= radians(degrees);
 	
-	Matrix4 transformationMatrix	= {0};
-	Matrix4 inverseMatrix			= {0};
-	
+	Matrix4 transformationMatrix	= IdentityMatrix4;
 	Vector4 yAxisOfPart				= {0, 1, 0, 1};
 	Vector4 worldY					= {0, 0, 0, 1}; //yAxisOfPart converted to world coordinates
 	Vector3 worldY3					= {0, 0, 0};
@@ -932,7 +946,7 @@
 	//round-off errors here? Potential for trouble.
 	return components;
 	
-}//end componentsSnappedToGrid:minimumAngle:
+}//end components:snappedToGrid:minimumAngle:
 
 
 //========== rotateByDegrees: ==================================================

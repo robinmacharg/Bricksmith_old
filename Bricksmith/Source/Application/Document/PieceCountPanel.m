@@ -249,7 +249,10 @@
 		savePath	= [savePanel URL];
 		exported	= [self->partReport textualRepresentationWithSortDescriptors:sortDescriptors];
 		
-		[exported writeToURL:savePath atomically:YES];
+		[exported writeToURL:savePath
+				  atomically:YES
+					encoding:NSUTF8StringEncoding
+					   error:NULL ];
 	}
 
 }//end exportButtonClicked:

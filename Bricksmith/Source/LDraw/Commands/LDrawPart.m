@@ -266,14 +266,7 @@
 		{
 			if( hasDisplayList == YES )
 			{
-				//on the somewhat non-committal advice of an Apple engineer who should 
-				// know, I am wrapping my calls to shared-context display lists with 
-				// mutexes.
-				pthread_mutex_lock(&displayListMutex);
-				
-					glCallList(self->displayListTag);
-				
-				pthread_mutex_unlock(&displayListMutex);
+				glCallList(self->displayListTag);
 			}
 			else
 				[modelToDraw draw:optionsMask parentColor:parentColor];
@@ -1032,14 +1025,6 @@
 	{
 		LDrawModel *referencedSubmodel	= [self referencedMPDSubmodel];
 		
-		// THIS IS NOT GLOBAL AS INTENDED WHEN USING THE PART LIBRARY LISTS.
-		// ***HOWEVER*** I believe all this to be wrong/unnecessary. See
-		// file://localhost/Developer/ADC%20Reference%20Library/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_threading/chapter_12_section_3.html#//apple_ref/doc/uid/TP40001987-CH409-DontLinkElementID_35
-		// http://developer.apple.com/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_threading/chapter_12_section_3.html
-		// which seem to indicate it's all a lost cause without CGLLockContext, 
-		// a TIGER-ONLY API. Sigh...
-		pthread_mutex_init(&displayListMutex, NULL);
-	
 		#if (OPTIMIZE_STEPS	== 0)
 			if(referencedSubmodel == nil)
 			{
@@ -1138,7 +1123,6 @@
 		#if (OPTIMIZE_STEPS	== 1)
 			glDeleteLists(displayListTag, 1);
 		#endif
-		pthread_mutex_destroy(&displayListMutex);
 	}
 	
 	[super dealloc];

@@ -261,10 +261,10 @@
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification
 {
 	NSOpenGLPixelFormatAttribute	pixelAttributes[]	= { NSOpenGLPFADoubleBuffer,
-															NSOpenGLPFADepthSize, 32,
-															NSOpenGLPFASampleBuffers, 1,
-															NSOpenGLPFASamples, 2,
-															nil};
+															NSOpenGLPFADepthSize,		32,
+															NSOpenGLPFASampleBuffers,	1,
+															NSOpenGLPFASamples,			2,
+															0 };
 	NSOpenGLPixelFormat				*pixelFormat		= nil;
 	
 	

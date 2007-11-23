@@ -10,7 +10,6 @@
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl.h>
-#import <pthread.h>
 
 #import "LDrawDirective.h"
 #import "LDrawDrawableElement.h"
@@ -22,8 +21,13 @@
 @class LDrawStep;
 @class PartReport;
 
-@interface LDrawPart : LDrawDrawableElement <NSCoding> {
-	
+////////////////////////////////////////////////////////////////////////////////
+//
+// class LDrawPart
+//
+////////////////////////////////////////////////////////////////////////////////
+@interface LDrawPart : LDrawDrawableElement <NSCoding>
+{
 	NSString		*displayName;
 	NSString		*referenceName; //lower-case version of display name
 	
@@ -31,7 +35,6 @@
 
 	BOOL			hasDisplayList;
 	GLuint			displayListTag;	//list ID for normals in non-inverted matrix
-	pthread_mutex_t	displayListMutex;
 }
 
 //Initialization

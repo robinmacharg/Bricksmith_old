@@ -61,7 +61,7 @@
 // Purpose:		Sets up a new untitled document.
 //
 //==============================================================================
-- (id)init
+- (id) init
 {
     self = [super init];
     if (self) {
@@ -75,7 +75,9 @@
     
     }
     return self;
-}
+	
+}//end init
+
 
 #pragma mark -
 #pragma mark DOCUMENT
@@ -86,12 +88,13 @@
 // Purpose:		Returns the name of the Nib file used to display this document.
 //
 //==============================================================================
-- (NSString *)windowNibName
+- (NSString *) windowNibName
 {
     // If you need to use a subclass of NSWindowController or if your document 
 	// supports multiple NSWindowControllers, you should remove this method and 
 	// override -makeWindowControllers instead.
     return @"LDrawDocument";
+	
 }//end windowNibName
 
 
@@ -100,7 +103,7 @@
 // Purpose:		awakeFromNib for document-based programs.
 //
 //==============================================================================
-- (void)windowControllerDidLoadNib:(NSWindowController *) aController
+- (void) windowControllerDidLoadNib:(NSWindowController *) aController
 {
 	NSNotificationCenter	*notificationCenter	= [NSNotificationCenter defaultCenter];
 	NSUserDefaults			*userDefaults		= [NSUserDefaults standardUserDefaults];
@@ -126,7 +129,8 @@
 	// because we want the origin to be nicely staggered as documents open; that 
 	// normally happens automatically.)
 	NSString *savedSize = [userDefaults objectForKey:DOCUMENT_WINDOW_SIZE];
-	if(savedSize != nil){
+	if(savedSize != nil)
+	{
 		NSRect frame = [window frame];
 		frame.size = NSSizeFromString(savedSize);
 		[window setFrame:frame display:YES];
@@ -197,14 +201,16 @@
 #pragma mark -
 #pragma mark Reading
 
-//========== readFromFile:ofType: ==============================================
+//========== readFromURL:ofType:error: =========================================
 //
 // Purpose:		Reads the file off of disk. We are overriding this NSDocument 
 //				method to grab the path; the actual data-collection is done 
 //				elsewhere.
 //
 //==============================================================================
-- (BOOL)readFromFile:(NSString *)fileName ofType:(NSString *)docType
+- (BOOL) readFromURL:(NSURL *)absoluteURL
+			  ofType:(NSString *)typeName
+			   error:(NSError **)outError
 {
 	AMSProgressPanel	*progressPanel	= [AMSProgressPanel progressPanel];
 	NSString			*openMessage	= nil;
@@ -218,10 +224,14 @@
 	[progressPanel showProgressPanel];
 
 	//do the actual loading.
-	[super readFromFile:fileName ofType:docType];
+	[super readFromURL:absoluteURL ofType:typeName error:outError];
 	
-	//track the path.
-	[[self documentContents] setPath:fileName];
+	// Track the path. I'm not sure what a non-file URL means, and I'm basically 
+	// hoping we never encounter one. 
+	if([absoluteURL isFileURL] == YES)
+		[[self documentContents] setPath:[absoluteURL path]];
+	else
+		[[self documentContents] setPath:nil];
 	
 	[progressPanel close];
 	
@@ -234,18 +244,20 @@
 }//end readFromFile:ofType:
 
 
-//========== revertToSavedFromFile:ofType: =====================================
+//========== revertToContentsOfURL:ofType:error: ===============================
 //
 // Purpose:		Called by NSDocument when it reverts the document to its most 
 //				recently saved state.
 //
 //==============================================================================
-- (BOOL)revertToSavedFromFile:(NSString *)fileName ofType:(NSString *)type
+- (BOOL) revertToContentsOfURL:(NSURL *)absoluteURL
+						ofType:(NSString *)typeName
+						 error:(NSError **)outError
 {
 	BOOL success = NO;
 	
 	//Causes loadDataRepresentation:ofType: to be invoked.
-	success = [super revertToSavedFromFile:fileName ofType:type];
+	success = [super revertToContentsOfURL:absoluteURL ofType:typeName error:outError];
 	if(success == YES)
 	{
 		//Display the new document contents. 
@@ -258,15 +270,15 @@
 }//end revertToSavedFromFile:ofType:
 
 
-//========== loadDataRepresentation:ofType: ====================================
+//========== readFromData:ofType:error: ========================================
 //
 // Purpose:		Read a logical document structure from data. This is the "open" 
 //				method.
 //
-// You can also choose to override -loadFileWrapperRepresentation:ofType: 
-// or -readFromFile:ofType: instead.
 //==============================================================================
-- (BOOL)loadDataRepresentation:(NSData *)data ofType:(NSString *)aType
+- (BOOL) readFromData:(NSData *)data
+			   ofType:(NSString *)typeName
+				error:(NSError **)outError
 {
 	NSString			*fileContents	= nil;
 	LDrawFile			*newFile		= nil;
@@ -285,13 +297,14 @@
 	// - optimizing models can result in OpenGL calls, so to be ultra-safe we 
 	//   set a context and lock on it. We can't use any of the documents GL 
 	//   views because the Nib may not have been loaded yet.
-	@synchronized([LDrawApplication sharedOpenGLContext])
+	CGLLockContext([[LDrawApplication sharedOpenGLContext] CGLContextObj]);
 	{
 		[[LDrawApplication sharedOpenGLContext] makeCurrentContext];
 	
 		newFile = [LDrawFile parseFromFileContents:fileContents];
 		[self setDocumentContents:newFile];
 	}
+	CGLUnlockContext([[LDrawApplication sharedOpenGLContext] CGLContextObj]);
 	
 	[fileContents release];
 	
@@ -302,41 +315,46 @@
 #pragma mark -
 #pragma mark Writing
 
-//========== writeToFile:ofType: ===============================================
+//========== writeToURL:ofType:error: ==========================================
 //
 // Purpose:		Saves the file out. We are overriding this NSDocument method to 
 //				grab the path; the actual data-collection is done elsewhere.
 //
 //==============================================================================
-- (BOOL)writeToFile:(NSString *)fileName ofType:(NSString *)docType
+- (BOOL) writeToURL:(NSURL *)absoluteURL
+			 ofType:(NSString *)typeName
+			  error:(NSError **)outError
 {
 	BOOL success = NO;
 	
 	//do the actual writing.
-	success = [super writeToFile:fileName ofType:docType];
+	success = [super writeToURL:absoluteURL ofType:typeName error:outError];
 	
 	//track the path.
-	[[self documentContents] setPath:fileName];
+	if([absoluteURL isFileURL] == YES)
+		[[self documentContents] setPath:[absoluteURL path]];
+	else
+		[[self documentContents] setPath:nil];
 	
 	return success;
 	
 }//end writeToFile:ofType:
 
 
-//========== dataRepresentationOfType: =========================================
+//========== dataOfType:error: =================================================
 //
 // Purpose:		Converts this document into a data object that can be written 
 //				to disk. This is where a document gets saved.
 //
-// You can also choose to override -fileWrapperRepresentationOfType: or 
-// -writeToFile:ofType: instead.
 //==============================================================================
-- (NSData *)dataRepresentationOfType:(NSString *)aType
+- (NSData *)dataOfType:(NSString *)typeName
+				 error:(NSError **)outError
 {
     NSString *modelOutput = [[self documentContents] write];
 	
 	return [modelOutput dataUsingEncoding:NSUTF8StringEncoding];
-}
+	
+}//end dataOfType:error:
 
 
 #pragma mark -
@@ -349,9 +367,11 @@
 //				document represents.
 //
 //==============================================================================
-- (LDrawFile *) documentContents{
+- (LDrawFile *) documentContents
+{
 	return documentContents;
-}
+	
+}//end documentContents
 
 
 //========== foremostWindow ====================================================
@@ -359,9 +379,11 @@
 // Purpose:		Returns the main editing window.
 //
 //==============================================================================
-- (NSWindow *)foremostWindow {
+- (NSWindow *) foremostWindow
+{
 	return [[[self windowControllers] objectAtIndex:0] window];
-}
+	
+}//end foremostWindow
 
 
 //========== gridSpacing =======================================================
@@ -406,7 +428,8 @@
 - (gridSpacingModeT) gridSpacingMode
 {
 	return gridMode;
-}
+	
+}//end gridSpacingMode
 
 
 //========== partBrowserDrawer =================================================
@@ -663,7 +686,7 @@
 		if([currentObject isKindOfClass:[LDrawPart class]])
 		{
 			if(mode == RotateAroundPartPositions)
-				rotationCenter = [currentObject position];
+				rotationCenter = [(LDrawPart*)currentObject position];
 		
 			[self rotatePart:currentObject
 				   byDegrees:rotation

@@ -140,19 +140,11 @@
 	// see other comments in -[LDrawStep optimize]
 	if(hasDisplayList == YES)
 	{
-		//on the somewhat non-committal advice of an Apple engineer who should 
-		// know, I am wrapping my calls to shared-context display lists with 
-		// mutexes.
-		pthread_mutex_lock(&displayListMutex);
-			
-			glCallList(self->displayListTag);
-				
-		pthread_mutex_unlock(&displayListMutex);
+		glCallList(self->displayListTag);
 	
 		#if OPTIMIZE_STEPS
 			glColor4fv(parentColor);
 		#endif
-		
 	}
 	else
 	{
@@ -391,8 +383,6 @@
 //		&&	(stepColor == LDrawCurrentColor || stepColor == LDrawEdgeColor)
 		&&	numberCommands >= 4 )
 	{
-		pthread_mutex_init(&displayListMutex, NULL);
-
 		// Generate only one display list. I used to create two; one for regular 
 		// normals and another for normals drown inside an inverted 
 		// transformation matrix. We don't need to do that anymore because we 

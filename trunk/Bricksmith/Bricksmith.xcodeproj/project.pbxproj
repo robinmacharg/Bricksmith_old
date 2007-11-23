@@ -1434,7 +1434,7 @@
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../AMSProgressBar/build/$(CONFIGURATION)/AMSProgressBar.framework/Headers";
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_LDFLAGS = "";
 				PREBINDING = NO;
 				PRODUCT_NAME = Bricksmith;
@@ -1461,7 +1461,7 @@
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../AMSProgressBar/build/$(CONFIGURATION)/AMSProgressBar.framework/Headers";
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_LDFLAGS = "";
 				PREBINDING = NO;
 				PRODUCT_NAME = Bricksmith;

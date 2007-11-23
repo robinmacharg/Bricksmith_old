@@ -9,7 +9,8 @@
 //  Copyright 2005. All rights reserved.
 //==============================================================================
 #import <Cocoa/Cocoa.h>
-#import <OpenGL/GL.h>
+#import <OpenGL/OpenGL.h>
+#import <OpenGL/gl.h>
 
 #import "ObjectInspectionController.h"
 
@@ -27,6 +28,7 @@
 
 	LDrawContainer *enclosingDirective; //LDraw files are a hierarchy.
 	BOOL			isSelected;
+	GLfloat			blah;
 	
 }
 

@@ -14,7 +14,7 @@
 
 @implementation PartBrowserTableView
 
-//========== dragImageForRows:event:dragImageOffset: ===========================
+//========== dragImageForRowsWithIndexes:tableColumns:event:offset: ============
 //
 // Purpose:		Return a better image for part drag-and-drop.
 //
@@ -23,9 +23,10 @@
 //			    it is dragged into. 
 //
 //==============================================================================
-- (NSImage *)dragImageForRows:(NSArray *)dragRows
-						event:(NSEvent *)dragEvent
-			  dragImageOffset:(NSPointPointer)dragImageOffset
+- (NSImage *)dragImageForRowsWithIndexes:(NSIndexSet *)dragRows
+							tableColumns:(NSArray *)tableColumns
+								   event:(NSEvent *)dragEvent
+								  offset:(NSPointPointer)dragImageOffset
 {
 	NSImage *arrowCursorImage	= [[NSCursor arrowCursor] image];
 	NSSize	 arrowSize			= [arrowCursorImage size];

@@ -36,38 +36,43 @@
 #pragma mark INITIALIZATION
 #pragma mark -
 
-//========== newModel ==========================================================
+//---------- newModel ------------------------------------------------[static]--
 //
 // Purpose:		Creates a new model ready to be edited.
 //
-//==============================================================================
-+ (id) newModel {
+//------------------------------------------------------------------------------
++ (id) newModel
+{
 	LDrawModel *newModel = [[LDrawModel alloc] initNew];
 	
 	return [newModel autorelease];
-}
+	
+}//end newModel
 
 
-//========== modelWithLines: ===================================================
+//---------- modelWithLines: -----------------------------------------[static]--
 //
-// Purpose:		Creates a new model file based on the lines from a file.
-//				These lines of strings should only describe one model, not 
-//				multiple ones.
+// Purpose:		Creates a new model file based on the lines from a file. These 
+//				lines of strings should only describe one model, not multiple 
+//				ones. 
 //
-//==============================================================================
+//------------------------------------------------------------------------------
 + (id) modelWithLines:(NSArray *)lines
 {
 	LDrawModel *newModel = [[LDrawModel alloc] initWithLines:lines];
 	
 	return [newModel autorelease];
-}
+	
+}//end modelWithLines:
+
 
 //========== init ==============================================================
 //
 // Purpose:		Creates a new, completely blank model file.
 //
 //==============================================================================
-- (id) init {
+- (id) init
+{
 	self = [super init];
 	
 	[self setModelDescription:@""];
@@ -569,7 +574,8 @@
 // Purpose:		Changes whether or not this is an official ldraw.org model.
 //
 //==============================================================================
-- (void) setLDrawRepositoryStatus:(LDrawDotOrgModelStatusT) newStatus{
+- (void) setLDrawRepositoryStatus:(LDrawDotOrgModelStatusT) newStatus
+{
 	ldrawDotOrgStatus = newStatus;
 }//end setLDrawRepositoryStatus
 
@@ -582,17 +588,19 @@
 //				be redisplayed.
 //
 //==============================================================================
-- (void) setMaximumStepDisplayed:(int)stepIndex {
-	
+- (void) setMaximumStepDisplayed:(int)stepIndex
+{
 	//Need to check and make sure this step number is not overflowing the bounds.
 	int maximumIndex = [[self steps] count]-1;
+	
 	if(stepIndex > maximumIndex || stepIndex < 0)
 		[NSException raise:NSRangeException format:@"index (%d) beyond maximum step index %d", stepIndex, maximumIndex];
-	else {
+	else
+	{
 		self->currentStepDisplayed = stepIndex;
 		[self setStepDisplay:YES];
 	}
-}
+}//end setMaximumStepDisplayed:
 
 
 //========== setStepDisplay ====================================================
@@ -688,7 +696,8 @@
 //				included.
 //
 //==============================================================================
-- (int) numberElements {
+- (int) numberElements
+{
 	NSArray		*steps			= [self steps];
 	LDrawStep	*currentStep	= nil;
 	int			 numberElements	= 0;
@@ -700,7 +709,8 @@
 	}
 	
 	return numberElements;
-}
+	
+}//end numberElements
 
 
 //========== optimize ==========================================================
@@ -783,7 +793,7 @@
 		self->cachedBounds = (Box3*)malloc( sizeof(Box3) );
 		memcpy( cachedBounds, &bounds, sizeof(Box3) );
 	}
-}
+}//end optimize
 
 
 //========== parseHeaderFromLines: =============================================
@@ -805,8 +815,8 @@
 //				the header.
 //
 //==============================================================================
-- (NSArray *) parseHeaderFromLines:(NSArray *) lines {
-	
+- (NSArray *) parseHeaderFromLines:(NSArray *) lines
+{
 	NSMutableArray	*linesWithoutHeader = [NSMutableArray arrayWithArray:lines];
 	NSString		*currentLine		= nil;
 	int				 counter			= 0;

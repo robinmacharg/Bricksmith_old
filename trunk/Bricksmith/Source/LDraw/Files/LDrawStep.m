@@ -141,10 +141,6 @@
 	if(hasDisplayList == YES)
 	{
 		glCallList(self->displayListTag);
-	
-		#if OPTIMIZE_STEPS
-			glColor4fv(parentColor);
-		#endif
 	}
 	else
 	{
@@ -176,10 +172,6 @@
 		//close drawing if we started it.
 		if(stepFlavor != LDrawStepAnyDirectives)
 			glEnd();
-			
-		#if OPTIMIZE_STEPS
-			glColor4fv(parentColor);
-		#endif
 	}
 
 }
@@ -329,17 +321,9 @@
 // Purpose:		Makes this step run faster by compiling its contents into a 
 //				display list if possible.
 //
-// Notes:		This was a misguided optimization. It turns out to be preferable 
-//				to simply display-list the entire part at once. Interestingly, 
-//				this whole route caused nasty graphical glitches. Each vertex in 
-//				the list needs to have a pre-associated color. Optimizing steps 
-//				would only work assuming that each display list could be 
-//				associated with a color *on the fly.* But we can't do that; the 
-//				display list needs to have colors *cooked in.*
-//
-//				BUT! BUT! Optimizing steps also DRAMATICALLY reduces memory 
-//				requirements, which means that huge models are actually usable.
-//				So this is back in pending better ideas.
+// Notes:		Now that I'm creating a display list for the entire part at 
+//				once, this optimization seems to provide no speed 
+//				advantange--and maybe even a very, very slight disadvantage. 
 //
 //==============================================================================
 - (void) optimize
@@ -372,35 +356,47 @@
 		
 	}
 	
-	//Put what we can in a display list. I haven't figured out how to overcome 
-	// the hierarchical nature of LDraw with display lists yet, so our options 
-	// are really very limited here.
-	//
-	//Another note: Display list IDs are by default unique to their context. 
-	// We want them to be global to the application! Solution: we set up a 
-	// shared context in LDrawApplication.
-	if(		isColorOptimizable == YES
-//		&&	(stepColor == LDrawCurrentColor || stepColor == LDrawEdgeColor)
-		&&	numberCommands >= 4 )
-	{
-		// Generate only one display list. I used to create two; one for regular 
-		// normals and another for normals drown inside an inverted 
-		// transformation matrix. We don't need to do that anymore because we 
-		// have two light sources, pointed in exactly opposite directions, so 
-		// that both kinds of normals will be illuminated. 
-		self->displayListTag	= glGenLists(1);
-		GLfloat glColor[4];
-		rgbafForCode(stepColor, glColor);
-
-		glNewList(displayListTag, GL_COMPILE);
-			[self draw:DRAW_NO_OPTIONS parentColor:glColor];
-		glEndList();
-		
-		//We have generated the list; we can now safely flag this step to be 
-		// henceforth drawn via the list.
-		self->hasDisplayList = YES;
-		
-	}//end if is optimizable
+	// Obsolete notion. 
+	// Notes:		This was a misguided optimization. It turns out to be 
+	//				preferable to simply display-list the entire part at once. 
+	//				Interestingly, this whole route caused nasty graphical 
+	//				glitches. Each vertex in the list needs to have a 
+	//				pre-associated color. Optimizing steps would only work 
+	//				assuming that each display list could be associated with a 
+	//				color *on the fly.* But we can't do that; the display list 
+	//				needs to have colors *cooked in.*  
+	
+//	//Put what we can in a display list. I haven't figured out how to overcome 
+//	// the hierarchical nature of LDraw with display lists yet, so our options 
+//	// are really very limited here.
+//	//
+//	//Another note: Display list IDs are by default unique to their context. 
+//	// We want them to be global to the application! Solution: we set up a 
+//	// shared context in LDrawApplication.
+//	if(		isColorOptimizable == YES
+////		&&	(stepColor == LDrawCurrentColor || stepColor == LDrawEdgeColor)
+//		&&	numberCommands >= 4 )
+//	{
+//		pthread_mutex_init(&displayListMutex, NULL);
+//
+//		// Generate only one display list. I used to create two; one for regular 
+//		// normals and another for normals drown inside an inverted 
+//		// transformation matrix. We don't need to do that anymore because we 
+//		// have two light sources, pointed in exactly opposite directions, so 
+//		// that both kinds of normals will be illuminated. 
+//		self->displayListTag	= glGenLists(1);
+//		GLfloat glColor[4];
+//		rgbafForCode(stepColor, glColor);
+//
+//		glNewList(displayListTag, GL_COMPILE);
+//			[self draw:DRAW_NO_OPTIONS parentColor:glColor];
+//		glEndList();
+//		
+//		//We have generated the list; we can now safely flag this step to be 
+//		// henceforth drawn via the list.
+//		self->hasDisplayList = YES;
+//		
+//	}//end if is optimizable
 	
 #endif
 }//end optimize

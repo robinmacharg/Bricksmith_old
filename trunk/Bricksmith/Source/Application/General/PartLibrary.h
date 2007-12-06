@@ -37,7 +37,7 @@
 - (LDrawModel *) modelForPart:(LDrawPart *) part;
 - (NSString *) pathForPartName:(NSString *)partName;
 - (LDrawModel *) modelFromNeighboringFileForPart:(LDrawPart *)part;
-- (GLuint) retainDisplayListForPart:(LDrawPart *)part;
+- (GLuint) retainDisplayListForPart:(LDrawPart *)part color:(GLfloat *)color;
 
 //Utilites
 - (void) addPartsInFolder:(NSString *)folderPath

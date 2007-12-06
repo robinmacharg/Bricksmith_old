@@ -482,15 +482,22 @@
 //
 // Purpose:		Returns the display list tag used to draw the given part. 
 //				Display lists are shared among multiple part instances of the 
-//				same name and color in order to reduce memory space.				
+//				same name and color in order to reduce memory space.	
+//
+// Parameters:	part	- part to get/create a display list for.
+//				color	- RGBA color for the part. We can't just ask the part for 
+//						  its color because it might be LDrawCurrentColor, in 
+//						  which case it is supposed to draw with its parent 
+//						  color. 
 //
 //==============================================================================
-- (GLuint) retainDisplayListForPart:(LDrawPart *)part
+- (GLuint) retainDisplayListForPart:(LDrawPart *) part
+							  color:(GLfloat *) glColor
 {
 	GLuint				 displayListTag	= 0;
 	NSString			*referenceName	= [part referenceName];
-	LDrawColorT			 color			= [part LDrawColor];
 	NSMutableDictionary	*partRecord		= nil;
+	NSString			*key			= [NSString stringWithFormat:@"%f %f %f %f", glColor[0], glColor[1], glColor[2], glColor[3] ];
 	NSNumber			*listTag		= nil;
 	
 	if([referenceName length] > 0)
@@ -506,7 +513,7 @@
 		else
 		{
 			// try to get a previously-cached list for this part/color
-			listTag = [partRecord objectForKey:[NSString stringWithFormat:@"%d", color]];
+			listTag = [partRecord objectForKey:key];
 		}
 	
 		if(listTag != nil)
@@ -516,11 +523,8 @@
 		}
 		else
 		{
-			GLfloat		 glColor[4]; //OpenGL equivalent of the LDrawColor.
 			LDrawModel	*modelToDraw = [self modelForPart:part];
 			
-			rgbafForCode(color, glColor);
-
 			if(modelToDraw != nil)
 			{
 				displayListTag = glGenLists(1); //create new list name
@@ -529,13 +533,15 @@
 				//transformation matrix, and we want our display list to be 
 				//independent of the transformation. So we shortcut part drawing 
 				//and do the model itself. 
-				glNewList(displayListTag, GL_COMPILE);
-//					glColor4fv(glColor); //set the color for this element.
-					[modelToDraw draw:DRAW_NO_OPTIONS parentColor:glColor];
-				glEndList();
+//				glPushMatrix();
+//					glLoadIdentity();
+					glNewList(displayListTag, GL_COMPILE);
+						[modelToDraw draw:DRAW_IN_IMMEDIATE_MODE parentColor:glColor];
+					glEndList();
+//				glPopMatrix();
 				
 				[partRecord setObject:[NSNumber numberWithUnsignedInt:displayListTag]
-							   forKey:[NSString stringWithFormat:@"%d", color] ];
+							   forKey:key ];
 				
 //				NSLog(@"generated %d for %@ %d", displayListTag, referenceName, color);
 			}
@@ -545,7 +551,7 @@
 	
 	return displayListTag;
 	
-}//end retainDisplayListForPart:
+}//end retainDisplayListForPart:color:
 
 
 #pragma mark -
@@ -559,14 +565,16 @@
 //				category if you wish to use the categories defined in the parts 
 //				themselves.
 //
-// Parameters:	categoryOverride: force all parts in the folder to be filed 
-//					under this category, rather than the one defined inside the 
-//					part.
-//				namePrefix: appends this prefix to each part scanned. Part 
-//					references in LDraw/parts/s should be prefixed with the DOS 
-//					path "s\". Pass nil to ignore the prefix.
-//				progressPanel: a progress panel which is displaying the progress 
-//					of the creation of the part catalog.
+// Parameters:	categoryOverride	- force all parts in the folder to be filed 
+//									  under this category, rather than the one 
+//									  defined inside the part. 
+//				namePrefix			- appends this prefix to each part scanned. 
+//									  Part references in LDraw/parts/s should be 
+//									  prefixed with the DOS path "s\". Pass nil 
+//									  to ignore the prefix. 
+//				progressPanel		- a progress panel which is displaying the 
+//									  progress of the creation of the part 
+//									  catalog. 
 //
 //==============================================================================
 - (void) addPartsInFolder:(NSString *)folderPath

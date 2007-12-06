@@ -136,9 +136,8 @@
 		
 		if(self->color == LDrawCurrentColor)
 		{
-			#if (OPTIMIZE_STEPS == 0)
-				glColor4fv(parentColor); //restore the parent color. OFF IF STEP-OPTIMIZING.
-			#endif
+			//restore the parent color.
+			glColor4fv(parentColor);
 			
 			//Just draw; don't fool with colors. A significant portion of our 
 			// drawing code probably falls into this category.
@@ -146,17 +145,11 @@
 		}
 		else
 		{
-			#if (OPTIMIZE_STEPS == 0) //we don't HAVE the parent color when steps are optimized
-				if(self->color == LDrawEdgeColor)
-					complimentColor(parentColor, glColor);
-			#endif
-		
+			if(self->color == LDrawEdgeColor)
+				complimentColor(parentColor, glColor);
+	
 			glColor4fv(glColor); //set the color for this element.
 			[self drawElement:optionsMask parentColor:glColor];
-			#if OPTIMIZE_STEPS
-				//restore the parent color. NO NEED. Each element does its own color now.
-				glColor4fv(parentColor);
-			#endif
 		}
 			
 		//Done drawing a selected part? Then switch back to normal filled drawing.

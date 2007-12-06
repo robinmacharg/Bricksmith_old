@@ -259,17 +259,36 @@
 //	if(self->matrixIsReversed)
 //		optionsMask ^= DRAW_REVERSE_NORMALS;
 	
+//	GLuint drawList;
+//	if(hasDisplayList == YES)
+//		drawList = self->displayListTag;
+//	else
+//	{
+//		drawList = [[LDrawApplication sharedPartLibrary]
+//													retainDisplayListForPart:self
+//																	   color:parentColor ];
+//	}
+	
 	//glMatrixMode(GL_MODELVIEW); //unnecessary, we set the matrix mode at the beginning of drawing.
 	glPushMatrix();
 		glMultMatrixf(glTransformation);
 		if((optionsMask & DRAW_BOUNDS_ONLY) == 0)
 		{
+//			glCallList(drawList);
+			
 			if( hasDisplayList == YES )
 			{
 				glCallList(self->displayListTag);
 			}
+//			else /*if(	(optionsMask & DRAW_IN_IMMEDIATE_MODE) == 0
+//					 && [self referencedMPDSubmodel] == nil )*/
+//			{
+//				GLuint tempDisplayList = 
+//				glCallList(tempDisplayList);
+//			}
 			else
-				[modelToDraw draw:optionsMask parentColor:parentColor];
+				[modelToDraw draw:(optionsMask) //let subreferences use display lists.
+					  parentColor:parentColor];
 		}
 		else
 			[self drawBounds];
@@ -1025,55 +1044,20 @@
 	{
 		LDrawModel *referencedSubmodel	= [self referencedMPDSubmodel];
 		
-		#if (OPTIMIZE_STEPS	== 0)
-			if(referencedSubmodel == nil)
-			{
-				self->displayListTag = [[LDrawApplication sharedPartLibrary]
-														retainDisplayListForPart:self];
-				if(displayListTag != 0)
-					self->hasDisplayList = YES;
-			}
-			else
-			{
-				// Don't optimize MPD references. The user can change their 
-				// referenced contents, and I don't want to have to keep track 
-				// of invalidating display lists when he does. 
-			}
-			
-		#else
-			LDrawModel *modelToDraw			= [[LDrawApplication sharedPartLibrary] modelForPart:self];
-			
-			//Don't optimize MPD references. The user can change their referenced
-			// contents, and I don't want to have to keep track of invalidating 
-			// display lists when he does.
-			if(referencedSubmodel == nil && modelToDraw != nil)
-			{
-				if(self->hasDisplayList == NO)
-					self->displayListTag = glGenLists(1); //create new list name
-				//else
-					//recycle old list name.
-				
-				//Don't ask the part to draw itself, either. Parts modify the 
-				// transformation matrix, and we want our display list to be 
-				// independent of the transformation. So we shortcut part 
-				// drawing and do the model itself.
-				glNewList(displayListTag, GL_COMPILE);
-					glColor4fv(self->glColor); //set the color for this element.
-					[modelToDraw draw:DRAW_NO_OPTIONS parentColor:self->glColor];
-				glEndList();
-				
+		if(referencedSubmodel == nil)
+		{
+			self->displayListTag = [[LDrawApplication sharedPartLibrary]
+													retainDisplayListForPart:self
+																	   color:self->glColor];
+			if(displayListTag != 0)
 				self->hasDisplayList = YES;
-			}
-			//we already have a refeneced MPD submodel
-			else
-			{
-				if(self->hasDisplayList == YES)
-				{
-					glDeleteLists(self->displayListTag, 1);
-					self->hasDisplayList = NO;
-				}
-			}
-		#endif
+		}
+		else
+		{
+			// Don't optimize MPD references. The user can change their 
+			// referenced contents, and I don't want to have to keep track 
+			// of invalidating display lists when he does. 
+		}
 	}
 	else
 		self->hasDisplayList = NO;
@@ -1120,9 +1104,7 @@
 	//give our display list back
 	if(self->hasDisplayList)
 	{
-		#if (OPTIMIZE_STEPS	== 1)
-			glDeleteLists(displayListTag, 1);
-		#endif
+		// I suppose we could release it here.
 	}
 	
 	[super dealloc];

@@ -43,5 +43,6 @@
 //Utilities
 - (NSMutableArray *) filterParts:(NSArray *)partRecords bySearchString:(NSString *)searchString;
 - (void) syncSelectionAndPartDisplayed;
+- (BOOL) writeSelectedPartToPasteboard:(NSPasteboard *)pasteboard;
 
 @end

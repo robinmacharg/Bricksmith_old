@@ -10,7 +10,7 @@
 //==============================================================================
 #import "PartBrowserTableView.h"
 
-#import "BezierPathCategory.h"
+#import "LDrawUtilities.h"
 
 @implementation PartBrowserTableView
 
@@ -28,29 +28,28 @@
 								   event:(NSEvent *)dragEvent
 								  offset:(NSPointPointer)dragImageOffset
 {
-	NSImage *arrowCursorImage	= [[NSCursor arrowCursor] image];
-	NSSize	 arrowSize			= [arrowCursorImage size];
-	NSImage	*brickImage			= [NSImage imageNamed:@"Brick"];
-	float	 border				= 3;
-	NSSize	 dragImageSize		= NSMakeSize([brickImage size].width + border*2, [brickImage size].height + border*2);
-	NSImage	*dragImage			= [[NSImage alloc] initWithSize:dragImageSize];
+	NSPoint	 offset				= NSZeroPoint;
+	NSImage	*dragImage			= [LDrawUtilities dragImageWithOffset:&offset];
 	
-	// turns out the arrow cursor image is a 24 x 24 picture, and the arrow 
-	// itself occupies only a small part of the lefthand side of that space. 
-	// Looks like it's very difficult to get the drag image over to the right of 
-	// the arrow without hardcoding some values. 
-	*dragImageOffset = NSMakePoint(arrowSize.width/2 + [dragImage size].width/2, -arrowSize.height / 2);
+	// The NSTableView drag code automatically centers the drag image at the 
+	// mouse cursor. Start by counteracting that so it appears directly above 
+	// the cursor, as it would if you passed the mouse location directly to 
+	// -[NSView dragImage:...]:
+	*dragImageOffset = NSMakePoint([dragImage size].width/2, [dragImage size].height/2);
+	
+	// Now move the image over so it looks like a badge next to the cursor:
+	//   ...Turns out the arrow cursor image is a 24 x 24 picture, and the arrow 
+	//   itself occupies only a small part of the lefthand side of that space. 
+	//   We have to resort to a hardcoded assumption that the actual arrow 
+	//   picture fills only half the full image.  
+	//   ...We subtract from y; it seems the table view is compensating for the 
+	//   flippedness of its coordinate system by accepting a natural offset. 
+	(*dragImageOffset).x += offset.x;
+	(*dragImageOffset).y += offset.y;
 
-	[dragImage lockFocus];
-		
-		[[NSColor colorWithDeviceWhite:0.6 alpha:0.75] set];
-		[[NSBezierPath bezierPathWithRect:NSMakeRect(0, 0, dragImageSize.width,dragImageSize.height) radiusPercentage:50.0] fill];
-		
-		[brickImage drawAtPoint:NSMakePoint(border, border) fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-		
-	[dragImage unlockFocus];
 	
-	return [dragImage autorelease];
+	return dragImage;
+	
 }//end dragImageForRows:event:dragImageOffset:
 
 

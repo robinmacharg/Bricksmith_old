@@ -28,7 +28,6 @@
 
 	LDrawContainer *enclosingDirective; //LDraw files are a hierarchy.
 	BOOL			isSelected;
-	GLfloat			blah;
 	
 }
 
@@ -40,7 +39,7 @@
 - (NSString *) write;
 
 //Display
-- (NSString *)browsingDescription;
+- (NSString *) browsingDescription;
 - (NSString *) iconName;
 - (NSString *) inspectorClassName;
 
@@ -48,6 +47,8 @@
 - (NSArray *)ancestors;
 - (LDrawContainer *) enclosingDirective;
 - (LDrawFile *) enclosingFile;
+- (BOOL) isSelected;
+
 - (void) setEnclosingDirective:(LDrawContainer *)newParent;
 - (void) setSelected:(BOOL)flag;
 
@@ -57,7 +58,7 @@
 - (void) unlockEditor;
 
 //Utilities
-- (BOOL)isAncestorInList:(NSArray *)containers;
+- (BOOL) isAncestorInList:(NSArray *)containers;
 - (void) registerUndoActions:(NSUndoManager *)undoManager;
 
 @end

@@ -20,7 +20,7 @@
 #pragma mark INITIALIZATION
 #pragma mark -
 
-//========== directiveWithString: ==============================================
+//---------- directiveWithString: ------------------------------------[static]--
 //
 // Purpose:		Returns the LDraw directive based on lineFromFile, a single line 
 //				of LDraw code from a file.
@@ -39,12 +39,15 @@
 //				//Now initialize whatever subclass we came up with for this line.
 //				newDirective = [LineTypeClass directiveWithString:lineFromFile];
 //
-//==============================================================================
-+ (id) directiveWithString:(NSString *)lineFromFile{
+//------------------------------------------------------------------------------
++ (id) directiveWithString:(NSString *)lineFromFile
+{
 	id newDirective = [LDrawDirective new];
 	
 	return [newDirective autorelease];
-}
+	
+}//end directiveWithString:
+
 
 //========== init ==============================================================
 //
@@ -52,11 +55,15 @@
 //				initialization code.
 //
 //==============================================================================
-- (id) init {
+- (id) init
+{
 	self = [super init];
+	
 	enclosingDirective = nil;
+	
 	return self;
-}
+	
+}//end init
 
 
 //========== initWithCoder: ====================================================
@@ -66,7 +73,7 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (id)initWithCoder:(NSCoder *)decoder
+- (id) initWithCoder:(NSCoder *)decoder
 {
 	//The superclass doesn't support NSCoding. So we just call the default init.
 	self = [super init];
@@ -74,7 +81,8 @@
 	[self setEnclosingDirective:[decoder decodeObjectForKey:@"enclosingDirective"]];
 	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== encodeWithCoder: ==================================================
@@ -84,7 +92,7 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (void)encodeWithCoder:(NSCoder *)encoder
+- (void) encodeWithCoder:(NSCoder *)encoder
 {
 	//self = [super encodeWithCoder:encoder]; //super doesn't implement this method.
 	
@@ -92,7 +100,7 @@
 	// someone else encodes the parent unconditionally.
 	[encoder encodeConditionalObject:enclosingDirective forKey:@"enclosingDirective"];
 	
-}
+}//end encodeWithCoder:
 
 
 //========== copyWithZone: =====================================================
@@ -101,7 +109,8 @@
 //				This thing has issules. Note caveats in LDrawContainer.
 //
 //==============================================================================
-- (id) copyWithZone:(NSZone *)zone {
+- (id) copyWithZone:(NSZone *)zone
+{
 	//Allocate a new instance because we don't inherit -copy: from anybody.
 	// Note the code to ensure that the correct subclass is allocated!
 	// Since LDrawDirective is the root LDraw class, all [subclass copy] 
@@ -112,14 +121,15 @@
 	[copied setSelected:self->isSelected];
 	
 	return copied;
-}
+	
+}//end copyWithZone:
 
 
 #pragma mark -
 #pragma mark DIRECTIVES
 #pragma mark -
 
-//========== draw ==============================================================
+//========== draw:parentColor: =================================================
 //
 // Purpose:		Issues the OpenGL code necessary to draw this element.
 //
@@ -127,9 +137,12 @@
 //				LDrawDirective's implementation does nothing.
 //
 //==============================================================================
-- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor {
+- (void) draw:(unsigned int)optionsMask parentColor:(GLfloat *)parentColor
+{
 	//subclasses should override this with OpenGL code to draw the line.
-}
+	
+}//end draw:parentColor:
+
 
 //========== write =============================================================
 //
@@ -140,10 +153,12 @@
 //				LDrawDirective's implementation does nothing.
 //
 //==============================================================================
-- (NSString *) write{
+- (NSString *) write
+{
 	//Returns a representation of the line which can be written out to a file.
 	return [NSString string]; //empty string; subclasses should override this method.
-}
+	
+}//end write
 
 
 #pragma mark -
@@ -156,10 +171,11 @@
 //				which can be presented to the user.
 //
 //==============================================================================
-- (NSString *)browsingDescription
+- (NSString *) browsingDescription
 {
 	return [NSString stringWithFormat:@"%@", [self class]];
-}
+	
+}//end browsingDescription
 
 
 //========== iconName ==========================================================
@@ -168,9 +184,11 @@
 //				object.
 //
 //==============================================================================
-- (NSString *) iconName{
+- (NSString *) iconName
+{
 	return @""; //Nothing.
-}
+	
+}//end iconName
 
 
 //========== inspectorClassName ================================================
@@ -178,9 +196,12 @@
 // Purpose:		Returns the name of the class used to inspect this one.
 //
 //==============================================================================
-- (NSString *) inspectorClassName{
+- (NSString *) inspectorClassName
+{
 	return @"";
-}
+	
+}//end inspectorClassName
+
 
 #pragma mark -
 #pragma mark ACCESSORS
@@ -194,7 +215,8 @@
 //				the first index.
 //
 //==============================================================================
-- (NSArray *)ancestors {
+- (NSArray *) ancestors
+{
 	NSMutableArray *ancestors		= [NSMutableArray arrayWithCapacity:3];
 	LDrawDirective *currentAncestor = self;
 	
@@ -204,7 +226,8 @@
 	}
 	
 	return ancestors;
-}
+	
+}//end ancestors
 
 
 //========== enclosingDirective ================================================
@@ -230,9 +253,11 @@
 // Notes:		LDrawFiles return nil.
 //
 //==============================================================================
-- (LDrawContainer *) enclosingDirective {
+- (LDrawContainer *) enclosingDirective
+{
 	return enclosingDirective;
-}
+	
+}//end enclosingDirective
 
 
 //========== enclosingFile =====================================================
@@ -265,15 +290,31 @@
 }//end enclosingFile
 
 
+//========== isSelected ========================================================
+//
+// Purpose:		Returns whether this directive thinks it's selected.
+//
+//==============================================================================
+- (BOOL) isSelected
+{
+	return self->isSelected;
+
+}//end isSelected
+
+
+#pragma mark -
+
 //========== setEnclosingDirective: ============================================
 //
 // Purpose:		Just about all directives can be nested inside another one, so 
 //				this is where this method landed.
 //
 //==============================================================================
-- (void) setEnclosingDirective:(LDrawContainer *)newParent{
+- (void) setEnclosingDirective:(LDrawContainer *)newParent
+{
 	enclosingDirective = newParent;
-}
+	
+}//end setEnclosingDirective:
 
 
 //========== setSelected: ======================================================
@@ -281,9 +322,11 @@
 // Purpose:		Somebody make this a protocol method.
 //
 //==============================================================================
-- (void) setSelected:(BOOL)flag {
+- (void) setSelected:(BOOL)flag
+{
 	self->isSelected = flag;
-}
+	
+}//end setSelected:
 
 #pragma mark -
 #pragma mark <INSPECTABLE>
@@ -323,7 +366,8 @@
 	[[undoManager prepareWithInvocationTarget:self] snapshot];
 	//First thing to call is snapshot, so that redo commands are filled 
 	// with the values of the current state.
-}
+	
+}//end snapshot
 
 
 //========== lockForEditing ====================================================
@@ -334,7 +378,8 @@
 - (void) lockForEditing
 {
 	[[self enclosingFile] lockForEditing];
-}
+	
+}//end lockForEditing
 
 
 //========== unlockEditor ======================================================
@@ -345,8 +390,8 @@
 - (void) unlockEditor
 {
 	[[self enclosingFile] unlockEditor];
-}
-
+	
+}//end unlockEditor
 
 
 #pragma mark -
@@ -360,12 +405,14 @@
 //				suitable for printing to the console.
 //
 //==============================================================================
-- (NSString *)description{
+- (NSString *) description
+{
 	return [NSString stringWithFormat:@"%@\n%@", [self class], [self write]];
-}
+	
+}//end description
 
 
-//========== isAncestorInList ==================================================
+//========== isAncestorInList: =================================================
 //
 // Purpose:		Given a list of LDrawContainers, returns YES if any of the 
 //				containers is a direct ancestor of the receiver. An ancestor is 
@@ -381,25 +428,30 @@
 	LDrawDirective	*ancestor		= self;
 	BOOL			 foundInList	= NO;
 	
-	do {
+	do
+	{
 		ancestor = [ancestor enclosingDirective];
 		foundInList = [containers containsObject:ancestor];
+		
 	}while(ancestor != nil && foundInList == NO);
 	
 	return foundInList;
-}
+	
+}//end isAncestorInList:
 
-//========== registerUndoActions ===============================================
+
+//========== registerUndoActions: ==============================================
 //
 // Purpose:		Registers the undo actions that are unique to this subclass, 
 //				not to any superclass.
 //
 //==============================================================================
-- (void) registerUndoActions:(NSUndoManager *)undoManager {
-	
+- (void) registerUndoActions:(NSUndoManager *)undoManager
+{
 	//LDrawDirectives are fairly abstract, so all undoable attributes come 
 	// from subclasses.
-}
+	
+}//end registerUndoActions:
 
 
 @end

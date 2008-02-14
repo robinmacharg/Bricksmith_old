@@ -160,7 +160,7 @@ extern float	V3Length(Vector3 *);
 extern Vector3*	V3Negate(Vector3 *v);
 extern Vector3*	V3Normalize(Vector3 *);
 extern Vector3*	V3Scale(Vector3 *, float);
-extern Vector3*	V3Add(Vector3 *a, Vector3 *b, Vector3 *c);
+extern Vector3	V3Add(Vector3 a, Vector3 b);
 extern Vector3	V3Sub(Vector3 a, Vector3 b);
 extern float	V3Dot(Vector3 *a, Vector3 *b);
 extern Vector3*	V3Lerp(Vector3 *lo, Vector3 *hi, float alpha, Vector3 *result);
@@ -175,7 +175,7 @@ extern Vector3*	V3IsolateGreatestComponent(Vector3 *vector);
 extern Point3*	V3MulPointByMatrix();
 extern Vector3*	V3MulPointByProjMatrix();
 extern Matrix4*	V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c);
-extern void		V3Print(Point3 *point);
+extern void		V3Print(Point3 point);
 extern float	det3x3( float, float, float, float, float, float, float, float, float );
 
 extern Vector4	V4Make(float x, float y, float z, float w);

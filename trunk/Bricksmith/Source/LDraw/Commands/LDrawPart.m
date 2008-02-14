@@ -250,7 +250,7 @@
 //				subroutine of -draw: in LDrawDrawableElement.
 //
 //==============================================================================
-- (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor
+- (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor
 {
 	LDrawModel *modelToDraw = [[LDrawApplication sharedPartLibrary] modelForPart:self];
 	
@@ -288,7 +288,7 @@
 //			}
 			else
 				[modelToDraw draw:(optionsMask) //let subreferences use display lists.
-					  parentColor:parentColor];
+					  parentColor:drawingColor];
 		}
 		else
 			[self drawBounds];
@@ -875,7 +875,8 @@
 //				The part's rotation angles will be adjusted to multiples of the 
 //				minimum angle specified.
 //
-// Parameters:	gridSpacing	- the grid line interval along stud widths.
+// Parameters:	components	- transform to adjust.
+//				gridSpacing	- the grid line interval along stud widths.
 //				degrees		- angle granularity. Pass 0 to leave angle 
 //							  unchanged. 
 //

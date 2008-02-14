@@ -4,10 +4,10 @@
 //
 // Purpose:		Draws an LDrawFile with OpenGL.
 //
-//				We also handle processing of mouse events related to the 
-//				document. Certain user interactions must be handed off to an 
+//				We also handle processing of user events related to the 
+//				document. Certain interactions must be handed off to an 
 //				LDrawDocument in order for them to effect the object being 
-//				drawn.
+//				drawn. 
 //
 //				This class also provides for a number of mouse-based viewing 
 //				tools triggered by hotkeys. However, we don't track them here! 
@@ -42,6 +42,7 @@
 #import "LDrawModel.h"
 #import "LDrawPart.h"
 #import "LDrawStep.h"
+#import "LDrawUtilities.h"
 #import "MacLDraw.h"
 #import "UserDefaultsCategory.h"
 
@@ -267,7 +268,8 @@
 		[NSThread detachNewThreadSelector:@selector(drawThreaded:) toTarget:self withObject:nil];
 	else
 		[self drawThreaded:nil];
-}
+		
+}//end drawRect:
 
 
 //========== drawThreaded: =====================================================
@@ -466,9 +468,11 @@
 //				it is flipped, though.
 //
 //==============================================================================
-- (BOOL) isFlipped {
+- (BOOL) isFlipped
+{
 	return YES;
-}
+	
+}//end isFlipped
 
 
 #pragma mark -
@@ -480,9 +484,11 @@
 // Purpose:		Allows us to pick up key events.
 //
 //==============================================================================
-- (BOOL)acceptsFirstResponder {
+- (BOOL)acceptsFirstResponder
+{
 	return self->acceptsFirstResponder;
-}
+	
+}//end acceptsFirstResponder
 
 
 //========== centerPoint =======================================================
@@ -496,7 +502,20 @@
 {
 	NSRect visibleRect = [self visibleRect];
 	return NSMakePoint( NSMidX(visibleRect), NSMidY(visibleRect) );
-}
+	
+}//end centerPoint
+
+
+//========== document ==========================================================
+//
+// Purpose:		Returns the document this view works in tandem with.
+//
+//==============================================================================
+- (LDrawDocument *) document
+{
+	return self->document;
+	
+}//end document
 
 
 //========== getInverseMatrix ==================================================
@@ -566,8 +585,10 @@
 // Purpose:		Returns the LDraw color code of the receiver.
 //
 //==============================================================================
--(LDrawColorT) LDrawColor{
-	return color;
+-(LDrawColorT) LDrawColor
+{
+	return self->color;
+	
 }//end color
 
 
@@ -577,9 +598,11 @@
 //				orthographic) used in the view.
 //
 //==============================================================================
-- (ProjectionModeT) projectionMode {
+- (ProjectionModeT) projectionMode
+{
 	return self->projectionMode;
-}
+	
+}//end projectionMode
 
 
 //========== viewingAngle ======================================================
@@ -587,9 +610,11 @@
 // Purpose:		Returns the current camera orientation for this view.
 //
 //==============================================================================
-- (ViewingAngleT) viewingAngle{
-	return viewingAngle;
-}		
+- (ViewingAngleT) viewingAngle
+{
+	return self->viewingAngle;
+	
+}//end viewingAngle
 
 
 //========== zoomPercentage ====================================================
@@ -637,7 +662,7 @@
 - (void) setAcceptsFirstResponder:(BOOL)flag
 {
 	self->acceptsFirstResponder = flag;
-}
+}//end 
 
 
 //========== setAutosaveName: ==================================================
@@ -650,8 +675,55 @@
 {
 	[newName retain];
 	[self->autosaveName release];
-	autosaveName = newName;
-}
+	self->autosaveName = newName;
+	
+}//end setAutosaveName:
+
+
+//========== setDelegate: ======================================================
+//
+// Purpose:		Sets the object that acts as the delegate for the receiver. 
+//
+// Notes:		This object acts in tandem two different "delegate" concepts: 
+//				the delegate and the document. The delegate is responsible for 
+//				more high-level, general activity, as described in the 
+//				LDrawGLViewDelegate category. The document is an actual 
+//				LDrawDocument, used for the nitty-gritty manipulation of the 
+//				model this view supports. 
+//
+//==============================================================================
+- (void) setDelegate:(id)object
+{
+	// weak link.
+	self->delegate = object;
+	
+}//end setDelegate:
+
+
+//========== setDragEndedInOurDocument: ========================================
+//
+// Purpose:		When a dragging operation we initiated ends outside the 
+//				originating document, we need to know about it so that we can 
+//				tell the document to completely delete the directives it started 
+//				dragging. (They are merely hidden during the drag.) However, 
+//				each document can be represented by multiple views, so it is 
+//				insufficient to simply test whether the drag ended within this 
+//				view. 
+//
+//				So, when a drag ends in any LDrawGLView, it inspects the 
+//				dragging source to see if it represents the same document. If it 
+//				does, it sends the source this message. If this message hasn't 
+//				been received by the time the drag ends, this view will 
+//				automatically instruct its document to purge the source 
+//				directives, since the directives were actually dragged out of 
+//				their document. 
+//
+//==============================================================================
+- (void) setDragEndedInOurDocument:(BOOL)flag
+{
+	self->dragEndedInOurDocument = flag;
+	
+}//end setDragEndedInOurDocument:
 
 
 //========== setLDrawColor: ====================================================
@@ -662,10 +734,10 @@
 //==============================================================================
 -(void) setLDrawColor:(LDrawColorT)newColor
 {
-	color = newColor;
+	self->color = newColor;
 	
 	//Look up the OpenGL color now so we don't have to whenever we draw.
-	rgbafForCode(color, glColor);
+	rgbafForCode(self->color, self->glColor);
 	
 }//end setColor
 
@@ -692,7 +764,7 @@
 		//Update our variable.
 		[newFile retain];
 		[self->fileBeingDrawn release];
-		fileBeingDrawn = newFile;
+		self->fileBeingDrawn = newFile;
 		
 		[[NSNotificationCenter defaultCenter] //force redisplay with glOrtho too.
 				postNotificationName:NSViewFrameDidChangeNotification
@@ -880,7 +952,7 @@
 	float newZoom		= currentZoom * 2;
 	
 	[self setZoomPercentage:newZoom];
-}
+}//end 
 
 
 //========== zoomOut: ==========================================================
@@ -914,8 +986,8 @@
 	
 	if(success == YES)
 	{
-		if(self->document != nil)
-			[document LDrawGLViewBecameFirstResponder:self];
+		if(self->delegate != nil && [self->delegate respondsToSelector:@selector(LDrawGLViewBecameFirstResponder:)])
+			[self->delegate LDrawGLViewBecameFirstResponder:self];
 		
 		//need to draw the focus ring now
 		[self setNeedsDisplay:YES];
@@ -1062,9 +1134,10 @@
 - (BOOL) worksWhenModal
 {
 	return YES;
-}
+}//end 
 
 #pragma mark -
+#pragma mark Keyboard
 
 //========== keyDown: ==========================================================
 //
@@ -1267,23 +1340,41 @@
 	
 }//end nudgeKeyDown:
 
+
 #pragma mark -
+#pragma mark Mouse
 
 //========== mouseDown: ========================================================
 //
 // Purpose:		We received a mouseDown before a mouseDragged. Handy thought.
 //
 //==============================================================================
-- (void)mouseDown:(NSEvent *)theEvent
+- (void) mouseDown:(NSEvent *)theEvent
 {
+	ToolModeT	toolMode	= [ToolPalette toolMode];
+
 	self->isDragging = NO; //not yet, anyway. If it does, that will be 
 		//recorded in mouseDragged. Otherwise, this value will remain NO.
 	
 	[self resetCursor];
 	
-	if([ToolPalette toolMode] == SmoothZoomTool)
+	if(toolMode == SmoothZoomTool)
 		[self mouseCenterClick:theEvent];
-}	
+		
+	else if(toolMode == RotateSelectTool)
+	{
+		// Try waiting for a click-and-hold; that means "begin drag-and-drop"
+		
+		[self cancelClickAndHoldTimer]; // just in case
+		
+		self->mouseDownTimer = [NSTimer scheduledTimerWithTimeInterval:0.25
+																target:self
+															  selector:@selector(clickAndHoldTimerFired:)
+															  userInfo:theEvent
+															   repeats:NO ];
+	}
+	
+}//end mouseDown:
 
 
 //========== mouseDragged: =====================================================
@@ -1297,6 +1388,7 @@
 
 	self->isDragging = YES;
 	[self resetCursor];
+
 	
 	//What to do?
 	
@@ -1307,7 +1399,16 @@
 		[self zoomDragged:theEvent];
 	
 	else if(toolMode == RotateSelectTool)
-		[self rotationDragged:theEvent];
+	{
+		if(self->canBeginDragAndDrop == YES)
+			[self dragAndDropDragged:theEvent];
+		else			
+			[self rotationDragged:theEvent];
+	}
+	
+	// Don't wait for drag-and-drop anymore. We need to do this after we process 
+	// the drag, because it clears the can-drag flag. 
+	[self cancelClickAndHoldTimer];
 	
 }//end mouseDragged
 
@@ -1321,6 +1422,8 @@
 - (void)mouseUp:(NSEvent *)theEvent
 {
 	ToolModeT toolMode = [ToolPalette toolMode];
+
+	[self cancelClickAndHoldTimer];
 
 	if( toolMode == RotateSelectTool )
 	{
@@ -1343,6 +1446,97 @@
 	[self resetCursor];
 	
 }//end mouseUp:
+
+
+#pragma mark - Dragging
+
+//========== dragAndDropDragged: ===============================================
+//
+// Purpose:		This is a special mouseDragged which means to begin a Mac OS 
+//				drag-and-drop operation. The originating drag dies here; once we 
+//				start drag-and-drop, the OS machinery takes over and we don't 
+//				track mouseDraggeds anymore. 
+//
+//==============================================================================
+- (void) dragAndDropDragged:(NSEvent *)theEvent
+{
+	NSPasteboard			*pasteboard			= nil;
+	NSPoint					 imageLocation		= NSZeroPoint;
+	BOOL					 beginCopy			= NO;
+	BOOL					 okayToDrag			= NO;
+	NSPoint					 offset				= NSZeroPoint;
+	NSArray					*archivedDirectives	= nil;
+	NSData					*data				= nil;
+	LDrawPart				*firstDirective		= nil; //needs to become an LDrawDrawableDirective
+	NSPoint					 viewPoint			= [self convertPoint:[theEvent locationInWindow] fromView:nil];
+	Point3					 modelPoint			= ZeroPoint3;
+	Point3					 firstPosition		= ZeroPoint3;
+	Vector3					 displacement		= ZeroPoint3;
+	NSImage					*dragImage			= nil;
+
+	if(		self->delegate != nil
+	   &&	[self->delegate respondsToSelector:@selector(LDrawGLView:writeDirectivesToPasteboard:asCopy:)] )
+	{
+		pasteboard		= [NSPasteboard pasteboardWithName:NSDragPboard];
+		beginCopy		= ([theEvent modifierFlags] & NSAlternateKeyMask) != 0;
+	
+		okayToDrag		= [self->delegate LDrawGLView:self writeDirectivesToPasteboard:pasteboard asCopy:beginCopy];
+		
+		if(okayToDrag == YES)
+		{
+			//---------- Find drag displacement --------------------------------
+			//
+			// When a drag enters a view, the first part's position is normally 
+			// set to the model point under the mouse. But that is incorrect 
+			// behavior when entering the originating view. The user almost 
+			// certainly did not click the mouse at the exact center of part 0, 
+			// but nevertheless he does not expect part 0 of his selection to 
+			// suddenly become centered under the mouse after dragging only one 
+			// pixel.
+			//
+			// Instead we record the offset of his actual originating 
+			// click against the position of part 0. Now when this drag reenters 
+			// its originating view, its position will be adjusted by that 
+			// offset. Everything will come out looking right. 
+			//
+			archivedDirectives	= [pasteboard propertyListForType:LDrawDraggingPboardType];
+			data				= [archivedDirectives objectAtIndex:0];
+			firstDirective		= [NSKeyedUnarchiver unarchiveObjectWithData:data];
+			firstPosition		= [firstDirective position];
+			modelPoint			= [self modelPointForPoint:viewPoint depthReferencePoint:firstPosition];
+			displacement		= V3Sub(modelPoint, firstPosition);
+			
+			// write displacement to private pasteboard.
+			[pasteboard addTypes:[NSArray arrayWithObject:LDrawDraggingInitialOffsetPboardType] owner:self];
+			[pasteboard setData:[NSData dataWithBytes:&displacement length:sizeof(Vector3)]
+						forType:LDrawDraggingInitialOffsetPboardType];
+			
+			
+			//---------- Start drag-and-drop ----------------------------------
+
+			imageLocation	= [self convertPoint:[theEvent locationInWindow] fromView:nil];
+			dragImage		= [LDrawUtilities dragImageWithOffset:&offset];
+			
+			// Offset the image location so that the drag image appears to the 
+			// lower-right of the arrow like a dragging badge. 
+			imageLocation.x +=  offset.x;
+			imageLocation.y += -offset.y; // Invert y because this view is flipped.
+			
+			// Initiate Drag.
+			[self dragImage:dragImage
+						 at:imageLocation
+					 offset:NSZeroSize
+					  event:theEvent
+				 pasteboard:pasteboard
+					 source:self
+				  slideBack:NO ];
+			
+			// reset drop destination flag.
+			[self setDragEndedInOurDocument:NO];
+		}
+	}
+
+}//end dragAndDropDragged:
 
 
 //========== panDrag: ==========================================================
@@ -1487,6 +1681,8 @@
 }//end zoomDragged:
 
 
+#pragma mark - Clicking
+
 //========== mouseCenterClick: =================================================
 //
 // Purpose:		We have received a mouseDown event which is intended to center 
@@ -1520,28 +1716,34 @@
 	NSArray			*fineDrawParts		= nil;
 	LDrawDirective	*clickedDirective	= nil;
 	
-	//first do hit-testing on nothing but the bounding boxes; that is very fast 
-	// and likely eliminates a lot of parts.
-	fastDrawParts	= [self getDirectivesUnderMouse:theEvent
-									amongDirectives:[NSArray arrayWithObject:self->fileBeingDrawn]
-										   fastDraw:YES];
-	
-	//now do a full draw for testing on the most likely candidates
-	fineDrawParts	= [self getDirectivesUnderMouse:theEvent
-									amongDirectives:fastDrawParts
-										   fastDraw:NO];
-	
-	if([fineDrawParts count] > 0)
-		clickedDirective = [fineDrawParts objectAtIndex:0];
-	
-	//Notify our delegate about this momentous event.
-	// It's okay to send nil; that means "deselect."
-	// We want to add this to the current selection if the shift key is down.
-	if([self->document respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)])
+	// Only try to select if we are actually drawing something, and can actually 
+	// select it. 
+	if(		self->fileBeingDrawn != nil
+	   &&	[self->delegate respondsToSelector:@selector(LDrawGLView:wantsToSelectDirective:byExtendingSelection:)] )
 	{
-		[self->document LDrawGLView:self
-			 wantsToSelectDirective:clickedDirective
-			   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
+		//first do hit-testing on nothing but the bounding boxes; that is very fast 
+		// and likely eliminates a lot of parts.
+		fastDrawParts	= [self getDirectivesUnderMouse:theEvent
+										amongDirectives:[NSArray arrayWithObject:self->fileBeingDrawn]
+											   fastDraw:YES];
+		
+		//now do a full draw for testing on the most likely candidates
+		fineDrawParts	= [self getDirectivesUnderMouse:theEvent
+										amongDirectives:fastDrawParts
+											   fastDraw:NO];
+		
+		if([fineDrawParts count] > 0)
+			clickedDirective = [fineDrawParts objectAtIndex:0];
+		
+		if([clickedDirective isSelected] == NO)
+		{
+			//Notify our delegate about this momentous event.
+			// It's okay to send nil; that means "deselect."
+			// We want to add this to the current selection if the shift key is down.
+			[self->delegate LDrawGLView:self
+				 wantsToSelectDirective:clickedDirective
+				   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
+		}
 	}
 
 }//end mousePartSelection:
@@ -1574,6 +1776,53 @@
 
 
 #pragma mark -
+
+//========== cancelClickAndHoldTimer ===========================================
+//
+// Purpose:		Something has happened which interrupts a click-and-hold, such 
+//				as maybe a mouseUp. 
+//
+//==============================================================================
+- (void) cancelClickAndHoldTimer
+{
+	if(self->mouseDownTimer != nil)
+	{
+		[self->mouseDownTimer invalidate];
+		self->mouseDownTimer = nil;
+	}
+	self->canBeginDragAndDrop	= NO;
+	
+}//end cancelClickAndHoldTimer
+
+
+//========== clickAndHoldTimerFired: ===========================================
+//
+// Purpose:		If we got here, it means the user has successfully executed a 
+//				click-and-hold, which means that the mouse button was clicked, 
+//				held down, and not moved for a certain period of time. 
+//
+//				We use this action to initiate a drag-and-drop.
+//
+//==============================================================================
+- (void) clickAndHoldTimerFired:(NSTimer*)theTimer
+{
+	NSEvent	*clickEvent	= [theTimer userInfo];
+
+	// the timer has expired; nil it out so nobody tries to message it after 
+	// it's been released. 
+	self->mouseDownTimer = nil;
+	
+	[self mousePartSelection:clickEvent];
+	
+	// Actual Mac Drag-and-Drop can only be initiated upon a mouseDown or 
+	// mouseDragged. So we wait until one of those actually happens to do 
+	// anything, and set this flag to tell us what to do when the moment comes.
+	self->canBeginDragAndDrop	= YES;
+	
+}//end clickAndHoldTimerFired:
+
+
+#pragma mark -
 #pragma mark DRAG AND DROP
 #pragma mark -
 
@@ -1591,15 +1840,14 @@
 	NSArray				*archivedDirectives	= nil;
 	NSMutableArray		*directives			= nil;
 	NSData				*data				= nil;
-	id					currentObject		= nil;
-	int					directiveCount		= 0;
-	int					counter				= 0;
-	NSPoint				dragPointInWindow	= NSZeroPoint;
-	NSPoint				dragPointInView		= NSZeroPoint;
-	TransformComponents	partTransform		= IdentityComponents;
-	Point3				modelReferencePoint	= ZeroPoint3;
-	Point3				modelPoint			= ZeroPoint3;
-	float				gridSpacing			= [self->document gridSpacing];
+	id					 currentObject		= nil;
+	int					 directiveCount		= 0;
+	int					 counter			= 0;
+	NSPoint				 dragPointInWindow	= [info draggingLocation];
+	NSPoint				 dragPointInView	= NSZeroPoint;
+	TransformComponents	 partTransform		= IdentityComponents;
+	Point3				 modelReferencePoint= ZeroPoint3;
+	NSData				*vectorOffsetData	= nil;
 	
 	// local drag?
 	if(sourceView == self)
@@ -1619,39 +1867,51 @@
 		data			= [archivedDirectives objectAtIndex:counter];
 		currentObject	= [NSKeyedUnarchiver unarchiveObjectWithData:data];
 		
+		// while a part is dragged, it is drawn selected
 		[currentObject setSelected:YES];
 		
 		[directives addObject:currentObject];
 	}
 
-//	NSLog(@"entered dragging %@", directives);
 	
 	
 	//---------- Find Location -------------------------------------------------
+	// We need to map our 2-D mouse coordinate into a point in the model's 3-D 
+	// space. That means we need to ask the delegate where along the missing 
+	// third axis it wants us to appear. 
 	
 	// Where are we?
-	dragPointInWindow	= [info draggingLocation];
 	dragPointInView		= [self convertPoint:dragPointInWindow fromView:nil];
 	
-	// ask the document roughly where it wants us to be
-	if([self->document respondsToSelector:@selector(LDrawGLViewPreferredPartTransform:)])
-		partTransform = [self->document LDrawGLViewPreferredPartTransform:self];
+	// Ask the delegate roughly where it wants us to be.
+	// We get a full transform here so that when we drag in new parts, they will 
+	// be rotated the same as whatever part we were using last. 
+	#warning Does not support initializing new parts
+	if([self->delegate respondsToSelector:@selector(LDrawGLViewPreferredPartTransform:)])
+		partTransform = [self->delegate LDrawGLViewPreferredPartTransform:self];
 	
 	// and adjust.
 	modelReferencePoint	= V3Make(partTransform.translate_X, partTransform.translate_Y, partTransform.translate_Z);
-	modelPoint	= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
 	
-	partTransform.translate_X	= modelPoint.x;
-	partTransform.translate_Y	= modelPoint.y;
-	partTransform.translate_Z	= modelPoint.z;
+	// Apply the initial offset.
+	// This is the difference between the position of part 0 and the actual 
+	// clicked point. We do this so that the point you clicked always remains 
+	// directly under the mouse.
+	//
+	// Only applicable if dragging into the source 
+	// view. Other views may have different orientations. We might be able to 
+	// remove that requirement by zeroing the inapplicable compont. 
+	if(sourceView == self)
+	{
+		vectorOffsetData = [pasteboard dataForType:LDrawDraggingInitialOffsetPboardType];
+		[vectorOffsetData getBytes:&self->draggingOffset length:sizeof(Vector3)];
+		
+		modelReferencePoint = V3Add(modelReferencePoint, self->draggingOffset);
+	}
 	
-	
-	// At the moment, I'm just going to try and get this working with one part 
-	// before extending it to multiple parts. 
-	[[directives objectAtIndex:0] setTransformComponents:partTransform];
-	partTransform = [[directives objectAtIndex:0] componentsSnappedToGrid:gridSpacing
-															 minimumAngle:0];
-	[[directives objectAtIndex:0] setTransformComponents:partTransform];
+	[self updateDirectives:directives
+		  withDragPosition:dragPointInWindow
+	   depthReferencePoint:modelReferencePoint];
 	
 	if([self->fileBeingDrawn respondsToSelector:@selector(setDraggingDirectives:)])
 	{
@@ -1678,15 +1938,9 @@
 	NSArray				*directives				= nil;
 	LDrawPart			*firstDirective			= nil;
 	id					 sourceView				= [info draggingSource];
-	NSPoint				 dragPointInWindow		= NSZeroPoint;
-	NSPoint				 dragPointInView		= NSZeroPoint;
-	TransformComponents	 displacementTransform	= IdentityComponents;
+	NSPoint				 dragPointInWindow		= [info draggingLocation];
 	Point3				 modelReferencePoint	= ZeroPoint3;
-	Point3				 modelPoint				= ZeroPoint3;
-	Point3				 oldPosition			= ZeroPoint3;
-	Vector3				 displacement			= ZeroPoint3;
-	float				 gridSpacing			= [self->document gridSpacing];
-	int					 counter				= 0;
+	BOOL				 moved					= NO;
 	NSDragOperation		 dragOperation			= NSDragOperationNone;
 	
 	// local drag?
@@ -1695,54 +1949,25 @@
 	else
 		dragOperation = NSDragOperationCopy;
 	
+	// Update the dragged parts.
 	if([self->fileBeingDrawn respondsToSelector:@selector(draggingDirectives)])
 	{
-		directives		= [(id)self->fileBeingDrawn draggingDirectives];
-		firstDirective	= [directives objectAtIndex:0];
-		
-		
-		//---------- Find Location ---------------------------------------------
-		
-		// Where are we?
-		dragPointInWindow	= [info draggingLocation];
-		dragPointInView		= [self convertPoint:dragPointInWindow fromView:nil];
-		oldPosition			= [firstDirective position];
-		
-		// and adjust.
+		directives			= [(id)self->fileBeingDrawn draggingDirectives];
+		firstDirective		= [directives objectAtIndex:0];
 		modelReferencePoint	= [firstDirective position];
-		modelPoint			= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
-		displacement		= V3Sub(modelPoint, oldPosition);
 		
-		
-		//---------- Find Actual Displacement ----------------------------------
-		// When dragging, we want to move IN grid increments, not move TO grid 
-		// increments. That means we snap the displacement vector itself to the 
-		// grid, not part's location. That's because the part may not have been 
-		// grid-aligned to begin with. 
-
-		displacementTransform.translate_X	= displacement.x;
-		displacementTransform.translate_Y	= displacement.y;
-		displacementTransform.translate_Z	= displacement.z;
-		
-		// Snap the displacement to the grid.
-		displacementTransform = [firstDirective components:displacementTransform
-											 snappedToGrid:gridSpacing
-											  minimumAngle:0];
-		displacement = V3Make(displacementTransform.translate_X, displacementTransform.translate_Y, displacementTransform.translate_Z);
-				
-
-		//---------- Update the parts' positions  ------------------------------
-		// At the moment, I'm just going to try and get this working with one part 
-		// before extending it to multiple parts. 
-		
-		if(V3EqualPoints(displacement, ZeroPoint3) == NO)
+		if(sourceView == self)
 		{
-			// Move all the parts by that amount.
-			for(counter = 0; counter < [directives count]; counter++)
-			{
-				[[directives objectAtIndex:counter] moveBy:displacement];
-			}
-			
+			modelReferencePoint = V3Add(modelReferencePoint, self->draggingOffset);
+		}
+
+		// Update with new position
+		moved				= [self updateDirectives:directives
+									withDragPosition:dragPointInWindow
+								 depthReferencePoint:modelReferencePoint];
+		
+		if(moved == YES)
+		{
 			[[NSNotificationCenter defaultCenter]
 							postNotificationName:LDrawDirectiveDidChangeNotification
 										  object:self->fileBeingDrawn ];
@@ -1777,17 +2002,26 @@
 //			    main model. 
 //
 //==============================================================================
-- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
+- (BOOL) performDragOperation:(id <NSDraggingInfo>)sender
 {
-	NSArray *directives = nil;
+	NSArray			*directives		= nil;
+	LDrawDocument	*senderDocument	= nil;
 	
 	if([self->fileBeingDrawn respondsToSelector:@selector(draggingDirectives)])
 	{
 		directives = [(id)self->fileBeingDrawn draggingDirectives];
 		
-		if([self->document respondsToSelector:@selector(LDrawGLView:acceptDrop:)])
-		   [self->document LDrawGLView:self acceptDrop:directives];
+		if([self->delegate respondsToSelector:@selector(LDrawGLView:acceptDrop:directives:)])
+		   [self->delegate LDrawGLView:self acceptDrop:sender directives:directives];
 	}
+	
+	if([[sender draggingSource] respondsToSelector:@selector(document)])
+	{
+		senderDocument = [[sender draggingSource] document];
+		if(senderDocument == self->document)
+			[[sender draggingSource] setDragEndedInOurDocument:YES];
+	}
+	
 	return YES;
 	
 }//end performDragOperation:
@@ -1810,6 +2044,100 @@
 									  object:self->fileBeingDrawn ];
 	}
 }//end concludeDragOperation:
+
+
+//========== draggedImage:endedAt:operation: ===================================
+//
+// Purpose:		The drag ended somewhere. Maybe it was here, maybe it wasn't.
+//
+//				If it ended in some other file, we need to instruct our delegate 
+//				to actually delete the dragged directives. When they are written 
+//				to the pasteboard, they are only hidden so that they can be 
+//				modified when the drag ends. 
+//
+//==============================================================================
+- (void)draggedImage:(NSImage *)anImage
+			 endedAt:(NSPoint)aPoint
+		   operation:(NSDragOperation)operation
+{
+	if(self->dragEndedInOurDocument == NO)
+	{
+		if([self->delegate respondsToSelector:@selector(LDrawGLViewPartsWereDraggedIntoOblivion:)])
+			[self->delegate LDrawGLViewPartsWereDraggedIntoOblivion:self];
+	}
+}//end draggedImage:endedAt:operation:
+
+
+#pragma mark -
+
+//========== updateDirectives:withDragPosition: ================================
+//
+// Purpose:		Adjusts the directives so they align with the given drag 
+//				location, in window coordinates. 
+//
+//==============================================================================
+- (BOOL) updateDirectives:(NSArray *)directives
+		 withDragPosition:(NSPoint)dragPointInWindow
+	  depthReferencePoint:(Point3)modelReferencePoint
+{
+	LDrawPart			*firstDirective			= nil;
+	NSPoint				 dragPointInView		= NSZeroPoint;
+	TransformComponents	 displacementTransform	= IdentityComponents;
+	Point3				 modelPoint				= ZeroPoint3;
+	Point3				 oldPosition			= ZeroPoint3;
+	Vector3				 displacement			= ZeroPoint3;
+	float				 gridSpacing			= [self->document gridSpacing];
+	int					 counter				= 0;
+	BOOL				 moved					= NO;
+	
+	firstDirective	= [directives objectAtIndex:0];
+	
+	
+	//---------- Find Location ---------------------------------------------
+	
+	// Where are we?
+	dragPointInView		= [self convertPoint:dragPointInWindow fromView:nil];
+	oldPosition			= modelReferencePoint;
+	
+	// and adjust.
+	modelPoint			= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
+	displacement		= V3Sub(modelPoint, oldPosition);
+	
+	
+	//---------- Find Actual Displacement ----------------------------------
+	// When dragging, we want to move IN grid increments, not move TO grid 
+	// increments. That means we snap the displacement vector itself to the 
+	// grid, not part's location. That's because the part may not have been 
+	// grid-aligned to begin with. 
+	
+	displacementTransform.translate_X	= displacement.x;
+	displacementTransform.translate_Y	= displacement.y;
+	displacementTransform.translate_Z	= displacement.z;
+	
+	// Snap the displacement to the grid.
+	displacementTransform = [firstDirective components:displacementTransform
+										 snappedToGrid:gridSpacing
+										  minimumAngle:0];
+	displacement = V3Make(displacementTransform.translate_X, displacementTransform.translate_Y, displacementTransform.translate_Z);
+	
+	
+	//---------- Update the parts' positions  ------------------------------
+	
+	if(V3EqualPoints(displacement, ZeroPoint3) == NO)
+	{
+		// Move all the parts by that amount.
+		for(counter = 0; counter < [directives count]; counter++)
+		{
+			[[directives objectAtIndex:counter] moveBy:displacement];
+		}
+		
+		moved = YES;
+	}
+	
+	return moved;
+	
+}//end updateDirectives:withDragPosition:
+
 
 #pragma mark -
 #pragma mark MENUS
@@ -2248,8 +2576,9 @@
 	//				NSSize	newFrameSize	= NSMakeSize( newSize*2, newSize*2 );
 					//Make the frame either just a little bit bigger than the size 
 					// of the model, or the same as the scroll view, whichever is larger.
-					NSSize	newFrameSize	= NSMakeSize( MAX(newSize*2, contentSize.width),
-														  MAX(newSize*2, contentSize.height) );
+//					NSSize	newFrameSize	= NSMakeSize( MAX(newSize*2, contentSize.width),
+//														  MAX(newSize*2, contentSize.height) );
+					NSSize	newFrameSize	= NSMakeSize( newSize*2, newSize*2 );
 					
 					//The canvas size changes will effectively be distributed equally on 
 					// all sides, because the model is always drawn in the center of the 
@@ -2270,7 +2599,7 @@
 	}
 	
 	[self setNeedsDisplay:YES];
-}
+}//end 
 
 
 //========== restoreConfiguration ==============================================
@@ -2419,9 +2748,10 @@
 - (void) scrollCenterToPoint:(NSPoint)newCenter
 {
 	NSRect	visibleRect		= [self visibleRect];
+	NSPoint	scrollOrigin	= NSMakePoint( newCenter.x - NSWidth(visibleRect)/2,
+										   newCenter.y - NSHeight(visibleRect)/2);
 	
-	[self scrollPoint: NSMakePoint( newCenter.x - NSWidth(visibleRect)/2,
-									newCenter.y - NSHeight(visibleRect)/2) ];
+	[self scrollPoint:scrollOrigin];
 }//end scrollCenterToPoint:
 
 
@@ -2697,5 +3027,6 @@
 	[super dealloc];
 	
 }//end dealloc
+
 
 @end

@@ -205,7 +205,8 @@
 //				further review (read: better programming skill).
 //
 //==============================================================================
-- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
+- (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor
+{
 	//do nothing.
 }
 
@@ -218,9 +219,9 @@
 // Note:		DISABLED. See -draw:parentColor:
 //
 //==============================================================================
-- (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor {
-	
-	[super drawElement:optionsMask parentColor:parentColor];
+- (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor
+{
+	[super drawElement:optionsMask withColor:drawingColor];
 }
 
 

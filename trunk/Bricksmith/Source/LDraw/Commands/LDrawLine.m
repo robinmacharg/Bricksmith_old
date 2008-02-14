@@ -168,33 +168,43 @@
 #pragma mark DIRECTIVES
 #pragma mark -
 
-//========== drawElement =======================================================
+//========== drawElement:parentColor: ==========================================
 //
 // Purpose:		Draws the graphic of the element represented. This call is a 
 //				subroutine of -draw: in LDrawDrawableElement.
 //
 //==============================================================================
-- (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor {
-
+- (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor
+{
 	//Have we already begun drawing somewhere upstream? If so, all we need to 
 	// do here is add the vertices.
-	if((optionsMask & DRAW_BEGUN) != 0) {
+	if((optionsMask & DRAW_BEGUN) != 0)
+	{
+		glColor4fv(drawingColor);
 		glNormal3f(0.0, -1.0, 0.0); //lines need normals! Who knew?
 		glVertex3f(vertex1.x, vertex1.y, vertex1.z);
+		
+		glColor4fv(drawingColor);
 		glNormal3f(0.0, -1.0, 0.0);
 		glVertex3f(vertex2.x, vertex2.y, vertex2.z);
 	}
 	//Drawing not begun; we must start it explicitly.
-	else {
+	else
+	{
 		glBegin(GL_LINES);
+		
+			glColor4fv(drawingColor);
 			glNormal3f(0.0, -1.0, 0.0);
 			glVertex3f(vertex1.x, vertex1.y, vertex1.z);
+			
+			glColor4fv(drawingColor);
 			glNormal3f(0.0, -1.0, 0.0);
 			glVertex3f(vertex2.x, vertex2.y, vertex2.z);
+			
 		glEnd();
 	}
 
-}
+}//end drawElement:drawingColor:
 
 
 //========== write =============================================================

@@ -52,6 +52,7 @@
 #import "PartReport.h"
 #import "PieceCountPanel.h"
 #import "RotationPanel.h"
+#import "ScrollViewCategory.h"
 #import "UserDefaultsCategory.h"
 
 @implementation LDrawDocument
@@ -145,6 +146,11 @@
 	drawerState = [userDefaults integerForKey:FILE_CONTENTS_DRAWER_STATE];
 	if(drawerState == NSDrawerOpenState)
 		[fileContentsDrawer open];
+	
+	[[fileGraphicView enclosingScrollView] centerDocumentView];
+	[[fileDetailView1 enclosingScrollView] centerDocumentView];
+	[[fileDetailView2 enclosingScrollView] centerDocumentView];
+	[[fileDetailView3 enclosingScrollView] centerDocumentView];
 	
 	//Restore the state of our 3D viewers.
 	[fileGraphicView	setAutosaveName:@"fileGraphicView"];
@@ -543,25 +549,11 @@
 //==============================================================================
 - (void) nudgeSelectionBy:(Vector3) nudgeVector
 {
-	NSUserDefaults			*userDefaults		= [NSUserDefaults standardUserDefaults];
 	NSArray					*selectedObjects	= [self selectedObjects];
 	LDrawDrawableElement	*firstNudgable		= nil;
 	id						 currentObject		= nil;
-	float					 nudgeMagnitude		= 0;
+	float					 nudgeMagnitude		= [self gridSpacing];
 	int						 counter			= 0;
-	
-	//Determine magnitude of nudge.
-	switch([self gridSpacingMode]) {
-		case gridModeFine:
-			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_FINE];
-			break;
-		case gridModeMedium:
-			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_MEDIUM];
-			break;
-		case gridModeCoarse:
-			nudgeMagnitude = [userDefaults floatForKey:GRID_SPACING_COARSE];
-			break;
-	}
 	
 	V3Normalize(&nudgeVector); //normalize just in case someone didn't get the message!
 	nudgeVector.x *= nudgeMagnitude;
@@ -699,7 +691,11 @@
 //========== selectDirective:byExtendingSelection: =============================
 //
 // Purpose:		Selects the specified directive.
-//				Pass nil to mean deselect.
+//				Pass nil to deselect all.
+//
+//				If shouldExtend is YES, this method toggles the selection of the 
+//				given directive. Otherwise, the given directive is made the 
+//				exclusive selection in the document. 
 //
 //==============================================================================
 - (void) selectDirective:(LDrawDirective *) directiveToSelect
@@ -748,9 +744,10 @@
 	id				 currentObject		= nil;
 	int				 counter			= 0;
 	
-	for(counter = 0; counter < [selectedObjects count]; counter++){
+	for(counter = 0; counter < [selectedObjects count]; counter++)
+	{
 		currentObject = [selectedObjects objectAtIndex:counter];
-		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
+		if([currentObject respondsToSelector:@selector(setHidden:)])
 			[self setElement:currentObject toHidden:hideFlag]; //undoable hook.
 	}
 }//end setSelectionToHidden:
@@ -1121,7 +1118,8 @@
 //				part delete.
 //
 //==============================================================================
-- (IBAction) delete:(id)sender {
+- (IBAction) delete:(id)sender
+{
 	NSArray			*selectedObjects	= [self selectedObjects];
 	LDrawDirective	*currentObject		= nil;
 	int				 counter;
@@ -1129,7 +1127,8 @@
 	//We'll just try to delete everything. Count backwards so that if a 
 	// deletion fails, it's the thing at the top rather than the bottom that 
 	// remains.
-	for(counter = [selectedObjects count]-1; counter >= 0; counter--) {
+	for(counter = [selectedObjects count]-1; counter >= 0; counter--)
+	{
 		currentObject = [selectedObjects objectAtIndex:counter];
 		if([self canDeleteDirective:currentObject displayErrors:YES] == YES)
 		{	//above method will display an error if the directive can't be deleted.
@@ -1801,7 +1800,7 @@
 
 //========== deleteDirective: ==================================================
 //
-// Purpose:		Removes the specified doomDirective from its enclosing 
+// Purpose:		Removes the specified doomedDirective from its enclosing 
 //				container.
 //
 //==============================================================================
@@ -2430,16 +2429,51 @@
 //
 //==============================================================================
 - (void) LDrawGLView:(LDrawGLView *)glView
-		  acceptDrop:(NSArray *)directives
+		  acceptDrop:(id < NSDraggingInfo >)info
+		  directives:(NSArray *)directives
 {
-	NSPasteboard	*pasteboard			= [NSPasteboard pasteboardWithName:@"BricksmithDragAndDropPboard"];
-	NSUndoManager	*undoManager		= [self undoManager];
+	NSPasteboard		*pasteboard			= [NSPasteboard pasteboardWithName:@"BricksmithDragAndDropPboard"];
+	NSUndoManager		*undoManager		= [self undoManager];
+	int					 selectionCount		= [self->selectedDirectives count];
+	id					 currentDirective	= nil;
+	id					 dragPart			= nil;
+	Point3				 originalPosition	= ZeroPoint3;
+	Point3				 dragPosition		= ZeroPoint3;
+	Vector3				 displacement		= ZeroPoint3;
+	int					 counter			= 0;
+	int					 dropDirectiveIndex	= 0;
 	
-	[self writeDirectives:directives
-			 toPasteboard:pasteboard];
-	[self pasteFromPasteboard:pasteboard];
-	
-	[undoManager setActionName:NSLocalizedString(@"UndoDrop", nil)];
+	// Being dragged from the same document. We must simply apply the transforms 
+	// from the dragged parts to the original parts, which have been hidden 
+	// during the drag. 
+	if(		[[info draggingSource] respondsToSelector:@selector(document)]
+	   &&	[[info draggingSource] document] == self )
+	{
+		for(counter = 0; counter < selectionCount; counter++)
+		{
+			currentDirective	= [self->selectedDirectives objectAtIndex:counter];
+			originalPosition	= [currentDirective position];
+			
+			if([currentDirective isKindOfClass:[LDrawDrawableElement class]])
+			{
+				dragPart		= [directives objectAtIndex:dropDirectiveIndex];
+				dragPosition	= [dragPart position];
+				displacement	= V3Sub(dragPosition, originalPosition);
+
+				[self moveDirective:currentDirective inDirection:displacement];
+				[currentDirective setHidden:NO];
+				
+				dropDirectiveIndex++;
+			}
+		}
+	}
+	else
+	{
+		[self writeDirectives:directives
+				 toPasteboard:pasteboard];
+		[self pasteFromPasteboard:pasteboard];
+		[undoManager setActionName:NSLocalizedString(@"UndoDrop", nil)];
+	}
 	
 }//end LDrawGLView:acceptDrop:
 
@@ -2461,6 +2495,41 @@
 	[self didChangeValueForKey:@"mostRecentLDrawView"];
 
 }//end LDrawGLViewBecameFirstResponder:
+
+
+//========== LDrawGLViewPartsWereDraggedIntoOblivion: ==========================
+//
+// Purpose:		The parts which originated the most recent drag operation have 
+//				apparently been dragged clear out of the document. Maybe they 
+//				went into another document. Maybe they got dragged into empty 
+//				space. Whereever they went, they are gone now. 
+//
+//				The trouble is that when we started dragging them, we just *hid* 
+//				them, in anticipation of their landing back within the document. 
+//				(It was too much trouble to delete them at the beginning, 
+//				because then we might have to reconstruct where they were in the 
+//				model hierarchy if they did stay in the same document.) Now that 
+//				we know they are really truly gone, we need to delete their 
+//				hidden ghosts. 
+//
+//==============================================================================
+- (void) LDrawGLViewPartsWereDraggedIntoOblivion:(LDrawGLView *)glView
+{
+	int		selectionCount		= [self->selectedDirectives count];
+	id		currentDirective	= nil;
+	int		counter				= 0;
+	
+	for(counter = 0; counter < selectionCount; counter++)
+	{
+		currentDirective	= [self->selectedDirectives objectAtIndex:counter];
+		
+		if([currentDirective isKindOfClass:[LDrawDrawableElement class]])
+		{
+			[self deleteDirective:currentDirective];
+		}
+	}
+	
+}//end LDrawGLViewPartsWereDraggedIntoOblivion:
 
 
 //========== LDrawGLViewPreferredPartTransform: ================================
@@ -2498,6 +2567,63 @@
 	[self selectDirective:directiveToSelect byExtendingSelection:shouldExtend];
 	
 }//end LDrawGLView:wantsToSelectDirective:byExtendingSelection:
+
+
+//========== LDrawGLView:writeDirectivesToPasteboard:asCopy: ===================
+//
+// Purpose:		Begin a drag-and-drop part insertion initiated in the directive 
+//				view. 
+//
+//==============================================================================
+- (BOOL)         LDrawGLView:(LDrawGLView *)glView
+ writeDirectivesToPasteboard:(NSPasteboard *)pasteboard
+					  asCopy:(BOOL)copyFlag
+{
+	int				 selectionCount		= [self->selectedDirectives count];
+	NSMutableArray	*archivedParts		= [NSMutableArray array];
+	id				 currentDirective	= nil;
+	NSData			*partData			= nil;
+	int				 counter			= 0;
+	BOOL			 success			= NO;
+	
+	// Archive selected moveable directives.
+	for(counter = 0; counter < selectionCount; counter++)
+	{
+		currentDirective = [self->selectedDirectives objectAtIndex:counter];
+		
+		if([currentDirective isKindOfClass:[LDrawDrawableElement class]])
+		{
+			partData	= [NSKeyedArchiver archivedDataWithRootObject:currentDirective];
+			[archivedParts addObject:partData];
+			
+			if(copyFlag == NO)
+			{
+				// Not copying; we want the dragging instance to be the only 
+				// visual manifestation of this part as it moves. 
+				[currentDirective setHidden:YES];
+			}
+			else
+			{
+				// Copying, so DESELECT the current directive as a visual 
+				// indicator that it will stay put. Since currentDirective is 
+				// already selected, we deselect by calling as follows: 
+				[self selectDirective:currentDirective byExtendingSelection:YES];
+			}
+		}
+	}
+	
+	// Set up pasteboard
+	if([archivedParts count] > 0)
+	{
+		[pasteboard declareTypes:[NSArray arrayWithObject:LDrawDraggingPboardType] owner:self];
+		[pasteboard setPropertyList:archivedParts forType:LDrawDraggingPboardType];
+		
+		success = YES;
+	}
+
+	return success;
+	
+}//end LDrawGLView:writeDirectivesToPasteboard:asCopy:
 
 
 #pragma mark -
@@ -3180,7 +3306,7 @@
 	for(counter = 0; counter < [selectedObjects count]; counter++)
 	{
 		currentObject = [selectedObjects objectAtIndex:counter];
-		if([currentObject isKindOfClass:[LDrawDrawableElement class]])
+		if([currentObject respondsToSelector:@selector(isHidden)])
 		{
 			invisibleSelected	= invisibleSelected || [currentObject isHidden];
 			visibleSelected		= visibleSelected   || ([currentObject isHidden] == NO);
@@ -3296,8 +3422,8 @@
 // Purpose:		Returns the LDraw objects currently selected in the file.
 //
 //==============================================================================
-- (NSArray *) selectedObjects {
-
+- (NSArray *) selectedObjects
+{
 	NSIndexSet		*selectedIndexes	= [fileContentsOutline selectedRowIndexes];
 	unsigned int	 currentIndex		= [selectedIndexes firstIndex];
 	NSMutableArray	*selectedObjects	= [NSMutableArray arrayWithCapacity:[selectedIndexes count]];
@@ -3475,8 +3601,8 @@
 	//Write out the selected objects, but only once for each object. 
 	// Don't write out items whose parent is selected; the parent will 
 	// automatically write its children.
-	for(counter = 0; counter < [directives count]; counter++) {
-		
+	for(counter = 0; counter < [directives count]; counter++)
+	{
 		currentObject = [directives objectAtIndex:counter];
 		//If we haven't already run into this object (via its parent container)
 		// then we want to write it out. Otherwise, it will be copied implicitly 
@@ -3495,7 +3621,8 @@
 	
 	//Now that we have figured out *what* to copy, convert it into the 
 	// *representations* we will use to copy.
-	for(counter = 0; counter < [objectsToCopy count]; counter++) {
+	for(counter = 0; counter < [objectsToCopy count]; counter++)
+	{
 		currentObject = [objectsToCopy objectAtIndex:counter];
 		
 		//Convert the object into the two representations we know how to write.

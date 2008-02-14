@@ -49,6 +49,10 @@
 		0B6F3FC407CB0253007B1075 /* LDrawTriangle.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B6F3FB607CB0253007B1075 /* LDrawTriangle.m */; };
 		0B6F48EC07D1882F007B1075 /* LDrawColor.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B6F48EA07D1882F007B1075 /* LDrawColor.h */; };
 		0B6F48ED07D1882F007B1075 /* LDrawColor.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B6F48EB07D1882F007B1075 /* LDrawColor.m */; };
+		0B74F28D0D0BB5AD00ED8419 /* ScrollViewCategory.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B74F28B0D0BB5AD00ED8419 /* ScrollViewCategory.h */; };
+		0B74F28E0D0BB5AD00ED8419 /* ScrollViewCategory.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B74F28C0D0BB5AD00ED8419 /* ScrollViewCategory.m */; };
+		0B74F2910D0BB5BB00ED8419 /* CenteringClipView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B74F28F0D0BB5BB00ED8419 /* CenteringClipView.h */; };
+		0B74F2920D0BB5BB00ED8419 /* CenteringClipView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B74F2900D0BB5BB00ED8419 /* CenteringClipView.m */; };
 		0B77A2FD0CE81694009B6BCC /* AMSProgressBar.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2B1C603A09FF00B3001EE8FA /* AMSProgressBar.framework */; };
 		0B83E9B907E3BB0D009C2384 /* LDrawComment.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B83E9B707E3BB0D009C2384 /* LDrawComment.h */; };
 		0B83E9BA07E3BB0D009C2384 /* LDrawComment.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B83E9B807E3BB0D009C2384 /* LDrawComment.m */; };
@@ -297,6 +301,10 @@
 		0B6F3FB607CB0253007B1075 /* LDrawTriangle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LDrawTriangle.m; sourceTree = "<group>"; };
 		0B6F48EA07D1882F007B1075 /* LDrawColor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LDrawColor.h; sourceTree = "<group>"; };
 		0B6F48EB07D1882F007B1075 /* LDrawColor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LDrawColor.m; sourceTree = "<group>"; };
+		0B74F28B0D0BB5AD00ED8419 /* ScrollViewCategory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScrollViewCategory.h; sourceTree = "<group>"; };
+		0B74F28C0D0BB5AD00ED8419 /* ScrollViewCategory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScrollViewCategory.m; sourceTree = "<group>"; };
+		0B74F28F0D0BB5BB00ED8419 /* CenteringClipView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CenteringClipView.h; sourceTree = "<group>"; };
+		0B74F2900D0BB5BB00ED8419 /* CenteringClipView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CenteringClipView.m; sourceTree = "<group>"; };
 		0B83E9B707E3BB0D009C2384 /* LDrawComment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LDrawComment.h; sourceTree = "<group>"; };
 		0B83E9B807E3BB0D009C2384 /* LDrawComment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LDrawComment.m; sourceTree = "<group>"; };
 		0B8EBCEF0938383000D87E0C /* ZoomInCursor.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = ZoomInCursor.tiff; sourceTree = "<group>"; };
@@ -543,6 +551,8 @@
 				0B2DD14D0CD810F20093E8E5 /* BezierPathCategory.m */,
 				0B8EBE96093C102E00D87E0C /* FormCategory.h */,
 				0B8EBE97093C102E00D87E0C /* FormCategory.m */,
+				0B74F28B0D0BB5AD00ED8419 /* ScrollViewCategory.h */,
+				0B74F28C0D0BB5AD00ED8419 /* ScrollViewCategory.m */,
 				0B8EBE98093C102E00D87E0C /* StringCategory.h */,
 				0B8EBE99093C102E00D87E0C /* StringCategory.m */,
 				0B8EBE9A093C102E00D87E0C /* UserDefaultsCategory.h */,
@@ -595,6 +605,8 @@
 		0B6F498C07D19440007B1075 /* Widgets */ = {
 			isa = PBXGroup;
 			children = (
+				0B74F28F0D0BB5BB00ED8419 /* CenteringClipView.h */,
+				0B74F2900D0BB5BB00ED8419 /* CenteringClipView.m */,
 				0B8EBE6B093C100100D87E0C /* DialogPanel.h */,
 				0B8EBE6C093C100100D87E0C /* DialogPanel.m */,
 				0B8EBE6D093C100100D87E0C /* ExtendedSplitView.h */,
@@ -968,6 +980,8 @@
 				0BDC146F0B9D0502001D1FF1 /* PartBrowserPanel.h in Headers */,
 				0B2DD14A0CD810DC0093E8E5 /* PartBrowserTableView.h in Headers */,
 				0B2DD14E0CD810F20093E8E5 /* BezierPathCategory.h in Headers */,
+				0B74F28D0D0BB5AD00ED8419 /* ScrollViewCategory.h in Headers */,
+				0B74F2910D0BB5BB00ED8419 /* CenteringClipView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1193,6 +1207,8 @@
 				0BDC14700B9D0502001D1FF1 /* PartBrowserPanel.m in Sources */,
 				0B2DD14B0CD810DC0093E8E5 /* PartBrowserTableView.m in Sources */,
 				0B2DD14F0CD810F20093E8E5 /* BezierPathCategory.m in Sources */,
+				0B74F28E0D0BB5AD00ED8419 /* ScrollViewCategory.m in Sources */,
+				0B74F2920D0BB5BB00ED8419 /* CenteringClipView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

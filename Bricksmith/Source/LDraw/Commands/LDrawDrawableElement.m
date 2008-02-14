@@ -118,7 +118,8 @@
 		//Load names for mouse-selection, if that's the mode we're in.
 		// Only elements contained within a step should ever wind up here.
 		// Any other nestings are invalid.
-		if((optionsMask & DRAW_HIT_TEST_MODE) != 0){
+		if((optionsMask & DRAW_HIT_TEST_MODE) != 0)
+		{
 			LDrawContainer *enclosingStep = [self enclosingDirective];
 			int partIndex = [enclosingStep indexOfDirective:self]; 
 			int stepIndex = [[enclosingStep enclosingDirective] indexOfDirective:enclosingStep];
@@ -136,20 +137,16 @@
 		
 		if(self->color == LDrawCurrentColor)
 		{
-			//restore the parent color.
-			glColor4fv(parentColor);
-			
 			//Just draw; don't fool with colors. A significant portion of our 
 			// drawing code probably falls into this category.
-			[self drawElement:optionsMask parentColor:parentColor];
+			[self drawElement:optionsMask withColor:parentColor];
 		}
 		else
 		{
 			if(self->color == LDrawEdgeColor)
 				complimentColor(parentColor, glColor);
 	
-			glColor4fv(glColor); //set the color for this element.
-			[self drawElement:optionsMask parentColor:glColor];
+			[self drawElement:optionsMask withColor:glColor];
 		}
 			
 		//Done drawing a selected part? Then switch back to normal filled drawing.
@@ -171,7 +168,7 @@
 //				shared functionality such as setting colors.
 //
 //==============================================================================
-- (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor{
+- (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor{
 	//implemented by subclasses.
 }
 

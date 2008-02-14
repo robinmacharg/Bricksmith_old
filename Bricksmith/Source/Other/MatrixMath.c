@@ -167,12 +167,22 @@ Vector3 *V3Scale(Vector3 *v, float newlen)
 }
 
 
-/* return vector sum c = a+b */
-Vector3 *V3Add(Vector3 *a, Vector3 *b, Vector3 *c)
+//========== V3Add =============================================================
+//
+// Purpose:		return vector sum c = a + b
+//
+//==============================================================================
+Vector3 V3Add(Vector3 a, Vector3 b)
 {
-	c->x = a->x+b->x;  c->y = a->y+b->y;  c->z = a->z+b->z;
-	return(c);
-}
+	Vector3 result;
+
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+	result.z = a.z + b.z;
+	
+	return result;
+	
+}//end V3Add
 
 
 //========== V3Sub =============================================================
@@ -382,9 +392,10 @@ Matrix4 *V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c)
 // Purpose:		Prints the given 3D point.
 //
 //==============================================================================
-void V3Print(Point3 *point)
+void V3Print(Point3 point)
 {
-	printf("(%12.6f, %12.6f, %12.6f)\n", point->x, point->y, point->z);
+	printf("(%12.6f, %12.6f, %12.6f)\n", point.x, point.y, point.z);
+	
 }//end V3Print
 
 

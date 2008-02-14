@@ -194,8 +194,10 @@
 			<string>ObjC</string>
 			<key>OUTLETS</key>
 			<dict>
-				<key>document</key>
+				<key>delegate</key>
 				<string>id</string>
+				<key>document</key>
+				<string>LDrawDocument</string>
 			</dict>
 			<key>SUPERCLASS</key>
 			<string>NSOpenGLView</string>
@@ -259,6 +261,14 @@
 			<string>ObjC</string>
 			<key>SUPERCLASS</key>
 			<string>NSResponder</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSScrollView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSView</string>
 		</dict>
 		<dict>
 			<key>CLASS</key>

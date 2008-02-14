@@ -52,7 +52,8 @@
 	[self->partsTable setTarget:self];
 	[self->partsTable setDoubleAction:@selector(doubleClickedInPartTable:)];
 	
-	[partPreview setAcceptsFirstResponder:NO];
+	[self->partPreview setAcceptsFirstResponder:NO];
+	[self->partPreview setDelegate:self];
 	
 	//Configure the search field's menu
 	recentsItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"NoRecentSearches", nil)
@@ -142,7 +143,8 @@
 	NSDictionary	*partRecord	= nil;
 	NSString		*partName	= nil;
 	
-	if(rowIndex >= 0) {
+	if(rowIndex >= 0)
+	{
 		partRecord	= [tableDataSource objectAtIndex:rowIndex];
 		partName	= [partRecord objectForKey:PART_NUMBER_KEY];
 	}
@@ -476,59 +478,55 @@
 #pragma mark -
 
 //**** NSTableDataSource ****
-//========== tableView:writeRows:toPasteboard: =================================
+//========== tableView:writeRowsWithIndexes:toPasteboard: ======================
 //
 // Purpose:		It's time for drag-and-drop parts!
 //
 //				This method adds LDraw parts to the pasteboard.
 //
+// Notes:		We can have but one part selected in the browser, so the rows 
+//				parameter is irrelevant. 
+//
 //==============================================================================
-- (BOOL)tableView:(NSTableView *)tableView
-		writeRows:(NSArray *)rows
-	 toPasteboard:(NSPasteboard *)pasteboard
+- (BOOL)     tableView:(NSTableView *)aTableView
+  writeRowsWithIndexes:(NSIndexSet *)rowIndexes
+		  toPasteboard:(NSPasteboard *)pasteboard
 {
-	NSMutableArray	*parts				= [NSMutableArray array];
-	NSDictionary	*partRecord			= nil;
-	NSString		*partName			= nil;
-	LDrawPart		*newPart			= [[[LDrawPart alloc] init] autorelease];
-	NSData			*partData			= nil;
-	LDrawColorT		 selectedColor		= [[LDrawColorPanel sharedColorPanel] LDrawColor];
-	int				 rowCount			= [rows count];
-	int				 counter			= 0;
+	BOOL	success = NO;
 	
-	// well, we can only have one part selected in the part browser at a time, 
-	// but I'll go through the whole multiple-selection rigamarole here. 
-	for(counter = 0; counter < rowCount; counter++)
-	{
-		partRecord	= [self->tableDataSource objectAtIndex:[[rows objectAtIndex:counter] intValue]];
-		partName	= [partRecord objectForKey:PART_NUMBER_KEY];
-
-		//We got a part; let's add it!
-		if(partName != nil)
-		{
-			newPart			= [[[LDrawPart alloc] init] autorelease];
-			
-			//Set up the part attributes
-			[newPart setLDrawColor:selectedColor];
-			[newPart setDisplayName:partName];
-			
-			partData = [NSKeyedArchiver archivedDataWithRootObject:newPart];
-			
-			[parts addObject:partData];
-		}
-	}
-
-	[pasteboard declareTypes:[NSArray arrayWithObject:LDrawDraggingPboardType] owner:self];
-	[pasteboard setPropertyList:parts forType:LDrawDraggingPboardType];
+	// Select the dragged row (it may not have been selected), then write it to 
+	// the pasteboard. 
+	[self->partsTable selectRowIndexes:rowIndexes byExtendingSelection:NO];
+	success = [self writeSelectedPartToPasteboard:pasteboard];
 	
-	return YES;
-	
-}//end tableView:writeRows:toPasteboard:
+	return success;
+		
+}//end tableView:writeRowsWithIndexes:toPasteboard:
 
 #pragma mark -
 #pragma mark DELEGATES
 #pragma mark -
 
+#pragma mark LDrawGLView
+
+//========== LDrawGLView:writeDirectivesToPasteboard:asCopy: ===================
+//
+// Purpose:		Begin a drag-and-drop part insertion initiated in the directive 
+//				view. 
+//
+//==============================================================================
+- (BOOL)         LDrawGLView:(LDrawGLView *)glView
+ writeDirectivesToPasteboard:(NSPasteboard *)pasteboard
+					  asCopy:(BOOL)copyFlag
+{
+	BOOL	success = [self writeSelectedPartToPasteboard:pasteboard];
+	
+	return success;
+	
+}//end LDrawGLView:writeDirectivesToPasteboard:asCopy:
+
+#pragma mark -
+#pragma mark NSTableView
 
 //**** NSTableView ****
 //========== tableViewSelectionDidChange: ======================================
@@ -536,7 +534,8 @@
 // Purpose:		A new part has been selected.
 //
 //==============================================================================
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
+{
 	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
 	int				 newRow			= [self->partsTable selectedRow];
 	
@@ -654,6 +653,50 @@
 	[partPreview setLDrawDirective:modelToView];
 	
 }//end syncSelectionAndPartDisplayed
+
+
+//========== writeSelectedPartToPasteboard: ====================================
+//
+// Purpose:		Writes the current part-browser selection onto the pasteboard.
+//
+//==============================================================================
+- (BOOL) writeSelectedPartToPasteboard:(NSPasteboard *)pasteboard
+{
+	NSMutableArray	*archivedParts		= [NSMutableArray array];
+	NSString		*partName			= [self selectedPartName];
+	LDrawPart		*newPart			= [[[LDrawPart alloc] init] autorelease];
+	NSData			*partData			= nil;
+	LDrawColorT		 selectedColor		= [[LDrawColorPanel sharedColorPanel] LDrawColor];
+	BOOL			 success			= NO;
+	
+	//We got a part; let's add it!
+	if(partName != nil)
+	{
+		newPart		= [[[LDrawPart alloc] init] autorelease];
+		
+		//Set up the part attributes
+		[newPart setLDrawColor:selectedColor];
+		[newPart setDisplayName:partName];
+		
+		partData	= [NSKeyedArchiver archivedDataWithRootObject:newPart];
+		
+		[archivedParts addObject:partData];
+		
+		// Set up pasteboard
+		[pasteboard declareTypes:[NSArray arrayWithObjects:LDrawDraggingPboardType, LDrawDraggingIsUninitializedPboardType, nil] owner:self];
+		
+		[pasteboard setPropertyList:archivedParts
+							forType:LDrawDraggingPboardType];
+		
+		[pasteboard setPropertyList:[NSNumber numberWithBool:YES]
+							forType:LDrawDraggingIsUninitializedPboardType];
+		
+		success = YES;
+	}
+	
+	return success;
+	
+}//end writeSelectedPartToPasteboard:
 
 
 #pragma mark -

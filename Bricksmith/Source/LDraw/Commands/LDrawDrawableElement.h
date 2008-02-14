@@ -22,7 +22,7 @@
 }
 
 //Directives
-- (void) drawElement:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor;
+- (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor;
 
 //Accessors
 - (Box3) boundingBox3;

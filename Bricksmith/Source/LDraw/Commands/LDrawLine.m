@@ -28,7 +28,7 @@
 #pragma mark INITIALIZATION
 #pragma mark -
 
-//========== lineWithDirectiveText: ============================================
+//---------- lineWithDirectiveText: ----------------------------------[static]--
 //
 // Purpose:		Given a line from an LDraw file, parse a line primitive.
 //
@@ -36,20 +36,22 @@
 //
 //				2 colour x1 y1 z1 x2 y2 z2 
 //
-//==============================================================================
-+ (LDrawLine *) lineWithDirectiveText:(NSString *)directive{
+//------------------------------------------------------------------------------
++ (LDrawLine *) lineWithDirectiveText:(NSString *)directive
+{
 	return [LDrawLine directiveWithString:directive];
-}
+	
+}//end lineWithDirectiveText:
 
 
-//========== directiveWithString: ==============================================
+//---------- directiveWithString: ------------------------------------[static]--
 //
 // Purpose:		Returns the LDraw directive based on lineFromFile, a single line 
 //				of LDraw code from a file.
 //
-//==============================================================================
-+ (id) directiveWithString:(NSString *)lineFromFile{
-	
+//------------------------------------------------------------------------------
++ (id) directiveWithString:(NSString *)lineFromFile
+{
 	LDrawLine		*parsedLDrawLine = nil;
 	NSString		*workingLine = lineFromFile;
 	NSString		*parsedField;
@@ -58,7 +60,8 @@
 	
 	//A malformed part could easily cause a string indexing error, which would 
 	// raise an exception. We don't want this to happen here.
-	NS_DURING
+	@try
+	{
 		//Read in the line code and advance past it.
 		parsedField = [LDrawUtilities readNextField:  workingLine
 										  remainder: &workingLine ];
@@ -98,14 +101,16 @@
 			
 			[parsedLDrawLine setVertex2:workingVertex];
 		}
-		
-	NS_HANDLER
+	}
+	@catch(NSException *exception)
+	{	
 		NSLog(@"the line primitive %@ was fatally invalid", lineFromFile);
-		NSLog(@" raised exception %@", [localException name]);
-	NS_ENDHANDLER
+		NSLog(@" raised exception %@", [exception name]);
+	}
 	
 	return parsedLDrawLine;
-}//end directiveWithString
+	
+}//end directiveWithString:
 
 
 //========== initWithCoder: ====================================================
@@ -115,7 +120,7 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (id)initWithCoder:(NSCoder *)decoder
+- (id) initWithCoder:(NSCoder *)decoder
 {
 	const uint8_t *temporary = NULL; //pointer to a temporary buffer returned by the decoder.
 	
@@ -129,7 +134,8 @@
 	memcpy(&vertex2, temporary, sizeof(Point3));
 	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== encodeWithCoder: ==================================================
@@ -139,13 +145,14 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (void)encodeWithCoder:(NSCoder *)encoder
+- (void) encodeWithCoder:(NSCoder *)encoder
 {
 	[super encodeWithCoder:encoder];
 	
 	[encoder encodeBytes:(void *)&vertex1 length:sizeof(Point3) forKey:@"vertex1"];
-	[encoder encodeBytes:(void *)&vertex2 length:sizeof(Point3) forKey:@"vertex2"];	
-}
+	[encoder encodeBytes:(void *)&vertex2 length:sizeof(Point3) forKey:@"vertex2"];
+		
+}//end encodeWithCoder:
 
 
 //========== copyWithZone: =====================================================
@@ -153,15 +160,16 @@
 // Purpose:		Returns a duplicate of this file.
 //
 //==============================================================================
-- (id) copyWithZone:(NSZone *)zone {
-	
+- (id) copyWithZone:(NSZone *)zone
+{
 	LDrawLine *copied = (LDrawLine *)[super copyWithZone:zone];
 	
 	[copied setVertex1:[self vertex1]];
 	[copied setVertex2:[self vertex2]];
 	
 	return copied;
-}
+	
+}//end copyWithZone:
 
 
 #pragma mark -
@@ -214,7 +222,8 @@
 //				2 colour x1 y1 z1 x2 y2 z2 
 //
 //==============================================================================
-- (NSString *) write{
+- (NSString *) write
+{
 	return [NSString stringWithFormat:
 				@"2 %3d %12f %12f %12f %12f %12f %12f",
 				color,
@@ -230,6 +239,7 @@
 			];
 }//end write
 
+
 #pragma mark -
 #pragma mark DISPLAY
 #pragma mark -
@@ -240,10 +250,11 @@
 //				which can be presented to the user.
 //
 //==============================================================================
-- (NSString *)browsingDescription
+- (NSString *) browsingDescription
 {
 	return NSLocalizedString(@"Line", nil);
-}
+	
+}//end browsingDescription
 
 
 //========== iconName ==========================================================
@@ -252,9 +263,11 @@
 //				object, or nil if there is no icon.
 //
 //==============================================================================
-- (NSString *) iconName{
+- (NSString *) iconName
+{
 	return @"Line";
-}
+	
+}//end iconName
 
 
 //========== inspectorClassName ================================================
@@ -262,9 +275,11 @@
 // Purpose:		Returns the name of the class used to inspect this one.
 //
 //==============================================================================
-- (NSString *) inspectorClassName{
+- (NSString *) inspectorClassName
+{
 	return @"InspectionLine";
-}
+	
+}//end inspectorClassName
 
 
 #pragma mark -
@@ -277,51 +292,75 @@
 //				perfectly contains this object.
 //
 //==============================================================================
-- (Box3) boundingBox3 {
-	Box3 bounds;
-	
-	V3BoundsFromPoints(&vertex1, &vertex2, &bounds);
+- (Box3) boundingBox3
+{
+	Box3 bounds = V3BoundsFromPoints(vertex1, vertex2);
 	
 	return bounds;
-}
+	
+}//end boundingBox3
+
+
+//========== position ==========================================================
+//
+// Purpose:		Returns some position for the element. This is used by 
+//				drag-and-drop. This is not necessarily human-usable information.
+//
+//==============================================================================
+- (Point3) position
+{
+	return self->vertex1;
+	
+}//end position
+
 
 //========== vertex1 ===========================================================
 //
 // Purpose:		Returns the line's start point.
 //
 //==============================================================================
-- (Point3) vertex1{
+- (Point3) vertex1
+{
 	return vertex1;
-}
+	
+}//end vertex1
 
 //========== vertex2 ===========================================================
 //
-// Purpose:		
+// Purpose:		Returns the line's end point.
 //
 //==============================================================================
-- (Point3) vertex2{
+- (Point3) vertex2
+{
 	return vertex2;
-}
+	
+}//end vertex2
 
+
+#pragma mark -
 
 //========== setVertex1: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the line's start point.
 //
 //==============================================================================
--(void) setVertex1:(Point3)newVertex{
+-(void) setVertex1:(Point3)newVertex
+{
 	vertex1 = newVertex;
-}//end setVertex1
+	
+}//end setVertex1:
 
 
 //========== setVertex2: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the line's end point.
 //
 //==============================================================================
--(void) setVertex2:(Point3)newVertex{
+-(void) setVertex2:(Point3)newVertex
+{
 	vertex2 = newVertex;
-}//end setVertex2
+	
+}//end setVertex2:
 
 
 #pragma mark -
@@ -356,7 +395,8 @@
 //				not to any superclass.
 //
 //==============================================================================
-- (void) registerUndoActions:(NSUndoManager *)undoManager {
+- (void) registerUndoActions:(NSUndoManager *)undoManager
+{
 
 	[super registerUndoActions:undoManager];
 
@@ -364,7 +404,8 @@
 	[[undoManager prepareWithInvocationTarget:self] setVertex1:[self vertex1]];
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAttributesLine", nil)];
-}
+	
+}//end registerUndoActions:
 
 
 @end

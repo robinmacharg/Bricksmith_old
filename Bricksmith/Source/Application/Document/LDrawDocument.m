@@ -555,7 +555,9 @@
 	float					 nudgeMagnitude		= [self gridSpacing];
 	int						 counter			= 0;
 	
-	V3Normalize(&nudgeVector); //normalize just in case someone didn't get the message!
+	//normalize just in case someone didn't get the message!
+	nudgeVector = V3Normalize(nudgeVector);
+	
 	nudgeVector.x *= nudgeMagnitude;
 	nudgeVector.y *= nudgeMagnitude;
 	nudgeVector.z *= nudgeMagnitude;
@@ -614,8 +616,8 @@
 			break;
 	}
 	
-	V3Normalize(&rotationAxis); //normalize just in case someone didn't get the message!
-	
+	//normalize just in case someone didn't get the message!
+	rotationAxis = V3Normalize(rotationAxis);
 	
 	rotation.x = rotationAxis.x * degreesToRotate;
 	rotation.y = rotationAxis.y * degreesToRotate;
@@ -661,7 +663,7 @@
 	
 	if(mode == RotateAroundSelectionCenter)
 	{
-		rotationCenter = V3Midpoint(&selectionBounds.min, &selectionBounds.max);
+		rotationCenter = V3Midpoint(selectionBounds.min, selectionBounds.max);
 	}
 	else if(mode == RotateAroundFixedPoint)
 	{
@@ -1892,9 +1894,7 @@
 {
 
 	NSUndoManager	*undoManager		= [self undoManager];
-	Tuple3			 oppositeRotation	= rotationDegrees;
-	
-	V3Negate(&oppositeRotation);
+	Tuple3			 oppositeRotation	= V3Negate(rotationDegrees);
 	
 	[[undoManager prepareWithInvocationTarget:self]
 			rotatePart: part
@@ -2443,11 +2443,15 @@
 	int					 counter			= 0;
 	int					 dropDirectiveIndex	= 0;
 	
-	// Being dragged from the same document. We must simply apply the transforms 
-	// from the dragged parts to the original parts, which have been hidden 
-	// during the drag. 
+	// Being dragged within the same document. We must simply apply the 
+	// transforms from the dragged parts to the original parts, which have been 
+	// hidden during the drag. 
+	//
+	// Exception: If we have no current selection, it means this was a copy 
+	//			  drag. Just paste instead of updating.
 	if(		[[info draggingSource] respondsToSelector:@selector(document)]
-	   &&	[[info draggingSource] document] == self )
+	   &&	[[info draggingSource] document] == self
+	   &&	selectionCount > 0 )
 	{
 		for(counter = 0; counter < selectionCount; counter++)
 		{

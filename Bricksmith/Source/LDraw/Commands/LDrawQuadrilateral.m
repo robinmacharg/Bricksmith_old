@@ -31,7 +31,7 @@
 #pragma mark -
 
 
-//========== quadrilateralWithDirectiveText: =========================================
+//---------- quadrilateralWithDirectiveText: -------------------------[static]--
 //
 // Purpose:		Given a line from an LDraw file, parse a triangle primitive.
 //
@@ -39,19 +39,20 @@
 //
 //				4 colour x1 y1 z1 x2 y2 z2 x3 y3 z3 x4 y4 z4 
 //
-//==============================================================================
+//------------------------------------------------------------------------------
 + (LDrawQuadrilateral *) quadrilateralWithDirectiveText:(NSString *)directive
 {
 	return [LDrawQuadrilateral directiveWithString:directive];
-}
+	
+}//end quadrilateralWithDirectiveText:
 
 
-//========== directiveWithString: ==============================================
+//---------- directiveWithString: ------------------------------------[static]--
 //
 // Purpose:		Returns the LDraw directive based on lineFromFile, a single line 
 //				of LDraw code from a file.
 //
-//==============================================================================
+//------------------------------------------------------------------------------
 + (id) directiveWithString:(NSString *)lineFromFile
 {
 	LDrawQuadrilateral	*parsedQuadrilateral = nil;
@@ -62,7 +63,8 @@
 	
 	//A malformed part could easily cause a string indexing error, which would 
 	// raise an exception. We don't want this to happen here.
-	NS_DURING
+	@try
+	{
 		//Read in the line code and advance past it.
 		parsedField = [LDrawUtilities readNextField:  workingLine
 										  remainder: &workingLine ];
@@ -130,14 +132,16 @@
 			
 			[parsedQuadrilateral fixBowtie];
 		}
-		
-	NS_HANDLER
+	}
+	@catch(NSException *exception)
+	{
 		NSLog(@"the quadrilateral primitive %@ was fatally invalid", lineFromFile);
-		NSLog(@" raised exception %@", [localException name]);
-	NS_ENDHANDLER
+		NSLog(@" raised exception %@", [exception name]);
+	}
 	
 	return [parsedQuadrilateral autorelease];
-}//end directiveWithString
+	
+}//end directiveWithString:
 
 
 //========== initWithCoder: ====================================================
@@ -147,7 +151,7 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (id)initWithCoder:(NSCoder *)decoder
+- (id) initWithCoder:(NSCoder *)decoder
 {
 	const uint8_t *temporary = NULL; //pointer to a temporary buffer returned by the decoder.
 	
@@ -166,8 +170,12 @@
 	temporary = [decoder decodeBytesForKey:@"vertex4" returnedLength:NULL];
 	memcpy(&vertex4, temporary, sizeof(Point3));
 	
+	temporary = [decoder decodeBytesForKey:@"normal" returnedLength:NULL];
+	memcpy(&normal, temporary, sizeof(Vector3));
+	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== encodeWithCoder: ==================================================
@@ -177,15 +185,16 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (void)encodeWithCoder:(NSCoder *)encoder
+- (void) encodeWithCoder:(NSCoder *)encoder
 {
 	[encoder encodeInt:color forKey:@"color"];
 	[encoder encodeBytes:(void *)&vertex1 length:sizeof(Point3) forKey:@"vertex1"];
 	[encoder encodeBytes:(void *)&vertex2 length:sizeof(Point3) forKey:@"vertex2"];
 	[encoder encodeBytes:(void *)&vertex3 length:sizeof(Point3) forKey:@"vertex3"];
 	[encoder encodeBytes:(void *)&vertex4 length:sizeof(Point3) forKey:@"vertex4"];
+	[encoder encodeBytes:(void *)&normal length:sizeof(Vector3) forKey:@"normal"];
 	
-}
+}//end encodeWithCoder:
 
 
 //========== copyWithZone: =====================================================
@@ -193,8 +202,8 @@
 // Purpose:		Returns a duplicate of this file.
 //
 //==============================================================================
-- (id) copyWithZone:(NSZone *)zone {
-	
+- (id) copyWithZone:(NSZone *)zone
+{
 	LDrawQuadrilateral *copied = (LDrawQuadrilateral *)[super copyWithZone:zone];
 	
 	[copied setVertex1:[self vertex1]];
@@ -203,7 +212,8 @@
 	[copied setVertex4:[self vertex4]];
 	
 	return copied;
-}
+	
+}//end copyWithZone:
 
 
 #pragma mark -
@@ -296,6 +306,7 @@
 			];
 }//end write
 
+
 #pragma mark -
 #pragma mark DISPLAY
 #pragma mark -
@@ -306,10 +317,11 @@
 //				which can be presented to the user.
 //
 //==============================================================================
-- (NSString *)browsingDescription
+- (NSString *) browsingDescription
 {
 	return NSLocalizedString(@"Quadrilateral", nil);
-}
+	
+}//end browsingDescription
 
 
 //========== iconName ==========================================================
@@ -321,7 +333,8 @@
 - (NSString *) iconName
 {
 	return @"Quadrilateral";
-}
+	
+}//end iconName
 
 
 //========== inspectorClassName ================================================
@@ -332,7 +345,8 @@
 - (NSString *) inspectorClassName
 {
 	return @"InspectionQuadrilateral";
-}
+	
+}//end inspectorClassName
 
 
 #pragma mark -
@@ -349,8 +363,8 @@
 {
 	Box3 bounds12, bounds34, bounds;
 	
-	V3BoundsFromPoints(&vertex1, &vertex2, &bounds12);
-	V3BoundsFromPoints(&vertex3, &vertex4, &bounds34);
+	bounds12 = V3BoundsFromPoints(vertex1, vertex2);
+	bounds34 = V3BoundsFromPoints(vertex3, vertex4);
 	
 	//Combine and we have the result. This is yucky.
 	bounds.min.x = MIN(bounds12.min.x, bounds34.min.x);
@@ -362,87 +376,111 @@
 	bounds.max.z = MAX(bounds12.max.z, bounds34.max.z);
 	
 	return bounds;
-}
+	
+}//end boundingBox3
+
+
+//========== position ==========================================================
+//
+// Purpose:		Returns some position for the element. This is used by 
+//				drag-and-drop. This is not necessarily human-usable information.
+//
+//==============================================================================
+- (Point3) position
+{
+	return self->vertex1;
+	
+}//end position
 
 
 //========== vertex1 ===========================================================
-//
-// Purpose:		Returns the quadrilateral's first vertex.
-//
 //==============================================================================
-- (Point3) vertex1{
-	return vertex1;
-}
+- (Point3) vertex1
+{
+	return self->vertex1;
+	
+}//end vertex1
+
 
 //========== vertex2 ===========================================================
-//
-// Purpose:		
-//
 //==============================================================================
-- (Point3) vertex2{
-	return vertex2;
-}
+- (Point3) vertex2
+{
+	return self->vertex2;
+	
+}//end vertex2
+
 
 //========== vertex3 ===========================================================
-//
-// Purpose:		
-//
 //==============================================================================
-- (Point3) vertex3{
-	return vertex3;
-}
+- (Point3) vertex3
+{
+	return self->vertex3;
+	
+}//end vertex3
 
-//========== vertex2 ===========================================================
-//
-// Purpose:		
-//
+
+//========== vertex4 ===========================================================
 //==============================================================================
-- (Point3) vertex4{
-	return vertex4;
-}
+- (Point3) vertex4
+{
+	return self->vertex4;
+	
+}//end vertex4
+
+
+#pragma mark -
 
 //========== setVertex1: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the quadrilateral's first vertex.
 //
 //==============================================================================
--(void) setVertex1:(Point3)newVertex{
-	vertex1 = newVertex;
+-(void) setVertex1:(Point3)newVertex
+{
+	self->vertex1 = newVertex;
 	[self recomputeNormal];
-}//end setVertex1
+	
+}//end setVertex1:
 
 
 //========== setVertex2: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the quadrilateral's second vertex.
 //
 //==============================================================================
--(void) setVertex2:(Point3)newVertex{
-	vertex2 = newVertex;
+-(void) setVertex2:(Point3)newVertex
+{
+	self->vertex2 = newVertex;
 	[self recomputeNormal];
-}//end setVertex2
+	
+}//end setVertex2:
 
 
 //========== setVertex3: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the quadrilateral's third vertex.
 //
 //==============================================================================
--(void) setVertex3:(Point3)newVertex{
-	vertex3 = newVertex;
+-(void) setVertex3:(Point3)newVertex
+{
+	self->vertex3 = newVertex;
 	[self recomputeNormal];
-}//end setVertex3
+	
+}//end setVertex3:
 
 
 //========== setVertex4: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the quadrilateral's fourth vertex.
 //
 //==============================================================================
--(void) setVertex4:(Point3)newVertex{
-	vertex4 = newVertex;
+-(void) setVertex4:(Point3)newVertex
+{
+	self->vertex4 = newVertex;
 	[self recomputeNormal];
-}//end setVertex4
+	
+}//end setVertex4:
 
 
 #pragma mark -
@@ -517,9 +555,9 @@
 	vector4_1 = V3Sub(self->vertex1, self->vertex4);
 	vector4_3 = V3Sub(self->vertex3, self->vertex4);
 	
-	V3Cross(&vector1_2, &vector1_4, &cross1);
-	V3Cross(&vector3_4, &vector3_2, &cross3);
-	V3Cross(&vector4_1, &vector4_3, &cross4);
+	cross1 = V3Cross(vector1_2, vector1_4);
+	cross3 = V3Cross(vector3_4, vector3_2);
+	cross4 = V3Cross(vector4_1, vector4_3);
 	
 	//When crosses point different directions, we have a bowtie. To test this, 
 	// recall that cos x = (u • v) / (||u|| ||v||)
@@ -527,7 +565,7 @@
 	// vectors (since the denominator is always positive, we can ignore it).
 	
 	//If 1 & 4 point opposite directions, we have a case 1 bowtie
-	if(V3Dot(&cross1, &cross4) < 0)
+	if(V3Dot(cross1, cross4) < 0)
 	{
 		//vectors point in opposite directions
 		Point3 swapPoint = self->vertex3;
@@ -535,7 +573,7 @@
 		vertex4 = swapPoint;
 	}
 	//If 3 & 4 point opposite directions, we have a case 2 bowtie
-	else if(V3Dot(&cross3, &cross4) < 0)
+	else if(V3Dot(cross3, cross4) < 0)
 	{
 		Point3 swapPoint = self->vertex2;
 		vertex2 = vertex3;
@@ -557,7 +595,7 @@
 	vector1 = V3Sub(self->vertex2, self->vertex1);
 	vector2 = V3Sub(self->vertex4, self->vertex1);
 	
-	V3Cross(&vector1, &vector2, &(self->normal));
+	self->normal = V3Cross(vector1, vector2);
 	
 }//end recomputeNormal
 
@@ -578,7 +616,8 @@
 	[[undoManager prepareWithInvocationTarget:self] setVertex1:[self vertex1]];
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAttributesQuadrilateral", nil)];
-}
+	
+}//end registerUndoActions:
 
 
 @end

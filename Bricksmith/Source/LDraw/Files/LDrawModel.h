@@ -38,7 +38,7 @@ typedef enum {
 	//steps are stored in the superclass.
 	
 	// Drag and Drop
-	NSArray					*draggingDirectives;
+	LDrawStep				*draggingDirectives;
 }
 
 //Initialization

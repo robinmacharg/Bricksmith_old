@@ -133,7 +133,7 @@
 	[self setAcceptsFirstResponder:YES];
 	[self setLDrawColor:LDrawCurrentColor];
 	cameraDistance			= -10000;
-	isDragging				= NO;
+	isTrackingDrag				= NO;
 	projectionMode			= ProjectionModePerspective;
 	rotationDrawMode		= LDrawGLDrawNormal;
 	viewingAngle			= ViewingAngle3D;
@@ -280,10 +280,11 @@
 //==============================================================================
 - (void) drawThreaded:(id)sender
 {
-	NSAutoreleasePool	*pool		= [[NSAutoreleasePool alloc] init];
-	NSDate				*startTime	= nil;
-	unsigned			 options	= DRAW_NO_OPTIONS;
-	NSTimeInterval		 drawTime	= 0;
+	NSAutoreleasePool	*pool				= [[NSAutoreleasePool alloc] init];
+	NSDate				*startTime			= nil;
+	unsigned			 options			= DRAW_NO_OPTIONS;
+	NSTimeInterval		 drawTime			= 0;
+	BOOL				 considerFastDraw	= NO;
 	
 	//mark another outstanding draw request, then get in line by requesting the 
 	// mutex.
@@ -302,10 +303,17 @@
 		// ourselves, and defer to the last guy.
 		if(numberDrawRequests == 1)
 		{
-			//If we're rotating, we may need to simplify large models.
+			// We may need to simplify large models if we are spinning the model 
+			// or doing part drag-and-drop. 
+			considerFastDraw =		self->isTrackingDrag == YES
+								||	(	[self->fileBeingDrawn respondsToSelector:@selector(draggingDirectives)]
+									 &&	[(id)self->fileBeingDrawn draggingDirectives] != nil
+									);
 		#if DEBUG_DRAWING == 0
-			if(self->isDragging && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
+			if(considerFastDraw == YES && self->rotationDrawMode == LDrawGLDrawExtremelyFast)
+			{
 				options |= DRAW_BOUNDS_ONLY;
+			}
 		#endif //DEBUG_DRAWING
 			
 			//Load the model matrix to make sure we are applying the right stuff.
@@ -315,7 +323,7 @@
 			glLineWidth(1.2);
 			glColor4fv(glColor);
 			
-		
+			// DRAW!
 			[self->fileBeingDrawn draw:options parentColor:glColor];
 			
 			if([[self window] firstResponder] == self)
@@ -325,9 +333,11 @@
 			[[self openGLContext] flushBuffer];
 		
 			
-			//If we just did a full draw, let's see if rotating needs to be done simply.
+			// If we just did a full draw, let's see if rotating needs to be 
+			// done simply. 
 			drawTime = -[startTime timeIntervalSinceNow];
-			if(self->isDragging == NO) {
+			if(considerFastDraw == NO)
+			{
 				if( drawTime > SIMPLIFICATION_THRESHOLD )
 					rotationDrawMode = LDrawGLDrawExtremelyFast;
 				else
@@ -337,13 +347,6 @@
 		#if DEBUG_DRAWING
 			NSLog(@"draw time: %f", drawTime);
 		#endif //DEBUG_DRAWING
-			
-
-		//	NSRect visibleRect = [self visibleRect];
-		//	[[NSColor colorWithCalibratedWhite:0.5 alpha:0.75] set];
-		////	[[NSColor clearColor] set];
-		//	NSRectFill(visibleRect);
-			
 			
 		}
 		//else we just drop the draw.
@@ -534,10 +537,8 @@
 - (Matrix4) getInverseMatrix
 {
 	Matrix4	transformation	= [self getMatrix];
-	Matrix4	inversed;
+	Matrix4	inversed		= Matrix4Invert(transformation);
 	
-	Matrix4Invert( &transformation, &inversed);
-		
 	return inversed;
 	
 }//end getInverseMatrix
@@ -1064,14 +1065,14 @@
 			break;
 		
 		case PanScrollTool:
-			if(self->isDragging == YES || isClicked == YES)
+			if(self->isTrackingDrag == YES || isClicked == YES)
 				cursor = [NSCursor closedHandCursor];
 			else
 				cursor = [NSCursor openHandCursor];
 			break;
 			
 		case SmoothZoomTool:
-			if(self->isDragging == YES) {
+			if(self->isTrackingDrag == YES) {
 				cursorImage = [NSImage imageNamed:@"ZoomCursor"];
 				cursor = [[[NSCursor alloc] initWithImage:cursorImage
 												  hotSpot:NSMakePoint(7, 10)] autorelease];
@@ -1279,8 +1280,8 @@
 				
 					if(isZMovement == YES)
 					{
-						actualNudge = zNudge;
-						V3Negate(&actualNudge); //into the screen (-z)
+						//into the screen (-z)
+						actualNudge = V3Negate(zNudge);
 					}
 					else
 						actualNudge = yNudge;
@@ -1293,8 +1294,7 @@
 						actualNudge = zNudge;
 					else
 					{
-						actualNudge = yNudge;
-						V3Negate(&actualNudge);
+						actualNudge = V3Negate(yNudge);
 					}
 					isNudge = YES;
 					break;
@@ -1303,13 +1303,12 @@
 				
 					if(isZMovement == YES)
 					{
-						actualNudge = zNudge;
-						V3Negate(&actualNudge); //this is iffy at best
+						//this is iffy at best
+						actualNudge = V3Negate(zNudge);
 					}
 					else
 					{
-						actualNudge = xNudge;
-						V3Negate(&actualNudge);
+						actualNudge = V3Negate(xNudge);
 					}
 					isNudge = YES;
 					break;
@@ -1353,7 +1352,7 @@
 {
 	ToolModeT	toolMode	= [ToolPalette toolMode];
 
-	self->isDragging = NO; //not yet, anyway. If it does, that will be 
+	self->isTrackingDrag = NO; //not yet, anyway. If it does, that will be 
 		//recorded in mouseDragged. Otherwise, this value will remain NO.
 	
 	[self resetCursor];
@@ -1386,7 +1385,7 @@
 {
 	ToolModeT toolMode = [ToolPalette toolMode];
 
-	self->isDragging = YES;
+	self->isTrackingDrag = YES;
 	[self resetCursor];
 
 	
@@ -1419,7 +1418,7 @@
 //				in the wider context of what the mouse did before now.
 //
 //==============================================================================
-- (void)mouseUp:(NSEvent *)theEvent
+- (void) mouseUp:(NSEvent *)theEvent
 {
 	ToolModeT toolMode = [ToolPalette toolMode];
 
@@ -1429,7 +1428,7 @@
 	{
 		//We only want to select a part if this was NOT part of a mouseDrag event.
 		// Otherwise, the selection should remain intact.
-		if(self->isDragging == NO){
+		if(self->isTrackingDrag == NO){
 			[self mousePartSelection:theEvent];
 		}
 	}
@@ -1439,10 +1438,10 @@
 		[self mouseZoomClick:theEvent];
 	
 	//Redraw from our dragging operations, if necessary.
-	if(	self->isDragging == YES && rotationDrawMode == LDrawGLDrawExtremelyFast )
+	if(	self->isTrackingDrag == YES && rotationDrawMode == LDrawGLDrawExtremelyFast )
 		[self setNeedsDisplay:YES];
 		
-	self->isDragging = NO; //not anymore.
+	self->isTrackingDrag = NO; //not anymore.
 	[self resetCursor];
 	
 }//end mouseUp:
@@ -1467,7 +1466,7 @@
 	NSPoint					 offset				= NSZeroPoint;
 	NSArray					*archivedDirectives	= nil;
 	NSData					*data				= nil;
-	LDrawPart				*firstDirective		= nil; //needs to become an LDrawDrawableDirective
+	LDrawDrawableElement	*firstDirective		= nil;
 	NSPoint					 viewPoint			= [self convertPoint:[theEvent locationInWindow] fromView:nil];
 	Point3					 modelPoint			= ZeroPoint3;
 	Point3					 firstPosition		= ZeroPoint3;
@@ -1512,6 +1511,16 @@
 						forType:LDrawDraggingInitialOffsetPboardType];
 			
 			
+			//---------- Reset event tracking flags ----------------------------
+
+			// reset drop destination flag.
+			[self setDragEndedInOurDocument:NO];
+			
+			// Once we give control to drag-and-drop, we no longer receive 
+			// mouseDragged events. 
+			self->isTrackingDrag = NO;
+			
+			
 			//---------- Start drag-and-drop ----------------------------------
 
 			imageLocation	= [self convertPoint:[theEvent locationInWindow] fromView:nil];
@@ -1531,8 +1540,7 @@
 					 source:self
 				  slideBack:NO ];
 			
-			// reset drop destination flag.
-			[self setDragEndedInOurDocument:NO];
+			// **** -dragImage: BLOCKS until drag is complete. ****
 		}
 	}
 
@@ -1643,8 +1651,8 @@
 		// our screen points by the modelview matrix inverse. That has the 
 		// effect of "undoing" the model matrix on the screen point, leaving us 
 		// a model point. 
-		V4MulPointByMatrix(&vectorX, &inversed, &transformedVectorX);
-		V4MulPointByMatrix(&vectorY, &inversed, &transformedVectorY);
+		transformedVectorX = V4MulPointByMatrix(vectorX, inversed);
+		transformedVectorY = V4MulPointByMatrix(vectorY, inversed);
 		
 		if(self->viewingAngle != ViewingAngle3D)
 		{
@@ -1834,20 +1842,21 @@
 //==============================================================================
 - (NSDragOperation) draggingEntered:(id <NSDraggingInfo>)info
 {
-	NSPasteboard		*pasteboard			= [info draggingPasteboard];
-	id					 sourceView			= [info draggingSource];
-	NSDragOperation		 dragOperation		= NSDragOperationNone;
-	NSArray				*archivedDirectives	= nil;
-	NSMutableArray		*directives			= nil;
-	NSData				*data				= nil;
-	id					 currentObject		= nil;
-	int					 directiveCount		= 0;
-	int					 counter			= 0;
-	NSPoint				 dragPointInWindow	= [info draggingLocation];
-	NSPoint				 dragPointInView	= NSZeroPoint;
-	TransformComponents	 partTransform		= IdentityComponents;
-	Point3				 modelReferencePoint= ZeroPoint3;
-	NSData				*vectorOffsetData	= nil;
+	NSPasteboard			*pasteboard			= [info draggingPasteboard];
+	id						 sourceView			= [info draggingSource];
+	NSDragOperation			 dragOperation		= NSDragOperationNone;
+	NSArray					*archivedDirectives	= nil;
+	NSMutableArray			*directives			= nil;
+	LDrawDrawableElement	*firstDirective		= nil;
+	LDrawPart				*newPart			= nil;
+	NSData					*data				= nil;
+	id						 currentObject		= nil;
+	int						 directiveCount		= 0;
+	int						 counter			= 0;
+	NSPoint					 dragPointInWindow	= [info draggingLocation];
+	TransformComponents		 partTransform		= IdentityComponents;
+	Point3					 modelReferencePoint= ZeroPoint3;
+	NSData					*vectorOffsetData	= nil;
 	
 	// local drag?
 	if(sourceView == self)
@@ -1872,26 +1881,32 @@
 		
 		[directives addObject:currentObject];
 	}
-
+	firstDirective = [directives objectAtIndex:0];
+	
+	
+	//---------- Initialize New Part? ------------------------------------------
+	
+	if([[pasteboard propertyListForType:LDrawDraggingIsUninitializedPboardType] boolValue] == YES)
+	{
+		// Uninitialized elements are always new parts from the part browser.
+		newPart = [directives objectAtIndex:0];
+	
+		// Ask the delegate roughly where it wants us to be.
+		// We get a full transform here so that when we drag in new parts, they 
+		// will be rotated the same as whatever part we were using last. 
+		if([self->delegate respondsToSelector:@selector(LDrawGLViewPreferredPartTransform:)])
+		{
+			partTransform = [self->delegate LDrawGLViewPreferredPartTransform:self];
+			[newPart setTransformComponents:partTransform];
+		}
+	}
 	
 	
 	//---------- Find Location -------------------------------------------------
 	// We need to map our 2-D mouse coordinate into a point in the model's 3-D 
-	// space. That means we need to ask the delegate where along the missing 
-	// third axis it wants us to appear. 
+	// space.
 	
-	// Where are we?
-	dragPointInView		= [self convertPoint:dragPointInWindow fromView:nil];
-	
-	// Ask the delegate roughly where it wants us to be.
-	// We get a full transform here so that when we drag in new parts, they will 
-	// be rotated the same as whatever part we were using last. 
-	#warning Does not support initializing new parts
-	if([self->delegate respondsToSelector:@selector(LDrawGLViewPreferredPartTransform:)])
-		partTransform = [self->delegate LDrawGLViewPreferredPartTransform:self];
-	
-	// and adjust.
-	modelReferencePoint	= V3Make(partTransform.translate_X, partTransform.translate_Y, partTransform.translate_Z);
+	modelReferencePoint	= [firstDirective position];
 	
 	// Apply the initial offset.
 	// This is the difference between the position of part 0 and the actual 
@@ -1911,8 +1926,12 @@
 	
 	[self updateDirectives:directives
 		  withDragPosition:dragPointInWindow
-	   depthReferencePoint:modelReferencePoint];
+	   depthReferencePoint:modelReferencePoint
+			 constrainAxis:NO];
 	
+	self->intialDragLocation = [firstDirective position];
+	
+	// The drag has begun!
 	if([self->fileBeingDrawn respondsToSelector:@selector(setDraggingDirectives:)])
 	{
 		[(id)self->fileBeingDrawn setDraggingDirectives:directives];
@@ -1935,13 +1954,14 @@
 //==============================================================================
 - (NSDragOperation) draggingUpdated:(id <NSDraggingInfo>)info
 {
-	NSArray				*directives				= nil;
-	LDrawPart			*firstDirective			= nil;
-	id					 sourceView				= [info draggingSource];
-	NSPoint				 dragPointInWindow		= [info draggingLocation];
-	Point3				 modelReferencePoint	= ZeroPoint3;
-	BOOL				 moved					= NO;
-	NSDragOperation		 dragOperation			= NSDragOperationNone;
+	NSArray					*directives				= nil;
+	LDrawDrawableElement	*firstDirective			= nil;
+	id						 sourceView				= [info draggingSource];
+	NSPoint					 dragPointInWindow		= [info draggingLocation];
+	Point3					 modelReferencePoint	= ZeroPoint3;
+	BOOL					 constrainDragAxis		= NO;
+	BOOL					 moved					= NO;
+	NSDragOperation			 dragOperation			= NSDragOperationNone;
 	
 	// local drag?
 	if(sourceView == self)
@@ -1960,11 +1980,17 @@
 		{
 			modelReferencePoint = V3Add(modelReferencePoint, self->draggingOffset);
 		}
-
+		
+		// If the shift key is down, only allow dragging along one axis as is 
+		// conventional in graphics programs. Cocoa gives us no way to get at 
+		// the event that initiated this call, so we have to hack. 
+		constrainDragAxis = ([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0;
+		
 		// Update with new position
-		moved				= [self updateDirectives:directives
-									withDragPosition:dragPointInWindow
-								 depthReferencePoint:modelReferencePoint];
+		moved	= [self updateDirectives:directives
+					  withDragPosition:dragPointInWindow
+				   depthReferencePoint:modelReferencePoint
+						 constrainAxis:constrainDragAxis];
 		
 		if(moved == YES)
 		{
@@ -2068,6 +2094,24 @@
 }//end draggedImage:endedAt:operation:
 
 
+//========== wantsPeriodicDraggingUpdates ======================================
+//
+// Purpose:		By default, Cocoa gives us dragging updates even when nothing 
+//				updates. We don't want that. 
+//
+//				By refusing periodic updates, we achieve deterministic dragging 
+//				behavior. Otherwise, parts can oscillate between two positions 
+//				when the mouse is held exactly halfway between two grid 
+//				positions. 
+//
+//==============================================================================
+- (BOOL) wantsPeriodicDraggingUpdates
+{
+	return NO;
+
+}//end wantsPeriodicDraggingUpdates
+
+
 #pragma mark -
 
 //========== updateDirectives:withDragPosition: ================================
@@ -2079,16 +2123,17 @@
 - (BOOL) updateDirectives:(NSArray *)directives
 		 withDragPosition:(NSPoint)dragPointInWindow
 	  depthReferencePoint:(Point3)modelReferencePoint
+			constrainAxis:(BOOL)constrainAxis
 {
-	LDrawPart			*firstDirective			= nil;
-	NSPoint				 dragPointInView		= NSZeroPoint;
-	TransformComponents	 displacementTransform	= IdentityComponents;
-	Point3				 modelPoint				= ZeroPoint3;
-	Point3				 oldPosition			= ZeroPoint3;
-	Vector3				 displacement			= ZeroPoint3;
-	float				 gridSpacing			= [self->document gridSpacing];
-	int					 counter				= 0;
-	BOOL				 moved					= NO;
+	LDrawDrawableElement	*firstDirective			= nil;
+	NSPoint					 dragPointInView		= NSZeroPoint;
+	Point3					 modelPoint				= ZeroPoint3;
+	Point3					 oldPosition			= ZeroPoint3;
+	Vector3					 displacement			= ZeroPoint3;
+	Vector3					 cumulativeDisplacement	= ZeroPoint3;
+	float					 gridSpacing			= [self->document gridSpacing];
+	int						 counter				= 0;
+	BOOL					 moved					= NO;
 	
 	firstDirective	= [directives objectAtIndex:0];
 	
@@ -2100,8 +2145,9 @@
 	oldPosition			= modelReferencePoint;
 	
 	// and adjust.
-	modelPoint			= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
-	displacement		= V3Sub(modelPoint, oldPosition);
+	modelPoint				= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
+	displacement			= V3Sub(modelPoint, oldPosition);
+	cumulativeDisplacement	= V3Sub(modelPoint, self->intialDragLocation);
 	
 	
 	//---------- Find Actual Displacement ----------------------------------
@@ -2110,15 +2156,25 @@
 	// grid, not part's location. That's because the part may not have been 
 	// grid-aligned to begin with. 
 	
-	displacementTransform.translate_X	= displacement.x;
-	displacementTransform.translate_Y	= displacement.y;
-	displacementTransform.translate_Z	= displacement.z;
+	// As is conventional in graphics programs, we allow dragging to be 
+	// constrained to a single axis. We will pick that axis that is furthest 
+	// from the initial drag location. 
+	if(constrainAxis == YES)
+	{
+		cumulativeDisplacement = V3IsolateGreatestComponent(cumulativeDisplacement);
+		
+		// Now select the component of the incremental displacement that matches 
+		// the surviving component of cumulativeDisplacement 
+		if(cumulativeDisplacement.x == 0)
+			displacement.x = 0;
+		if(cumulativeDisplacement.y == 0)
+			displacement.y = 0;
+		if(cumulativeDisplacement.z == 0)
+			displacement.z = 0;
+	}
 	
 	// Snap the displacement to the grid.
-	displacementTransform = [firstDirective components:displacementTransform
-										 snappedToGrid:gridSpacing
-										  minimumAngle:0];
-	displacement = V3Make(displacementTransform.translate_X, displacementTransform.translate_Y, displacementTransform.translate_Z);
+	displacement			= [firstDirective position:displacement snappedToGrid:gridSpacing];
 	
 	
 	//---------- Update the parts' positions  ------------------------------
@@ -2186,8 +2242,10 @@
 //				We also use this opportunity to grow the canvas if necessary.
 //
 //==============================================================================
-- (void) displayNeedsUpdating:(NSNotification *)notification {
+- (void) displayNeedsUpdating:(NSNotification *)notification
+{
 	[self resetFrameSize]; //calls setNeedsDisplay
+	
 }//end displayNeedsUpdating
 
 
@@ -2199,8 +2257,10 @@
 //				We also use this opportunity to grow the canvas if necessary.
 //
 //==============================================================================
-- (void) mouseToolDidChange:(NSNotification *)notification {
+- (void) mouseToolDidChange:(NSNotification *)notification
+{
 	[self resetCursor];
+	
 }//end mouseToolDidChange
 
 
@@ -2530,8 +2590,8 @@
 					// Find bounds size, based on model dimensions.
 					//
 					
-					float	distance1		= V3DistanceBetween2Points(&origin, &(newBounds.min) );
-					float	distance2		= V3DistanceBetween2Points(&origin, &(newBounds.max) );
+					float	distance1		= V3DistanceBetween2Points(origin, newBounds.min );
+					float	distance2		= V3DistanceBetween2Points(origin, newBounds.max );
 					float	newSize			= MAX(distance1, distance2) + 40; //40 is just to provide a margin.
 					NSSize	contentSize		= [[self enclosingScrollView] contentSize];
 					GLfloat	currentMatrix[16];
@@ -2839,23 +2899,25 @@
 	//find the vectors in the model which project onto the screen's axes
 	// (We only care about x and y because this is a two-dimensional 
 	// projection, and the third axis is consquently ambiguous. See below.) 
-	V4MulPointByMatrix(&screenX, &inversed, &unprojectedX);
-	V4MulPointByMatrix(&screenY, &inversed, &unprojectedY);
+	unprojectedX = V4MulPointByMatrix(screenX, inversed);
+	unprojectedY = V4MulPointByMatrix(screenY, inversed);
 	
 	//find the actual axes closest to those model vectors
-	modelX	= V3FromV4(&unprojectedX);
-	modelY	= V3FromV4(&unprojectedY);
-	V3IsolateGreatestComponent(&modelX);
-	V3IsolateGreatestComponent(&modelY);
-	V3Normalize(&modelX);
-	V3Normalize(&modelY);
+	modelX	= V3FromV4(unprojectedX);
+	modelY	= V3FromV4(unprojectedY);
+	
+	modelX	= V3IsolateGreatestComponent(modelX);
+	modelY	= V3IsolateGreatestComponent(modelY);
+	
+	modelX	= V3Normalize(modelX);
+	modelY	= V3Normalize(modelY);
 	
 	// The z-axis is often ambiguous because we are working backwards from a 
 	// two-dimensional screen. Thankfully, while the process used for deriving 
 	// the x and y vectors is perhaps somewhat arbitrary, it always yields 
 	// sensible and unique results. Thus we can simply derive the z-vector, 
 	// which will be whatever axis x and y *didn't* land on. 
-	V3Cross(&modelX, &modelY, &modelZ);
+	modelZ = V3Cross(modelX, modelY);
 	
 	if(outModelX != NULL)
 		*outModelX = modelX;

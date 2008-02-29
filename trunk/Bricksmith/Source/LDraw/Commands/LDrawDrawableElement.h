@@ -14,25 +14,33 @@
 #import "LDrawDirective.h"
 #import "MatrixMath.h"
 
-@interface LDrawDrawableElement : LDrawDirective <LDrawColorable, NSCoding> {
-	
+////////////////////////////////////////////////////////////////////////////////
+//
+// class LDrawDrawableElement
+//
+////////////////////////////////////////////////////////////////////////////////
+@interface LDrawDrawableElement : LDrawDirective <LDrawColorable, NSCoding>
+{
 	LDrawColorT		color;
 	GLfloat			glColor[4]; //OpenGL equivalent of the LDrawColor.
 	BOOL			hidden;		//YES if we don't draw this.
 }
 
-//Directives
+// Directives
 - (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor;
 
-//Accessors
+// Accessors
 - (Box3) boundingBox3;
 - (BOOL) isHidden;
 - (LDrawColorT) LDrawColor;
+- (Point3) position;
+
 - (void) setHidden:(BOOL)flag;
 - (void) setLDrawColor:(LDrawColorT)newColor;
 
-//Actions
+// Actions
 - (Vector3) displacementForNudge:(Vector3)nudgeVector;
 - (void) moveBy:(Vector3)moveVector;
+- (Point3) position:(Point3)position snappedToGrid:(float)gridSpacing;
 
 @end

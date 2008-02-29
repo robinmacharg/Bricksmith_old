@@ -248,15 +248,8 @@
 	
 	// Draw Drag-and-Drop pieces if we've got 'em.
 	if(self->draggingDirectives != nil)
-	{
-		maxIndex = [self->draggingDirectives count];
+		[self->draggingDirectives draw:optionsMask parentColor:parentColor];
 		
-		for(counter = 0; counter < maxIndex; counter++)
-		{
-			currentDirective	= [self->draggingDirectives objectAtIndex:counter];
-			[currentDirective draw:optionsMask parentColor:parentColor];
-		}
-	}
 }//end draw:parentColor:
 
 
@@ -392,7 +385,7 @@
 //==============================================================================
 - (NSArray *) draggingDirectives
 {
-	return self->draggingDirectives;
+	return [self->draggingDirectives subdirectives];
 	
 }//end draggingDirectives
 
@@ -516,10 +509,33 @@
 //==============================================================================
 - (void) setDraggingDirectives:(NSArray *)directives
 {
-	[directives retain];
+	LDrawStep		*dragStep			= nil;
+	LDrawDirective	*currentDirective	= nil;
+	int				 counter			= 0;
+	
+	// When we get sent nil directives, nil out the drag step.
+	if(directives != nil)
+	{
+		dragStep	= [LDrawStep emptyStep];
+		
+		// The law of Bricksmith is that all parts in a model must be enclosed in a 
+		// step. Resistance is futile.
+		for(counter = 0; counter < [directives count]; counter++)
+		{
+			currentDirective = [directives objectAtIndex:counter];
+			[dragStep addDirective:currentDirective];
+		}
+		
+		// Tell the element that it lives in us now. This is important for submodel 
+		// references being dragged; without it, they have no way of resolving their 
+		// part reference, and thus can't draw during their drag. 
+		[dragStep setEnclosingDirective:self];
+	}
+	
+	[dragStep retain];
 	[self->draggingDirectives release];
 	
-	self->draggingDirectives = directives;
+	self->draggingDirectives = dragStep;
 	
 }//end setDraggingDirectives:
 

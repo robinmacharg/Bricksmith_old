@@ -27,13 +27,15 @@
 // Purpose:		Create a fresh object. This is the default initializer.
 //
 //==============================================================================
-- (id) init {
+- (id) init
+{
 	self = [super init];
 	
 	self->hidden = NO;
 	
 	return self;
-}
+	
+}//end init
 
 
 //========== initWithCoder: ====================================================
@@ -43,7 +45,7 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (id)initWithCoder:(NSCoder *)decoder
+- (id) initWithCoder:(NSCoder *)decoder
 {
 	self = [super initWithCoder:decoder];
 	
@@ -51,7 +53,8 @@
 	[self setHidden:[decoder decodeBoolForKey:@"hidden"]];
 	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== encodeWithCoder: ==================================================
@@ -61,13 +64,14 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (void)encodeWithCoder:(NSCoder *)encoder
+- (void) encodeWithCoder:(NSCoder *)encoder
 {
 	[super encodeWithCoder:encoder];
 	
 	[encoder encodeInt:color	forKey:@"color"];
 	[encoder encodeBool:hidden	forKey:@"hidden"];
-}
+	
+}//end encodeWithCoder:
 
 
 
@@ -76,14 +80,15 @@
 // Purpose:		Returns a duplicate of this file.
 //
 //==============================================================================
-- (id) copyWithZone:(NSZone *)zone {
-	
+- (id) copyWithZone:(NSZone *)zone
+{
 	LDrawDrawableElement *copied = (LDrawDrawableElement *)[super copyWithZone:zone];
 	
 	[copied setLDrawColor:[self LDrawColor]];
 	
 	return copied;
-}
+	
+}//end copyWithZone:
 
 
 #pragma mark -
@@ -149,7 +154,8 @@
 			[self drawElement:optionsMask withColor:glColor];
 		}
 			
-		//Done drawing a selected part? Then switch back to normal filled drawing.
+		// Done drawing a selected part? Then switch back to normal filled 
+		// drawing. 
 		if(self->isSelected == YES)
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -161,16 +167,18 @@
 }//end draw:optionsMask:
 
 
-//========== drawElement =======================================================
+//========== drawElement:withColor: ============================================
 //
 // Purpose:		Draws the actual drawable stuff (polygons, etc.) of the element. 
 //				This is a subroutine of the -draw: method, which wraps some 
 //				shared functionality such as setting colors.
 //
 //==============================================================================
-- (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor{
+- (void) drawElement:(unsigned int) optionsMask withColor:(GLfloat *)drawingColor
+{
 	//implemented by subclasses.
-}
+	
+}//end drawElement:withColor:
 
 
 #pragma mark -
@@ -183,13 +191,15 @@
 //				perfectly contains this object.
 //
 //==============================================================================
-- (Box3) boundingBox3 {
+- (Box3) boundingBox3
+{
 	Box3 bounds = InvalidBox;
 	
 	//You shouldn't be here. Look in a subclass.
 	
 	return bounds;
-}
+	
+}//end boundingBox3
 
 
 //========== isHidden ==========================================================
@@ -197,19 +207,39 @@
 // Purpose:		Returns whether this element will be drawn or not.
 //
 //==============================================================================
-- (BOOL) isHidden {
+- (BOOL) isHidden
+{
 	return self->hidden;
-}
+	
+}//end isHidden
+
 
 //========== LDrawColor ========================================================
 //
 // Purpose:		Returns the LDraw color code of the receiver.
 //
 //==============================================================================
--(LDrawColorT) LDrawColor{
+-(LDrawColorT) LDrawColor
+{
 	return color;
-}//end color
+	
+}//end LDrawColor
 
+
+//========== position ==========================================================
+//
+// Purpose:		Returns some position for the element. This is used by 
+//				drag-and-drop. This is not necessarily human-usable information.
+//
+//==============================================================================
+- (Point3) position
+{
+	return ZeroPoint3;
+	
+}//end position
+
+
+#pragma mark -
 
 //========== setHidden: ========================================================
 //
@@ -219,9 +249,11 @@
 //				hiddenness is a temporary state; it is not saved and restored.
 //
 //==============================================================================
-- (void) setHidden:(BOOL) flag {
+- (void) setHidden:(BOOL) flag
+{
 	self->hidden = flag;
-}
+	
+}//end setHidden:
 
 
 //========== setLDrawColor: ====================================================
@@ -236,11 +268,11 @@
 	//Look up the OpenGL color now so we don't have to whenever we draw.
 	rgbafForCode(color, glColor);
 	
-}//end setColor
+}//end setLDrawColor:
 
 
 #pragma mark -
-#pragma mark ACTIONS
+#pragma mark MOVEMENT
 #pragma mark -
 
 //========== displacementForNudge: =============================================
@@ -255,7 +287,8 @@
 {
 	//possibly refined by subclasses.
 	return nudgeVector;
-}
+	
+}//end displacementForNudge:
 
 
 //========== moveBy: ===========================================================
@@ -272,6 +305,34 @@
 - (void) moveBy:(Vector3)moveVector
 {
 	//implemented by subclasses.
-}
+	
+}//end moveBy:
+
+
+//========== position:snappedToGrid: ===========================================
+//
+// Purpose:		Orients position at discrete points separated by the given grid 
+//				spacing. 
+//
+// Notes:		This method may be overridden by subclasses to provide more 
+//				intelligent grid alignment. 
+//
+//				This method is provided mainly as a service to drag-and-drop. 
+//				In the case of LDrawParts, you should generally avoid this 
+//				method in favor of 
+//				-[LDrawPart components:snappedToGrid:minimumAngle:].
+//
+//==============================================================================
+- (Point3) position:(Point3)position
+	  snappedToGrid:(float)gridSpacing
+{
+	position.x = roundf(position.x/gridSpacing) * gridSpacing;
+	position.y = roundf(position.y/gridSpacing) * gridSpacing;
+	position.z = roundf(position.z/gridSpacing) * gridSpacing;
+	
+	return position;
+	
+}//end position:snappedToGrid:
+
 
 @end

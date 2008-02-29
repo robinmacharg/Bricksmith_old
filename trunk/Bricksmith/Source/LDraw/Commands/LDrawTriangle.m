@@ -33,7 +33,7 @@
 #pragma mark INITIALIZATION
 #pragma mark -
 
-//========== triangleWithDirectiveText: =========================================
+//---------- triangleWithDirectiveText: ------------------------------[static]--
 //
 // Purpose:		Given a line from an LDraw file, parse a triangle primitive.
 //
@@ -41,19 +41,22 @@
 //
 //				3 colour x1 y1 z1 x2 y2 z2 x3 y3 z3 
 //
-//==============================================================================
-+ (LDrawTriangle *) triangleWithDirectiveText:(NSString *)directive{
+//------------------------------------------------------------------------------
++ (LDrawTriangle *) triangleWithDirectiveText:(NSString *)directive
+{
 	return [LDrawTriangle directiveWithString:directive];
-}
+	
+}//end triangleWithDirectiveText:
 
-//========== directiveWithString: ==============================================
+
+//---------- directiveWithString: ------------------------------------[static]--
 //
 // Purpose:		Returns the LDraw directive based on lineFromFile, a single line 
 //				of LDraw code from a file.
 //
-//==============================================================================
-+ (id) directiveWithString:(NSString *)lineFromFile{
-		
+//------------------------------------------------------------------------------
++ (id) directiveWithString:(NSString *)lineFromFile
+{
 	LDrawTriangle	*parsedTriangle = nil;
 	NSString		*workingLine = lineFromFile;
 	NSString		*parsedField;
@@ -62,7 +65,8 @@
 	
 	//A malformed part could easily cause a string indexing error, which would 
 	// raise an exception. We don't want this to happen here.
-	NS_DURING
+	@try
+	{
 		//Read in the line code and advance past it.
 		parsedField = [LDrawUtilities readNextField:  workingLine
 										  remainder: &workingLine ];
@@ -116,14 +120,16 @@
 			[parsedTriangle setVertex3:workingVertex];
 			
 		}
-		
-	NS_HANDLER
+	}
+	@catch(NSException *exception)
+	{
 		NSLog(@"the triangle primitive %@ was fatally invalid", lineFromFile);
-		NSLog(@" raised exception %@", [localException name]);
-	NS_ENDHANDLER
+		NSLog(@" raised exception %@", [exception name]);
+	}
 	
 	return [parsedTriangle autorelease];
-}//end triangleWithDirectiveText
+	
+}//end directiveWithString
 
 
 //========== initWithCoder: ====================================================
@@ -133,7 +139,7 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (id)initWithCoder:(NSCoder *)decoder
+- (id) initWithCoder:(NSCoder *)decoder
 {
 	const uint8_t *temporary = NULL; //pointer to a temporary buffer returned by the decoder.
 	
@@ -149,8 +155,12 @@
 	temporary = [decoder decodeBytesForKey:@"vertex3" returnedLength:NULL];
 	memcpy(&vertex3, temporary, sizeof(Point3));
 	
+	temporary = [decoder decodeBytesForKey:@"normal" returnedLength:NULL];
+	memcpy(&normal, temporary, sizeof(Vector3));
+	
 	return self;
-}
+	
+}//end initWithCoder:
 
 
 //========== encodeWithCoder: ==================================================
@@ -160,15 +170,16 @@
 //				read and write LDraw objects as NSData.
 //
 //==============================================================================
-- (void)encodeWithCoder:(NSCoder *)encoder
+- (void) encodeWithCoder:(NSCoder *)encoder
 {
 	[super encodeWithCoder:encoder];
 	
 	[encoder encodeBytes:(void *)&vertex1 length:sizeof(Point3) forKey:@"vertex1"];
 	[encoder encodeBytes:(void *)&vertex2 length:sizeof(Point3) forKey:@"vertex2"];
 	[encoder encodeBytes:(void *)&vertex3 length:sizeof(Point3) forKey:@"vertex3"];
+	[encoder encodeBytes:(void *)&normal  length:sizeof(Vector3) forKey:@"normal"];
 	
-}
+}//end encodeWithCoder:
 
 
 //========== copyWithZone: =====================================================
@@ -176,8 +187,8 @@
 // Purpose:		Returns a duplicate of this file.
 //
 //==============================================================================
-- (id) copyWithZone:(NSZone *)zone {
-	
+- (id) copyWithZone:(NSZone *)zone
+{
 	LDrawTriangle *copied = (LDrawTriangle *)[super copyWithZone:zone];
 	
 	[copied setVertex1:[self vertex1]];
@@ -185,7 +196,8 @@
 	[copied setVertex3:[self vertex3]];
 	
 	return copied;
-}
+	
+}//end copyWithZone:
 
 
 #pragma mark -
@@ -243,7 +255,8 @@
 //				3 colour x1 y1 z1 x2 y2 z2 x3 y3 z3 
 //
 //==============================================================================
-- (NSString *) write{
+- (NSString *) write
+{
 	return [NSString stringWithFormat:
 				@"3 %3d %12f %12f %12f %12f %12f %12f %12f %12f %12f",
 				color,
@@ -263,6 +276,7 @@
 			];
 }//end write
 
+
 #pragma mark -
 #pragma mark DISPLAY
 #pragma mark -
@@ -273,10 +287,11 @@
 //				which can be presented to the user.
 //
 //==============================================================================
-- (NSString *)browsingDescription
+- (NSString *) browsingDescription
 {
 	return NSLocalizedString(@"Triangle", nil);
-}
+	
+}//end browsingDescription
 
 
 //========== iconName ==========================================================
@@ -285,9 +300,11 @@
 //				object, or nil if there is no icon.
 //
 //==============================================================================
-- (NSString *) iconName{
+- (NSString *) iconName
+{
 	return @"Triangle";
-}
+	
+}//end iconName
 
 
 //========== inspectorClassName ================================================
@@ -295,9 +312,11 @@
 // Purpose:		Returns the name of the class used to inspect this one.
 //
 //==============================================================================
-- (NSString *) inspectorClassName{
+- (NSString *) inspectorClassName
+{
 	return @"InspectionTriangle";
-}
+	
+}//end inspectorClassName
 
 
 #pragma mark -
@@ -310,11 +329,12 @@
 //				perfectly contains this object.
 //
 //==============================================================================
-- (Box3) boundingBox3 {
+- (Box3) boundingBox3
+{
 	Box3 bounds;
 	
 	//Compare first two points.
-	V3BoundsFromPoints(&vertex1, &vertex2, &bounds);
+	bounds = V3BoundsFromPoints(vertex1, vertex2);
 
 	//Now toss the third vertex into the mix.
 	bounds.min.x = MIN(bounds.min.x, vertex3.x);
@@ -326,67 +346,89 @@
 	bounds.max.z = MAX(bounds.max.z, vertex3.z);
 	
 	return bounds;
-}
+	
+}//end boundingBox3
+
+
+//========== position ==========================================================
+//
+// Purpose:		Returns some position for the element. This is used by 
+//				drag-and-drop. This is not necessarily human-usable information.
+//
+//==============================================================================
+- (Point3) position
+{
+	return self->vertex1;
+	
+}//end position
 
 
 //========== vertex1 ===========================================================
-//
-// Purpose:		Returns the triangle's first vertex.
-//
 //==============================================================================
-- (Point3) vertex1{
-	return vertex1;
-}
+- (Point3) vertex1
+{
+	return self->vertex1;
+	
+}//end vertex1
+
 
 //========== vertex2 ===========================================================
-//
-// Purpose:		
-//
 //==============================================================================
-- (Point3) vertex2{
-	return vertex2;
-}
+- (Point3) vertex2
+{
+	return self->vertex2;
+	
+}//end vertex2
+
 
 //========== vertex3 ===========================================================
-//
-// Purpose:		
-//
 //==============================================================================
-- (Point3) vertex3{
-	return vertex3;
-}
+- (Point3) vertex3
+{
+	return self->vertex3;
+	
+}//end vertex3
+
+
+#pragma mark -
 
 //========== setVertex1: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the triangle's first vertex.
 //
 //==============================================================================
--(void) setVertex1:(Point3)newVertex{
-	vertex1 = newVertex;
+-(void) setVertex1:(Point3)newVertex
+{
+	self->vertex1 = newVertex;
 	[self recomputeNormal];
-}//end setVertex1
+	
+}//end setVertex1:
 
 
 //========== setVertex2: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the triangle's second vertex.
 //
 //==============================================================================
--(void) setVertex2:(Point3)newVertex{
-	vertex2 = newVertex;
+-(void) setVertex2:(Point3)newVertex
+{
+	self->vertex2 = newVertex;
 	[self recomputeNormal];
-}//end setVertex2
+	
+}//end setVertex2:
 
 
 //========== setVertex3: =======================================================
 //
-// Purpose:		
+// Purpose:		Sets the triangle's last vertex.
 //
 //==============================================================================
--(void) setVertex3:(Point3)newVertex{
-	vertex3 = newVertex;
+-(void) setVertex3:(Point3)newVertex
+{
+	self->vertex3 = newVertex;
 	[self recomputeNormal];
-}//end setVertex3
+	
+}//end setVertex3:
 
 
 #pragma mark -
@@ -431,7 +473,7 @@
 	vector1 = V3Sub(self->vertex2, self->vertex1);
 	vector2 = V3Sub(self->vertex3, self->vertex1);
 	
-	V3Cross(&vector1, &vector2, &(self->normal));
+	self->normal = V3Cross(vector1, vector2);
 	
 }//end recomputeNormal
 
@@ -451,7 +493,8 @@
 	[[undoManager prepareWithInvocationTarget:self] setVertex1:[self vertex1]];
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAttributesTriangle", nil)];
-}
+	
+}//end registerUndoActions:
 
 
 @end

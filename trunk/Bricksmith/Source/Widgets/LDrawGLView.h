@@ -24,7 +24,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#define SIMPLIFICATION_THRESHOLD	0.4 //seconds
+#define SIMPLIFICATION_THRESHOLD	0.3 //seconds
 #define CAMERA_DISTANCE_FACTOR		6.5	//controls perspective; cameraLocation = modelSize * CAMERA_DISTANCE_FACTOR
 
 
@@ -88,11 +88,12 @@ typedef enum
 	ViewingAngleT		 viewingAngle;			// our orientation
 	
 	// Event Tracking
-	BOOL				 isDragging;			// true if the last mousedown was followed by a drag.
+	BOOL				 isTrackingDrag;		// true if the last mousedown was followed by a drag, and we're tracking it (drag-and-drop doesn't count)
 	NSTimer				*mouseDownTimer;		// countdown to beginning drag-and-drop
 	BOOL				 canBeginDragAndDrop;	// the next mouse-dragged will initiate a drag-and-drop.
 	BOOL				 dragEndedInOurDocument;// YES if the drag we initiated ended in the document we display
 	Vector3				 draggingOffset;		// displacement between part 0's position and the initial click point of the drag
+	Point3				 intialDragLocation;	// point in model where part was positioned at draggingEntered
 }
 
 // Drawing
@@ -138,7 +139,7 @@ typedef enum
 - (void) cancelClickAndHoldTimer;
 
 // Drag and Drop
-- (BOOL) updateDirectives:(NSArray *)directives withDragPosition:(NSPoint)dragPointInWindow depthReferencePoint:(Point3)modelReferencePoint;
+- (BOOL) updateDirectives:(NSArray *)directives withDragPosition:(NSPoint)dragPointInWindow depthReferencePoint:(Point3)modelReferencePoint constrainAxis:(BOOL)constrainAxis;
 
 // Notifications
 - (void) displayNeedsUpdating:(NSNotification *)notification;

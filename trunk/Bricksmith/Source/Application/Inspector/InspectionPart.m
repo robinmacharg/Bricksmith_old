@@ -55,18 +55,16 @@
 	[representedObject setDisplayName:[partNameField stringValue]];
 	
 	//Fill the components structure.
- 	components.scale_X		= scaling.x / 100.0; //convert from percentage
- 	components.scale_Y		= scaling.y / 100.0;
- 	components.scale_Z		= scaling.z / 100.0;
+ 	components.scale.x		= scaling.x / 100.0; //convert from percentage
+ 	components.scale.y		= scaling.y / 100.0;
+ 	components.scale.z		= scaling.z / 100.0;
  	components.shear_XY		= shear.x;
  	components.shear_XZ		= shear.y;
  	components.shear_YZ		= shear.z;
- 	components.rotate_X		= oldComponents.rotate_X; //rotation is handled elsewhere.
- 	components.rotate_Y		= oldComponents.rotate_Y;
- 	components.rotate_Z		= oldComponents.rotate_Z;
- 	components.translate_X	= position.x;
- 	components.translate_Y	= position.y;
- 	components.translate_Z	= position.z;	
+ 	components.rotate.x		= oldComponents.rotate.x; //rotation is handled elsewhere.
+ 	components.rotate.y		= oldComponents.rotate.y;
+ 	components.rotate.z		= oldComponents.rotate.z;
+ 	components.translate	= position;
 	
 	[representedObject setTransformComponents:components];
 	
@@ -99,13 +97,11 @@
 	
 	[colorWell setColorCode:[representedObject LDrawColor]];
 
-	position.x = components.translate_X;
-	position.y = components.translate_Y;
-	position.z = components.translate_Z;
+	position	= components.translate;
 	
-	scaling.x = components.scale_X * 100.0; //convert to percentage.
-	scaling.y = components.scale_Y * 100.0; //convert to percentage.
-	scaling.z = components.scale_Z * 100.0; //convert to percentage.
+	scaling.x	= components.scale.x * 100.0; //convert to percentage.
+	scaling.y	= components.scale.y * 100.0; //convert to percentage.
+	scaling.z	= components.scale.z * 100.0; //convert to percentage.
 	
 	//stuff the shear into the structure, despite the bad name mismatches.
 	shear.x = components.shear_XY;
@@ -153,9 +149,9 @@
 	else
 	{
 		//Absolute rotation; fill in the real rotation angles.
-		[rotationXField setFloatValue:degrees(components.rotate_X)];
-		[rotationYField setFloatValue:degrees(components.rotate_Y)];
-		[rotationZField setFloatValue:degrees(components.rotate_Z)];
+		[rotationXField setFloatValue:degrees(components.rotate.x)];
+		[rotationYField setFloatValue:degrees(components.rotate.y)];
+		[rotationZField setFloatValue:degrees(components.rotate.z)];
 		
 	}
 }//end setRotationAngles
@@ -195,9 +191,9 @@
 	else{
 		TransformComponents components = [[self object] transformComponents];
 		
-		components.rotate_X = radians([rotationXField floatValue]); //convert from degrees
-		components.rotate_Y = radians([rotationYField floatValue]);
-		components.rotate_Z = radians([rotationZField floatValue]);
+		components.rotate.x = radians([rotationXField floatValue]); //convert from degrees
+		components.rotate.y = radians([rotationYField floatValue]);
+		components.rotate.z = radians([rotationZField floatValue]);
 		
 		[representedObject setTransformComponents:components];
 	}
@@ -232,10 +228,7 @@
 	TransformComponents	components		= [[self object] transformComponents];
 	
 	//If the values really did change, then update.
-	if(		formContents.x != components.translate_X
-		||	formContents.y != components.translate_Y
-		||	formContents.z != components.translate_Z
-	  )
+	if( V3EqualPoints(formContents, components.translate) == NO )
 	{
 		[self finishedEditing:sender];
 	}
@@ -286,9 +279,9 @@
 	TransformComponents	components		= [[self object] transformComponents];
 
 	//If the values really did change, then update.
-	if(		formContents.x != components.scale_X * 100.0
-	   ||	formContents.y != components.scale_Y * 100.0
-	   ||	formContents.z != components.scale_Z * 100.0
+	if(		formContents.x != components.scale.x * 100.0
+	   ||	formContents.y != components.scale.y * 100.0
+	   ||	formContents.z != components.scale.z * 100.0
 	   )
 	{
 		[self finishedEditing:sender];

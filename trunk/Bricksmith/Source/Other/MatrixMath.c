@@ -1,10 +1,16 @@
-/*
- *  MatrixMath.c
- *  Bricksmith
- *
- */
-
+//==============================================================================
+//
+// File:		MatrixMath.h
+//
+// Purpose:		Mathematical library for computer graphics
+//
+//				Stolen heavily from GraphicsGems.h  
+//				Version 1.0 - Andrew Glassner
+//				from "Graphics Gems", Academic Press, 1990
+//
+//==============================================================================
 #include "MatrixMath.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,22 +22,13 @@ const Box3 InvalidBox = {	{ INFINITY,  INFINITY,  INFINITY},
 							{-INFINITY, -INFINITY, -INFINITY}   };
 							
 const TransformComponents IdentityComponents = {
-							1, //scale_X;
-							1, //scale_Y;
-							1, //scale_Z;
-							0, //shear_XY;
-							0, //shear_XZ;
-							0, //shear_YZ;
-							0, //rotate_X; //in radians
-							0, //rotate_Y; //in radians
-							0, //rotate_Z; //in radians
-							0, //translate_X;
-							0, //translate_Y;
-							0, //translate_Z;
-							0, //perspective_X;
-							0, //perspective_Y;
-							0, //perspective_Z;
-							0, //perspective_W;
+							{1, 1, 1},	//scale;
+							0,			//shear_XY;
+							0,			//shear_XZ;
+							0,			//shear_YZ;
+							{0, 0, 0},	//rotate;		//in radians
+							{0, 0, 0},	//translate;
+							{0, 0, 0, 0}//perspective;
 						};
 
 const Matrix4 IdentityMatrix4 = {{	{1, 0, 0, 0},
@@ -40,6 +37,7 @@ const Matrix4 IdentityMatrix4 = {{	{1, 0, 0, 0},
 									{0, 0, 0, 1} }};
 
 const Point3 ZeroPoint3 = {0.0, 0.0, 0.0};
+const Point4 ZeroPoint4 = {0.0, 0.0, 0.0, 0.0};
 
 #pragma mark 2-D LIBRARY
 #pragma mark -
@@ -61,25 +59,19 @@ float det2x2( float a, float b, float c, float d)
 #pragma mark 3-D LIBRARY
 #pragma mark -
 
-/******************/
-/*   3d Library   */
-/******************/
-
-/* create, initialize, and return a new vector */
-Vector3 *V3New(float x, float y, float z)
-{
-	Vector3 *v = NEWTYPE(Vector3);
-	v->x = x;  v->y = y;  v->z = z;
-	return(v);
-}
-
-/* create, initialize, and return a new vector */
+//========== V3Make ============================================================
+//
+// Purpose:		create, initialize, and return a new vector
+//
+//==============================================================================
 Vector3 V3Make(float x, float y, float z)
 {
 	Vector3 v;
 	v.x = x;  v.y = y;  v.z = z;
 	return(v);
-}
+	
+}//end V3Make
+
 
 /* create, initialize, and return a duplicate vector */
 Vector3 *V3Duplicate(Vector3 *a)
@@ -89,6 +81,7 @@ Vector3 *V3Duplicate(Vector3 *a)
 	return(v);
 }
 
+
 //========== V3FromV4 ==========================================================
 //
 // Purpose:		Create a new 3D vector whose components match the given 4D 
@@ -96,16 +89,17 @@ Vector3 *V3Duplicate(Vector3 *a)
 //				vector is really a 3D one being used for convenience in 4D math.
 //
 //==============================================================================
-Vector3 V3FromV4(Vector4 *originalVector) {
+Vector3 V3FromV4(Vector4 originalVector)
+{
 	Vector3 newVector;
 	
 	//This is very bad.
-	if(originalVector->w != 1)
-		printf("lossy 4D vector conversion: <%f, %f, %f, %f>\n", originalVector->x, originalVector->y, originalVector->z, originalVector->w);
+	if(originalVector.w != 1)
+		printf("lossy 4D vector conversion: <%f, %f, %f, %f>\n", originalVector.x, originalVector.y, originalVector.z, originalVector.w);
 	
-	newVector.x = originalVector->x;
-	newVector.y = originalVector->y;
-	newVector.z = originalVector->z;
+	newVector.x = originalVector.x;
+	newVector.y = originalVector.y;
+	newVector.z = originalVector.z;
 	
 	return newVector;
 }
@@ -120,51 +114,98 @@ Vector3 V3FromV4(Vector4 *originalVector) {
 //==============================================================================
 bool V3EqualPoints(Point3 point1, Point3 point2)
 {
-	if(point1.x == point2.x &&
-	   point1.y == point2.y &&
-	   point1.z == point2.z )
+	if(		point1.x == point2.x
+	   &&	point1.y == point2.y
+	   &&	point1.z == point2.z )
 		return true;
 	else
 		return false;
-}
+		
+}//end V3EqualPoints
 
 
-/* returns squared length of input vector */	
-float V3SquaredLength(Vector3 *a) 
+//========== V3SquaredLength ===================================================
+//
+// Purpose:		returns squared length of input vector
+//
+//==============================================================================
+float V3SquaredLength(Vector3 a) 
 {
-	return((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
-}
+	return (	(a.x * a.x)
+			+	(a.y * a.y)
+			+	(a.z * a.z) );
+	
+}//end V3SquaredLength
 
-/* returns length of input vector */
-float V3Length(Vector3 *a) 
-{
-	return(sqrt(V3SquaredLength(a)));
-}
 
-/* negates the input vector and returns it */
-Vector3 *V3Negate(Vector3 *v) 
+//========== V3Length ==========================================================
+//
+// Purpose:		returns length of input vector
+//
+//==============================================================================
+float V3Length(Vector3 a) 
 {
-	v->x = -v->x;  v->y = -v->y;  v->z = -v->z;
+	return sqrt(V3SquaredLength(a));
+	
+}//end V3Length
+
+
+//========== V3Negate ==========================================================
+//
+// Purpose:		negates the input vector and returns it
+//
+//==============================================================================
+Vector3 V3Negate(Vector3 v) 
+{
+	v.x = - v.x;
+	v.y = - v.y;
+	v.z = - v.z;
+	
 	return(v);
-}
+	
+}//end V3Negate
 
-/* normalizes the input vector and returns it */
-Vector3 *V3Normalize(Vector3 *v) 
+
+//========== V3Normalize =======================================================
+//
+// Purpose:		normalizes the input vector and returns it
+//
+//==============================================================================
+Vector3 V3Normalize(Vector3 v) 
 {
 	float len = V3Length(v);
-	if (len != 0.0) { v->x /= len;  v->y /= len; v->z /= len; }
-	return(v);
-}
-
-/* scales the input vector to the new length and returns it */
-Vector3 *V3Scale(Vector3 *v, float newlen) 
-{
-	float len = V3Length(v);
-	if (len != 0.0) {
-		v->x *= newlen/len;   v->y *= newlen/len;  v->z *= newlen/len;
+	
+	if (len != 0.0)
+	{
+		v.x /= len;
+		v.y /= len;
+		v.z /= len;
 	}
+	
 	return(v);
-}
+	
+}//end V3Normalize
+
+
+//========== V3Scale ===========================================================
+//
+// Purpose:		scales the input vector to the new length and returns it
+//
+//==============================================================================
+Vector3 V3Scale(Vector3 v, float newlen) 
+{
+	float len = V3Length(v);
+	
+	if (len != 0.0)
+	{
+		v.x *= newlen / len;
+		v.y *= newlen / len;
+		v.z *= newlen / len;
+	}
+	
+	return(v);
+	
+}//end V3Scale
 
 
 //========== V3Add =============================================================
@@ -203,60 +244,112 @@ Vector3 V3Sub(Vector3 a, Vector3 b)
 }//end V3Sub
 
 
-/* return the dot product of vectors a and b */
-float V3Dot(Vector3 *a, Vector3 *b) 
+//========== V3Dot =============================================================
+//
+// Purpose:		return the dot product of vectors a and b
+//
+//==============================================================================
+float V3Dot(Vector3 a, Vector3 b) 
 {
-	return((a->x*b->x)+(a->y*b->y)+(a->z*b->z));
-}
+	return ((a.x * b.x) + (a.y * b.y) + (a.z * b.z));
+	
+}//end V3Dot
 
-/* linearly interpolate between vectors by an amount alpha */
-/* and return the resulting vector. */
-/* When alpha=0, result=lo.  When alpha=1, result=hi. */
-Vector3 *V3Lerp(Vector3 *lo, Vector3 *hi, float alpha, Vector3 *result) 
+
+//========== V3Lerp ============================================================
+//
+// Purpose:		linearly interpolate between vectors by an amount alpha and 
+//				return the resulting vector. 
+//
+//				When alpha=0, result=lo.  When alpha=1, result=hi.
+//
+//==============================================================================
+Vector3 V3Lerp(Vector3 lo, Vector3 hi, float alpha) 
 {
-	result->x = LERP(alpha, lo->x, hi->x);
-	result->y = LERP(alpha, lo->y, hi->y);
-	result->z = LERP(alpha, lo->z, hi->z);
+	Vector3 result;
+
+	result.x = LERP(alpha, lo.x, hi.x);
+	result.y = LERP(alpha, lo.y, hi.y);
+	result.z = LERP(alpha, lo.z, hi.z);
+	
 	return(result);
-}
+	
+}//end V3Lerp
 
-/* make a linear combination of two vectors and return the result. */
-/* result = (a * ascl) + (b * bscl) */
-Vector3 *V3Combine (Vector3 *a, Vector3 *b, Vector3 *result, float ascl, float bscl) 
+
+//========== V3Combine =========================================================
+//
+// Purpose:		make a linear combination of two vectors and return the result.
+//
+//				result = (a * ascl) + (b * bscl)
+//
+//==============================================================================
+Vector3 V3Combine (Vector3 a, Vector3 b, float ascl, float bscl) 
 {
-	result->x = (ascl * a->x) + (bscl * b->x);
-	result->y = (ascl * a->y) + (bscl * b->y);
-	result->z = (ascl * a->z) + (bscl * b->z);
+	Vector3 result;
+	
+	result.x = (ascl * a.x) + (bscl * b.x);
+	result.y = (ascl * a.y) + (bscl * b.y);
+	result.z = (ascl * a.z) + (bscl * b.z);
+	
 	return(result);
-}
+	
+}//end V3Combine
 
 
-/* multiply two vectors together component-wise and return the result */
-Vector3 *V3Mul (Vector3 *a, Vector3 *b, Vector3 *result) 
+//========== V3Mul =============================================================
+//
+// Purpose:		Multiply two vectors together component-wise and return the 
+//				result.
+//
+//==============================================================================
+Vector3 V3Mul(Vector3 a, Vector3 b) 
 {
-	result->x = a->x * b->x;
-	result->y = a->y * b->y;
-	result->z = a->z * b->z;
+	Vector3 result;
+	
+	result.x = a.x * b.x;
+	result.y = a.y * b.y;
+	result.z = a.z * b.z;
+	
 	return(result);
-}
+	
+}//end V3Mul
 
-/* return the distance between two points */
-float V3DistanceBetween2Points(const Point3 *a, const Point3 *b)
-{
-	float dx = a->x - b->x;
-	float dy = a->y - b->y;
-	float dz = a->z - b->z;
-	return(sqrt((dx*dx)+(dy*dy)+(dz*dz)));
-}
 
-/* return the cross product c = a cross b */
-Vector3 *V3Cross(Vector3 *a, Vector3 *b, Vector3 *c)
+//========== V3DistanceBetween2Points ==========================================
+//
+// Purpose:		return the distance between two points
+//
+//==============================================================================
+float V3DistanceBetween2Points(Point3 a, Point3 b)
 {
-	c->x = (a->y*b->z) - (a->z*b->y);
-	c->y = (a->z*b->x) - (a->x*b->z);
-	c->z = (a->x*b->y) - (a->y*b->x);
+	float dx = a.x - b.x;
+	float dy = a.y - b.y;
+	float dz = a.z - b.z;
+	
+	float distance	= sqrt( (dx*dx) + (dy*dy) + (dz*dz) );
+	
+	return distance;
+	
+}//end V3DistanceBetween2Points
+
+
+//========== V3Cross ===========================================================
+//
+// Purpose:		return the cross product c = a x b
+//
+//==============================================================================
+Vector3 V3Cross(Vector3 a, Vector3 b)
+{
+	Vector3 c;
+
+	c.x = (a.y * b.z) - (a.z * b.y);
+	c.y = (a.z * b.x) - (a.x * b.z);
+	c.z = (a.x * b.y) - (a.y * b.x);
+	
 	return(c);
-}
+	
+}//end V3Cross
 
 
 //========== V3Midpoint ========================================================
@@ -265,13 +358,16 @@ Vector3 *V3Cross(Vector3 *a, Vector3 *b, Vector3 *c)
 //				point2.
 //
 //==============================================================================
-Point3 V3Midpoint(Point3 *point1, Point3 *point2) {
+Point3 V3Midpoint(Point3 point1, Point3 point2)
+{
 	Point3 midpoint;
-	midpoint.x = (point1->x + point2->x)/2;
-	midpoint.y = (point1->y + point2->y)/2;
-	midpoint.z = (point1->z + point2->z)/2;
+	
+	midpoint.x = (point1.x + point2.x) / 2;
+	midpoint.y = (point1.y + point2.y) / 2;
+	midpoint.z = (point1.z + point2.z) / 2;
 	
 	return midpoint;
+	
 }//end V3Midpoint
 
 
@@ -280,17 +376,21 @@ Point3 V3Midpoint(Point3 *point1, Point3 *point2) {
 // Purpose:		Sorts the points into their minimum and maximum.
 //
 //==============================================================================
-Box3 *V3BoundsFromPoints(Point3 *point1, Point3 *point2, Box3 *bounds) {
-	bounds->min.x = MIN(point1->x, point2->x);
-	bounds->min.y = MIN(point1->y, point2->y);
-	bounds->min.z = MIN(point1->z, point2->z);
+Box3 V3BoundsFromPoints(Point3 point1, Point3 point2)
+{
+	Box3 bounds;
+
+	bounds.min.x = MIN(point1.x, point2.x);
+	bounds.min.y = MIN(point1.y, point2.y);
+	bounds.min.z = MIN(point1.z, point2.z);
 	
-	bounds->max.x = MAX(point1->x, point2->x);
-	bounds->max.y = MAX(point1->y, point2->y);
-	bounds->max.z = MAX(point1->z, point2->z);
+	bounds.max.x = MAX(point1.x, point2.x);
+	bounds.max.y = MAX(point1.y, point2.y);
+	bounds.max.z = MAX(point1.z, point2.z);
 	
 	return bounds;
-}
+	
+}//end V3BoundsFromPoints
 
 
 //========== V3EqualsBoxes =====================================================
@@ -318,61 +418,108 @@ int V3EqualsBoxes(const Box3 *box1, const Box3 *box2)
 //				This is useful for figuring out the direction of input.
 //
 //==============================================================================
-Vector3 *V3IsolateGreatestComponent(Vector3 *vector) {
-
-	if(fabs(vector->x) > fabs(vector->y) ){
-		vector->y = 0;
-		if(fabs(vector->x) > fabs(vector->z) )
-			vector->z = 0;
+Vector3 V3IsolateGreatestComponent(Vector3 vector)
+{
+	if(fabs(vector.x) > fabs(vector.y) )
+	{
+		vector.y = 0;
+		
+		if(fabs(vector.x) > fabs(vector.z) )
+			vector.z = 0;
 		else
-			vector->x = 0;
+			vector.x = 0;
 	}
-	else{
-		vector->x = 0;
-		if(fabs(vector->y) > fabs(vector->z) )
-			vector->z = 0;
+	else
+	{
+		vector.x = 0;
+		
+		if(fabs(vector.y) > fabs(vector.z) )
+			vector.z = 0;
 		else
-			vector->y = 0;
+			vector.y = 0;
 	}
 	
 	return vector;
-}
+	
+}//end V3IsolateGreatestComponent
 
 
-/* multiply a point by a matrix and return the transformed point */
-Point3 *V3MulPointByMatrix(pin, m, pout)
-Point3 *pin, *pout;
-Matrix3 *m;
+//========== V3MulPointByMatrix ================================================
+//
+// Purpose:		multiply a point by a matrix and return the transformed point
+//
+//==============================================================================
+Point3 V3MulPointByMatrix(Point3 pin, Matrix3 m)
 {
-	pout->x = (pin->x * m->element[0][0]) + (pin->y * m->element[1][0]) + 
-	(pin->z * m->element[2][0]);
-	pout->y = (pin->x * m->element[0][1]) + (pin->y * m->element[1][1]) + 
-		(pin->z * m->element[2][1]);
-	pout->z = (pin->x * m->element[0][2]) + (pin->y * m->element[1][2]) + 
-		(pin->z * m->element[2][2]);
-	return(pout);
-}
+	Point3 pout = ZeroPoint3;
+	
+	pout.x =	(pin.x * m.element[0][0])
+			 +	(pin.y * m.element[1][0])
+			 +	(pin.z * m.element[2][0]);
+			 
+	pout.y =	(pin.x * m.element[0][1])
+			 +	(pin.y * m.element[1][1])
+			 +	(pin.z * m.element[2][1]);
+			 
+	pout.z =	(pin.x * m.element[0][2])
+			 +	(pin.y * m.element[1][2])
+			 +	(pin.z * m.element[2][2]);
+		
+	return pout;
+	
+}//end V3MulPointByMatrix
 
-/* multiply a point by a projective matrix and return the transformed point */
-Point3 *V3MulPointByProjMatrix(pin, m, pout)
-Point3 *pin, *pout;
-Matrix4 *m;
+
+//========== V3MulPointByProjMatrix ============================================
+//
+// Purpose:		multiply a point by a projective matrix and return the 
+//				transformed point 
+//
+//==============================================================================
+Point3 V3MulPointByProjMatrix(Point3 pin, Matrix4 m)
 {
-	float w;
-	pout->x = (pin->x * m->element[0][0]) + (pin->y * m->element[1][0]) + 
-		(pin->z * m->element[2][0]) + m->element[3][0];
-	pout->y = (pin->x * m->element[0][1]) + (pin->y * m->element[1][1]) + 
-		(pin->z * m->element[2][1]) + m->element[3][1];
-	pout->z = (pin->x * m->element[0][2]) + (pin->y * m->element[1][2]) + 
-		(pin->z * m->element[2][2]) + m->element[3][2];
-	w =    (pin->x * m->element[0][3]) + (pin->y * m->element[1][3]) + 
-		(pin->z * m->element[2][3]) + m->element[3][3];
-	if (w != 0.0) { pout->x /= w;  pout->y /= w;  pout->z /= w; }
+	Point3 pout = ZeroPoint3;
+	float	w	= 0.0;
+	
+	pout.x =	(pin.x * m.element[0][0])
+			 +	(pin.y * m.element[1][0])
+			 + 	(pin.z * m.element[2][0])
+			 +	m.element[3][0];
+			 
+	pout.y =	(pin.x * m.element[0][1])
+			 +	(pin.y * m.element[1][1])
+			 + 	(pin.z * m.element[2][1])
+			 +	m.element[3][1];
+			 
+	pout.z =	(pin.x * m.element[0][2])
+			 +	(pin.y * m.element[1][2])
+			 + 	(pin.z * m.element[2][2])
+			 +	m.element[3][2];
+			 
+	w =			(pin.x * m.element[0][3])
+			 +	(pin.y * m.element[1][3])
+			 +	(pin.z * m.element[2][3])
+			 +	m.element[3][3];
+			 
+	if (w != 0.0)
+	{
+		pout.x /= w;
+		pout.y /= w;
+		pout.z /= w;
+	}
+	
 	return(pout);
-}
+	
+}//end V3MulPointByProjMatrix
 
-/* multiply together matrices c = ab */
-/* note that c must not point to either of the input matrices */
+
+//========== V3MatMul ==========================================================
+//
+// Purpose:		multiply together matrices c = ab
+//
+// Notes:		c must not point to either of the input matrices
+//
+//==============================================================================
 Matrix4 *V3MatMul(Matrix4 *a, Matrix4 *b, Matrix4 *c)
 {
 	int i, j, k;
@@ -433,9 +580,15 @@ float a1, a2, a3, b1, b2, b3, c1, c2, c3;
 Vector4 V4Make(float x, float y, float z, float w)
 {
 	Vector4 v;
-	v.x = x;  v.y = y;  v.z = z; v.w = w;
+	
+	v.x = x;
+	v.y = y;
+	v.z = z;
+	v.w = w;
+	
 	return(v);
-}
+	
+}//end V4Make
 
 
 //========== V3FromV4 ==========================================================
@@ -444,16 +597,18 @@ Vector4 V4Make(float x, float y, float z, float w)
 //				vector, with a 1 in the 4th dimension.
 //
 //==============================================================================
-Vector4 V4FromV3(Vector3 *originalVector) {
+Vector4 V4FromV3(Vector3 originalVector)
+{
 	Vector4 newVector;
 	
-	newVector.x = originalVector->x;
-	newVector.y = originalVector->y;
-	newVector.z = originalVector->z;
+	newVector.x = originalVector.x;
+	newVector.y = originalVector.y;
+	newVector.z = originalVector.z;
 	newVector.w = 1;
 	
 	return newVector;
-}
+	
+}//end V4FromV3
 
 
 //========== V4MulPointByMatrix() ==============================================
@@ -464,18 +619,33 @@ Vector4 V4FromV3(Vector3 *originalVector) {
 // Source:		Graphic Gems II, Spencer W. Thomas
 //
 //==============================================================================
-Vector4 *V4MulPointByMatrix(Vector4 *pin, Matrix4 *m, Vector4 *pout)
+Vector4 V4MulPointByMatrix(Vector4 pin, Matrix4 m)
 {
-	pout->x = (pin->x * m->element[0][0]) + (pin->y * m->element[1][0]) +
-	(pin->z * m->element[2][0]) + (pin->w * m->element[3][0]);
-	pout->y = (pin->x * m->element[0][1]) + (pin->y * m->element[1][1]) +
-		(pin->z * m->element[2][1]) + (pin->w * m->element[3][1]);
-	pout->z = (pin->x * m->element[0][2]) + (pin->y * m->element[1][2]) +
-		(pin->z * m->element[2][2]) + (pin->w * m->element[3][2]);
-	pout->w = (pin->x * m->element[0][3]) + (pin->y * m->element[1][3]) +
-		(pin->z * m->element[2][3]) + (pin->w * m->element[3][3]);
-	return(pout);
-}
+	Vector4 pout;
+
+	pout.x	=	(pin.x * m.element[0][0])
+			 +	(pin.y * m.element[1][0])
+			 +	(pin.z * m.element[2][0])
+			 +	(pin.w * m.element[3][0]);
+			 
+	pout.y	=	(pin.x * m.element[0][1])
+			 +	(pin.y * m.element[1][1])
+			 +	(pin.z * m.element[2][1])
+			 +	(pin.w * m.element[3][1]);
+	
+	pout.z	=	(pin.x * m.element[0][2])
+			 +	(pin.y * m.element[1][2])
+			 +	(pin.z * m.element[2][2])
+			 +	(pin.w * m.element[3][2]);
+		
+	pout.w	=	(pin.x * m.element[0][3])
+			 +	(pin.y * m.element[1][3])
+			 +	(pin.z * m.element[2][3])
+			 +	(pin.w * m.element[3][3]);
+		
+	return (pout);
+	
+}//end V4MulPointByMatrix
 
 
 #pragma mark -
@@ -527,14 +697,14 @@ Matrix4 Matrix4CreateTransformation(TransformComponents *components)
 	float	rotation[3][3];
 	
 	//Create the rotation matrix.
-	double sinX = sin(components->rotate_X);
-	double cosX = cos(components->rotate_X);
+	double sinX = sin(components->rotate.x);
+	double cosX = cos(components->rotate.x);
 	
-	double sinY = sin(components->rotate_Y);
-	double cosY = cos(components->rotate_Y);
+	double sinY = sin(components->rotate.y);
+	double cosY = cos(components->rotate.y);
 	
-	double sinZ = sin(components->rotate_Z);
-	double cosZ = cos(components->rotate_Z);
+	double sinZ = sin(components->rotate.z);
+	double cosZ = cos(components->rotate.z);
 	
 	rotation[0][0] = cosY * cosZ;
 	rotation[0][1] = cosY * sinZ;
@@ -550,22 +720,22 @@ Matrix4 Matrix4CreateTransformation(TransformComponents *components)
 	
 	//Build the transformation.element matrix.
 	// Seeing the transformation.element matrix in these terms helps to make sense of Matrix4DecomposeTransformation().
-	transformation.element[0][0] = components->scale_X * rotation[0][0];
-	transformation.element[0][1] = components->scale_X * rotation[0][1];
-	transformation.element[0][2] = components->scale_X * rotation[0][2];
+	transformation.element[0][0] = components->scale.x * rotation[0][0];
+	transformation.element[0][1] = components->scale.x * rotation[0][1];
+	transformation.element[0][2] = components->scale.x * rotation[0][2];
 
-	transformation.element[1][0] = components->scale_Y * (components->shear_XY * rotation[0][0] + rotation[1][0]);
-	transformation.element[1][1] = components->scale_Y * (components->shear_XY * rotation[0][1] + rotation[1][1]);
-	transformation.element[1][2] = components->scale_Y * (components->shear_XY * rotation[0][2] + rotation[1][2]);
+	transformation.element[1][0] = components->scale.y * (components->shear_XY * rotation[0][0] + rotation[1][0]);
+	transformation.element[1][1] = components->scale.y * (components->shear_XY * rotation[0][1] + rotation[1][1]);
+	transformation.element[1][2] = components->scale.y * (components->shear_XY * rotation[0][2] + rotation[1][2]);
 
-	transformation.element[2][0] = components->scale_Z * (components->shear_XZ * rotation[0][0] + components->shear_YZ * rotation[1][0] + rotation[2][0]);
-	transformation.element[2][1] = components->scale_Z * (components->shear_XZ * rotation[0][1] + components->shear_YZ * rotation[1][1] + rotation[2][1]);
-	transformation.element[2][2] = components->scale_Z * (components->shear_XZ * rotation[0][2] + components->shear_YZ * rotation[1][2] + rotation[2][2]);
+	transformation.element[2][0] = components->scale.z * (components->shear_XZ * rotation[0][0] + components->shear_YZ * rotation[1][0] + rotation[2][0]);
+	transformation.element[2][1] = components->scale.z * (components->shear_XZ * rotation[0][1] + components->shear_YZ * rotation[1][1] + rotation[2][1]);
+	transformation.element[2][2] = components->scale.z * (components->shear_XZ * rotation[0][2] + components->shear_YZ * rotation[1][2] + rotation[2][2]);
 	
 	//translation is so nice and easy.
-	transformation.element[3][0] = components->translate_X;
-	transformation.element[3][1] = components->translate_Y;
-	transformation.element[3][2] = components->translate_Z;
+	transformation.element[3][0] = components->translate.x;
+	transformation.element[3][1] = components->translate.y;
+	transformation.element[3][2] = components->translate.z;
 	
 	//And lastly the corner.
 	transformation.element[3][3] = 1;
@@ -590,16 +760,15 @@ Matrix4 Matrix4CreateTransformation(TransformComponents *components)
 // Source:		Graphic Gems II, Spencer W. Thomas
 //
 //==============================================================================
-int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
+int Matrix4DecomposeTransformation( Matrix4 originalMatrix,
 									TransformComponents *decomposed )
 {
-	int			counter, j;
-	Matrix4		localMatrix;
+	int			counter		= 0;
+	int			j			= 0;
+	Matrix4		localMatrix	= originalMatrix;
 	Matrix4		pmat, invpmat, tinvpmat;
 	Vector4		prhs, psol;
-	Point3		row[3], dummyPoint;
-	
-	localMatrix = *originalMatrix;
+	Point3		row[3];
 	
  	// Normalize the matrix.
  	if ( localMatrix.element[3][3] == 0 )
@@ -634,15 +803,15 @@ int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
 		// necessarily the best.)
 		// inverse function (and Matrix4x4Determinant, above) from the Matrix
 		// Inversion gem in the first volume.
- 		Matrix4Invert( &pmat, &invpmat );
-		Matrix4Transpose( &invpmat, &tinvpmat );
- 		V4MulPointByMatrix(&prhs, &tinvpmat, &psol);
+ 		invpmat		= Matrix4Invert(pmat);
+		tinvpmat	= Matrix4Transpose(invpmat);
+ 		psol		= V4MulPointByMatrix(prhs, tinvpmat);
 		
  		// Stuff the answer away.
- 		decomposed->perspective_X = psol.x;
- 		decomposed->perspective_Y = psol.y;
- 		decomposed->perspective_Z = psol.z;
- 		decomposed->perspective_W = psol.w;
+ 		decomposed->perspective.x = psol.x;
+ 		decomposed->perspective.y = psol.y;
+ 		decomposed->perspective.z = psol.z;
+ 		decomposed->perspective.w = psol.w;
  		// Clear the perspective partition.
  		localMatrix.element[0][3] = 0;
 		localMatrix.element[1][3] = 0;
@@ -651,16 +820,16 @@ int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
  	}
 	//No perspective
 	else{
- 		decomposed->perspective_X = 0;
-		decomposed->perspective_Y = 0;
-		decomposed->perspective_Z = 0;
-		decomposed->perspective_W = 0;
+ 		decomposed->perspective.x = 0;
+		decomposed->perspective.y = 0;
+		decomposed->perspective.z = 0;
+		decomposed->perspective.w = 0;
 	}
 	
  	// Next take care of translation (easy).
-	decomposed->translate_X = localMatrix.element[3][0];
-	decomposed->translate_Y = localMatrix.element[3][1];
-	decomposed->translate_Z = localMatrix.element[3][2];
+	decomposed->translate.x = localMatrix.element[3][0];
+	decomposed->translate.y = localMatrix.element[3][1];
+	decomposed->translate.z = localMatrix.element[3][2];
 	
 	//Zero out the translation as we continue to decompose.
 	for ( counter = 0; counter < 3; counter++ ) {
@@ -675,40 +844,41 @@ int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
  	}
 	
  	// Compute X scale factor and normalize first row.
- 	decomposed->scale_X = V3Length(&row[0]);
- 	V3Scale(&row[0], 1.0);
+ 	decomposed->scale.x = V3Length(row[0]);
+ 	row[0] = V3Scale(row[0], 1.0);
 	
  	// Compute XY shear factor and make 2nd row orthogonal to 1st.
- 	decomposed->shear_XY = V3Dot(&row[0], &row[1]);
- 	V3Combine(&row[1], &row[0], &row[1], 1.0, -decomposed->shear_XY);
+ 	decomposed->shear_XY = V3Dot(row[0], row[1]);
+ 	row[1] = V3Combine(row[1], row[0], 1.0, -decomposed->shear_XY);
 	
  	// Now, compute Y scale and normalize 2nd row.
- 	decomposed->scale_Y = V3Length(&row[1]);
- 	V3Scale(&row[1], 1.0);
- 	decomposed->shear_XY /= decomposed->scale_Y;
+ 	decomposed->scale.y = V3Length(row[1]);
+ 	row[1] = V3Scale(row[1], 1.0);
+ 	decomposed->shear_XY /= decomposed->scale.y;
 	
  	// Compute XZ and YZ shears, orthogonalize 3rd row.
- 	decomposed->shear_XZ = V3Dot(&row[0], &row[2]);
- 	V3Combine(&row[2], &row[0], &row[2], 1.0, -decomposed->shear_XZ);
- 	decomposed->shear_YZ = V3Dot(&row[1], &row[2]);
- 	V3Combine(&row[2], &row[1], &row[2], 1.0, -decomposed->shear_YZ);
+ 	decomposed->shear_XZ = V3Dot(row[0], row[2]);
+ 	row[2] = V3Combine(row[2], row[0], 1.0, -decomposed->shear_XZ);
+ 	decomposed->shear_YZ = V3Dot(row[1], row[2]);
+ 	row[2] = V3Combine(row[2], row[1], 1.0, -decomposed->shear_YZ);
 	
  	// Next, get Z scale and normalize 3rd row.
- 	decomposed->scale_Z = V3Length(&row[2]);
- 	V3Scale(&row[2], 1.0);
- 	decomposed->shear_XZ /= decomposed->scale_Z;
- 	decomposed->shear_YZ /= decomposed->scale_Z;
+ 	decomposed->scale.z = V3Length(row[2]);
+ 	row[2] = V3Scale(row[2], 1.0);
+ 	decomposed->shear_XZ /= decomposed->scale.z;
+ 	decomposed->shear_YZ /= decomposed->scale.z;
 	
  	// At this point, the matrix (in rows[]) is orthonormal.
  	// Check for a coordinate system flip.  If the determinant
  	// is -1, then negate the matrix and the scaling factors.
- 	if ( V3Dot( &row[0], V3Cross( &row[1], &row[2], &dummyPoint) ) < 0 ) {
+ 	if ( V3Dot( row[0], V3Cross(row[1], row[2]) ) < 0 )
+	{
+		decomposed->scale.x *= -1;
+		decomposed->scale.y *= -1;
+		decomposed->scale.z *= -1;
 		
-		decomposed->scale_X *= -1;
-		decomposed->scale_Y *= -1;
-		decomposed->scale_Z *= -1;
-		
- 		for ( counter = 0; counter < 3; counter++ ) {
+ 		for ( counter = 0; counter < 3; counter++ )
+		{
  			row[counter].x *= -1;
  			row[counter].y *= -1;
  			row[counter].z *= -1;
@@ -718,31 +888,32 @@ int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
 	
 	
 	// Now, extract the rotation angles.
-	decomposed->rotate_Y = asin(-row[0].z);
+	decomposed->rotate.y = asin(-row[0].z);
 	
 	//cos(Y) != 0.
 	// We can just use some simple algebra on the simplest components 
 	// of the rotation matrix.
- 	if ( fabs(cos(decomposed->rotate_Y)) > SMALL_NUMBER ) { //within a tolerance of zero.
- 		decomposed->rotate_X = atan2(row[1].z, row[2].z);
- 		decomposed->rotate_Z = atan2(row[0].y, row[0].x);
+ 	if ( fabs(cos(decomposed->rotate.y)) > SMALL_NUMBER ) { //within a tolerance of zero.
+ 		decomposed->rotate.x = atan2(row[1].z, row[2].z);
+ 		decomposed->rotate.z = atan2(row[0].y, row[0].x);
  	}
 	//cos(Y) == 0; so Y = +/- PI/2
 	// this is a "singularity" that zeroes out the information we would 
 	// usually use to determine X and Y.
 	
-	else if( decomposed->rotate_Y < 0) { // -PI/2
- 		decomposed->rotate_X = atan2(-row[2].y, row[1].y);
- 		decomposed->rotate_Z = 0;
+	else if( decomposed->rotate.y < 0) { // -PI/2
+ 		decomposed->rotate.x = atan2(-row[2].y, row[1].y);
+ 		decomposed->rotate.z = 0;
  	}
-	else if( decomposed->rotate_Y > 0) { // +PI/2
- 		decomposed->rotate_X = atan2(row[2].y, row[1].y);
- 		decomposed->rotate_Z = 0;
+	else if( decomposed->rotate.y > 0) { // +PI/2
+ 		decomposed->rotate.x = atan2(row[2].y, row[1].y);
+ 		decomposed->rotate.z = 0;
  	}
 	
  	// All done!
  	return 1;
-}
+	
+}//end Matrix4DecomposeTransformation
 
 
 //========== Matrix4Rotate() ===================================================
@@ -754,7 +925,7 @@ int Matrix4DecomposeTransformation( Matrix4 *originalMatrix,
 // Note:		You may safely pass the same matrix for original and result.
 //
 //==============================================================================
-Matrix4* Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *result)
+Matrix4 Matrix4Rotate(Matrix4 original, Tuple3 degreesToRotate)
 {
 	TransformComponents	rotateComponents	= IdentityComponents;
 	Matrix4				addedRotation		= IdentityMatrix4;
@@ -762,18 +933,14 @@ Matrix4* Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *resu
 
 	//Create a new matrix that causes the rotation we want.
 	//  (start with identity matrix)
-	rotateComponents.rotate_X = radians(degreesToRotate->x);
-	rotateComponents.rotate_Y = radians(degreesToRotate->y);
-	rotateComponents.rotate_Z = radians(degreesToRotate->z);
+	rotateComponents.rotate.x = radians(degreesToRotate.x);
+	rotateComponents.rotate.y = radians(degreesToRotate.y);
+	rotateComponents.rotate.z = radians(degreesToRotate.z);
 	addedRotation = Matrix4CreateTransformation(&rotateComponents);
 	
-	V3MatMul(original, &addedRotation, &newMatrix); //rotate at rotationCenter
+	V3MatMul(&original, &addedRotation, &newMatrix); //rotate at rotationCenter
 	
-	//Copy in the answer. Doing it via the temporary newMatrix variable means we
-	// can pass the same parameter for original and result.
-	*result = newMatrix;
-	
-	return result;
+	return newMatrix;
 
 }//end Matrix4Rotate
 
@@ -787,19 +954,19 @@ Matrix4* Matrix4Rotate(Matrix4 *original, Tuple3 *degreesToRotate, Matrix4 *resu
 // Note:		You may safely pass the same matrix for original and result.
 //
 //==============================================================================
-Matrix4* Matrix4Translate(Matrix4 *original,
-						  Vector3 *displacement,
-						  Matrix4 *result)
+Matrix4 Matrix4Translate(Matrix4 original, Vector3 displacement)
 {
-	//Copy original to result
-	if(original != result) //pointer compare
-		*result = *original;
+	Matrix4 result = IdentityMatrix4;
 	
-	result->element[3][0] += displacement->x; //applied directly to 
-	result->element[3][1] += displacement->y; //the matrix because 
-	result->element[3][2] += displacement->z; //that's easier here.
+	//Copy original to result
+	result = original;
+	
+	result.element[3][0] += displacement.x; //applied directly to 
+	result.element[3][1] += displacement.y; //the matrix because 
+	result.element[3][2] += displacement.z; //that's easier here.
 	
 	return result;
+	
 }//end Matrix4Translate
 
 
@@ -810,14 +977,18 @@ Matrix4* Matrix4Translate(Matrix4 *original,
 // Source:		Graphic Gems II, Spencer W. Thomas
 //
 //==============================================================================
-Matrix4 *Matrix4Transpose(Matrix4 *a, Matrix4 *b)
+Matrix4 Matrix4Transpose(Matrix4 a)
 {
-	int i, j;
+	Matrix4 transpose	= IdentityMatrix4;
+	int		i, j;
+	
 	for (i=0; i<4; i++)
 		for (j=0; j<4; j++)
-			b->element[i][j] = a->element[j][i];
-	return(b);
-}
+			transpose.element[i][j] = a.element[j][i];
+			
+	return transpose;
+	
+}//end Matrix4Transpose
 
 
 //========== Matrix4Invert() ===================================================
@@ -829,23 +1000,25 @@ Matrix4 *Matrix4Transpose(Matrix4 *a, Matrix4 *b)
 //					  det A
 //
 //==============================================================================
-void Matrix4Invert( Matrix4 *in, Matrix4 *out )
+Matrix4 Matrix4Invert( Matrix4 in )
 {
-    int i, j;
-    float det, Matrix4x4Determinant();
+	Matrix4 out	= IdentityMatrix4;
+    int		i, j;
+    float	det	= 0.0;
 	
     /* calculate the adjoint matrix */
 	
-    Matrix4Adjoint( in, out );
+    Matrix4Adjoint( &in, &out );
 	
     /*  calculate the 4x4 determinant
 		*  if the determinant is zero, 
 		*  then the inverse matrix is not unique.
 		*/
 	
-    det = Matrix4x4Determinant( in );
+    det = Matrix4x4Determinant( &in );
 	
-    if ( fabs( det ) < SMALL_NUMBER) {
+    if ( fabs( det ) < SMALL_NUMBER)
+	{
         printf("Non-singular matrix, no inverse!\n");
         exit(1);
     }
@@ -854,8 +1027,11 @@ void Matrix4Invert( Matrix4 *in, Matrix4 *out )
 	
     for (i=0; i<4; i++)
         for(j=0; j<4; j++)
-			out->element[i][j] = out->element[i][j] / det;
-}
+			out.element[i][j] = out.element[i][j] / det;
+	
+	return out;
+	
+}//end Matrix4Invert
 
 
 //========== Matrix4Adjoint() ==================================================

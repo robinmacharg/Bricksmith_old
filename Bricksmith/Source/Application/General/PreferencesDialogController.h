@@ -16,7 +16,11 @@
 #define PREFS_STYLE_TAB_IDENTFIER		@"PreferencesTabStyles"
 
 
-
+////////////////////////////////////////////////////////////////////////////////
+//
+// class PreferencesDialogController
+//
+////////////////////////////////////////////////////////////////////////////////
 @interface PreferencesDialogController : NSObject
 {
     IBOutlet NSWindow		*preferencesWindow;
@@ -28,6 +32,7 @@
 	
 	// General Tab
 	IBOutlet NSForm			*gridSpacingForm;
+	IBOutlet NSMatrix		*mouseDraggingRadioButtons;
 
 	// Parts Tab
     IBOutlet NSTextField	*LDrawPathTextField;
@@ -60,7 +65,8 @@
 - (void)changeTab:(id)sender;
 
 // - General Tab
-- (IBAction) partBrowserStyleChanged:(id)sender;
+- (IBAction) gridSpacingChanged:(id)sender;
+- (IBAction) mouseDraggingChanged:(id)sender;
 
 // - Styles Tab
 - (IBAction) backgroundColorWellChanged:(id)sender;
@@ -75,7 +81,7 @@
 - (IBAction) chooseLDrawFolder:(id)sender;
 - (IBAction) pathTextFieldChanged:(id)sender;
 - (IBAction) reloadParts:(id)sender;
-- (IBAction) gridSpacingChanged:(id)sender;
+- (IBAction) partBrowserStyleChanged:(id)sender;
 
 //Utilities
 + (void) ensureDefaults;

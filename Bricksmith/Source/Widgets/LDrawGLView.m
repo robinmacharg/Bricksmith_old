@@ -133,7 +133,7 @@
 	[self setAcceptsFirstResponder:YES];
 	[self setLDrawColor:LDrawCurrentColor];
 	cameraDistance			= -10000;
-	isTrackingDrag				= NO;
+	isTrackingDrag			= NO;
 	projectionMode			= ProjectionModePerspective;
 	rotationDrawMode		= LDrawGLDrawNormal;
 	viewingAngle			= ViewingAngle3D;
@@ -1093,6 +1093,11 @@
 											  hotSpot:NSMakePoint(7, 10)] autorelease];
 			break;
 		
+		case SpinTool:
+			cursorImage = [NSImage imageNamed:@"Spin"];
+			cursor = [[[NSCursor alloc] initWithImage:cursorImage
+											  hotSpot:NSMakePoint(7, 10)] autorelease];
+			break;
 	}
 	
 	//update the cursor based on the tool mode.
@@ -1135,7 +1140,9 @@
 - (BOOL) worksWhenModal
 {
 	return YES;
-}//end 
+	
+}//end worksWhenModal
+
 
 #pragma mark -
 #pragma mark Keyboard
@@ -1350,10 +1357,13 @@
 //==============================================================================
 - (void) mouseDown:(NSEvent *)theEvent
 {
-	ToolModeT	toolMode	= [ToolPalette toolMode];
-
-	self->isTrackingDrag = NO; //not yet, anyway. If it does, that will be 
-		//recorded in mouseDragged. Otherwise, this value will remain NO.
+	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
+	MouseDragBehaviorT	 draggingBehavior	= [userDefaults integerForKey:MOUSE_DRAGGING_BEHAVIOR_KEY];
+	ToolModeT			 toolMode			= [ToolPalette toolMode];
+	
+	// Reset event tracking flags.
+	self->isTrackingDrag	= NO;
+	self->didPartSelection	= NO;
 	
 	[self resetCursor];
 	
@@ -1362,15 +1372,36 @@
 		
 	else if(toolMode == RotateSelectTool)
 	{
-		// Try waiting for a click-and-hold; that means "begin drag-and-drop"
-		
-		[self cancelClickAndHoldTimer]; // just in case
-		
-		self->mouseDownTimer = [NSTimer scheduledTimerWithTimeInterval:0.25
-																target:self
-															  selector:@selector(clickAndHoldTimerFired:)
-															  userInfo:theEvent
-															   repeats:NO ];
+		switch(draggingBehavior)
+		{
+			case MouseDraggingOff:
+				// do nothing
+				break;
+			
+			case MouseDraggingBeginAfterDelay:
+				[self cancelClickAndHoldTimer]; // just in case
+				
+				// Try waiting for a click-and-hold; that means "begin 
+				// drag-and-drop" 
+				self->mouseDownTimer = [NSTimer scheduledTimerWithTimeInterval:0.25
+																		target:self
+																	  selector:@selector(clickAndHoldTimerFired:)
+																	  userInfo:theEvent
+																	   repeats:NO ];
+				break;			
+			
+			case MouseDraggingBeginImmediately:
+				[self mousePartSelection:theEvent];
+				break;
+			
+			case MouseDraggingImmediatelyInOrthoNeverInPerspective:
+				if([self projectionMode] == ProjectionModeOrthographic)
+				{
+					[self mousePartSelection:theEvent];
+				}
+				break;
+		}
+	
 	}
 	
 }//end mouseDown:
@@ -1383,7 +1414,9 @@
 //==============================================================================
 - (void)mouseDragged:(NSEvent *)theEvent
 {
-	ToolModeT toolMode = [ToolPalette toolMode];
+	NSUserDefaults		*userDefaults		= [NSUserDefaults standardUserDefaults];
+	MouseDragBehaviorT	 draggingBehavior	= [userDefaults integerForKey:MOUSE_DRAGGING_BEHAVIOR_KEY];
+	ToolModeT			 toolMode			= [ToolPalette toolMode];
 
 	self->isTrackingDrag = YES;
 	[self resetCursor];
@@ -1394,15 +1427,40 @@
 	if(toolMode == PanScrollTool)
 		[self panDragged:theEvent];
 	
+	if(toolMode == SpinTool)
+		[self rotationDragged:theEvent];
+	
 	else if(toolMode == SmoothZoomTool)
 		[self zoomDragged:theEvent];
 	
 	else if(toolMode == RotateSelectTool)
 	{
-		if(self->canBeginDragAndDrop == YES)
-			[self dragAndDropDragged:theEvent];
-		else			
-			[self rotationDragged:theEvent];
+		switch(draggingBehavior)
+		{
+			case MouseDraggingOff:
+				[self rotationDragged:theEvent];
+				break;
+				
+			case MouseDraggingBeginAfterDelay:
+				// If the delay has elapsed, begin drag-and-drop. Otherwise, 
+				// just spin the model. 
+				if(self->canBeginDragAndDrop == YES)
+					[self dragAndDropDragged:theEvent];
+				else			
+					[self rotationDragged:theEvent];
+				break;			
+				
+			case MouseDraggingBeginImmediately:
+				[self dragAndDropDragged:theEvent];
+				break;
+				
+			case MouseDraggingImmediatelyInOrthoNeverInPerspective:
+				if([self projectionMode] == ProjectionModePerspective)
+					[self rotationDragged:theEvent];
+				else
+					[self dragAndDropDragged:theEvent];
+				break;
+		}
 	}
 	
 	// Don't wait for drag-and-drop anymore. We need to do this after we process 
@@ -1420,7 +1478,7 @@
 //==============================================================================
 - (void) mouseUp:(NSEvent *)theEvent
 {
-	ToolModeT toolMode = [ToolPalette toolMode];
+	ToolModeT			 toolMode			= [ToolPalette toolMode];
 
 	[self cancelClickAndHoldTimer];
 
@@ -1428,9 +1486,8 @@
 	{
 		//We only want to select a part if this was NOT part of a mouseDrag event.
 		// Otherwise, the selection should remain intact.
-		if(self->isTrackingDrag == NO){
+		if(self->isTrackingDrag == NO && self->didPartSelection == NO)
 			[self mousePartSelection:theEvent];
-		}
 	}
 	
 	else if(	toolMode == ZoomInTool
@@ -1445,6 +1502,32 @@
 	[self resetCursor];
 	
 }//end mouseUp:
+
+
+//========== menuForEvent: =====================================================
+//
+// Purpose:		Customize the contextual menu for the given mouse-down event. 
+//
+//				Calls to this method are filtered by the events the system 
+//				considers acceptible for invoking a contextual menu; namely, 
+//				right-clicks and control-clicks. 
+//
+//==============================================================================
+- (NSMenu *) menuForEvent:(NSEvent *)theEvent
+{
+	int modifiers = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+	
+	// Only display contextual menus for pure control- or right-clicks. By 
+	// default, the system permits control+<any other modifiers> to trigger 
+	// contextual menus. We want to use control/modifier combos to activate 
+	// other mouse tools, so we filter out those events. 
+	if(		modifiers == NSControlKeyMask // and nothing eles!
+	   ||	[theEvent type] == NSRightMouseDown )
+		return [self menu];
+	else
+		return nil;
+		
+}//end menuForEvent:
 
 
 #pragma mark - Dragging
@@ -1723,6 +1806,15 @@
 	NSArray			*fastDrawParts		= nil;
 	NSArray			*fineDrawParts		= nil;
 	LDrawDirective	*clickedDirective	= nil;
+	BOOL			 extendSelection	= NO;
+	
+	NSLog(@"%s", __func__);
+	
+	// Per the AHIG, both command and shift are used for multiple selection. In 
+	// Bricksmith, there is no difference between contiguous and non-contiguous 
+	// selection, so both keys do the same thing. 
+	extendSelection =	([theEvent modifierFlags] & NSShiftKeyMask) != 0
+					 ||	([theEvent modifierFlags] & NSCommandKeyMask) != 0;
 	
 	// Only try to select if we are actually drawing something, and can actually 
 	// select it. 
@@ -1743,17 +1835,27 @@
 		if([fineDrawParts count] > 0)
 			clickedDirective = [fineDrawParts objectAtIndex:0];
 		
-		if([clickedDirective isSelected] == NO)
+		// If the clicked part is already selected, calling this method will 
+		// deselect it. Generally, we want to leave the current selection intact 
+		// (so we can drag it, maybe). The exception is multiple-selection mode, 
+		// which means we actually *want* to deselect it. 
+		if(		[clickedDirective isSelected] == NO
+		   ||	(	[clickedDirective isSelected] == YES // allow deselection
+				 && extendSelection == YES
+				)
+		  )
 		{
 			//Notify our delegate about this momentous event.
 			// It's okay to send nil; that means "deselect."
 			// We want to add this to the current selection if the shift key is down.
 			[self->delegate LDrawGLView:self
 				 wantsToSelectDirective:clickedDirective
-				   byExtendingSelection:(([theEvent modifierFlags] & NSShiftKeyMask) != 0) ];
+				   byExtendingSelection:extendSelection ];
 		}
 	}
 
+	self->didPartSelection = YES;
+	
 }//end mousePartSelection:
 
 
@@ -1923,13 +2025,15 @@
 		
 		modelReferencePoint = V3Add(modelReferencePoint, self->draggingOffset);
 	}
+	// For constrained dragging, we care only about the initial, unmodified 
+	// postion. 
+	self->initialDragLocation = modelReferencePoint;
 	
+	// Move the parts
 	[self updateDirectives:directives
 		  withDragPosition:dragPointInWindow
 	   depthReferencePoint:modelReferencePoint
 			 constrainAxis:NO];
-	
-	self->intialDragLocation = [firstDirective position];
 	
 	// The drag has begun!
 	if([self->fileBeingDrawn respondsToSelector:@selector(setDraggingDirectives:)])
@@ -1976,10 +2080,9 @@
 		firstDirective		= [directives objectAtIndex:0];
 		modelReferencePoint	= [firstDirective position];
 		
+		// Apply the offset if appropriate
 		if(sourceView == self)
-		{
 			modelReferencePoint = V3Add(modelReferencePoint, self->draggingOffset);
-		}
 		
 		// If the shift key is down, only allow dragging along one axis as is 
 		// conventional in graphics programs. Cocoa gives us no way to get at 
@@ -2129,6 +2232,7 @@
 	NSPoint					 dragPointInView		= NSZeroPoint;
 	Point3					 modelPoint				= ZeroPoint3;
 	Point3					 oldPosition			= ZeroPoint3;
+	Point3					 constrainedPosition	= ZeroPoint3;
 	Vector3					 displacement			= ZeroPoint3;
 	Vector3					 cumulativeDisplacement	= ZeroPoint3;
 	float					 gridSpacing			= [self->document gridSpacing];
@@ -2147,7 +2251,7 @@
 	// and adjust.
 	modelPoint				= [self modelPointForPoint:dragPointInView depthReferencePoint:modelReferencePoint];
 	displacement			= V3Sub(modelPoint, oldPosition);
-	cumulativeDisplacement	= V3Sub(modelPoint, self->intialDragLocation);
+	cumulativeDisplacement	= V3Sub(modelPoint, self->initialDragLocation);
 	
 	
 	//---------- Find Actual Displacement ----------------------------------
@@ -2161,21 +2265,17 @@
 	// from the initial drag location. 
 	if(constrainAxis == YES)
 	{
-		cumulativeDisplacement = V3IsolateGreatestComponent(cumulativeDisplacement);
+		// Find the part's position along the constrained axis.
+		cumulativeDisplacement	= V3IsolateGreatestComponent(cumulativeDisplacement);
+		constrainedPosition		= V3Add(self->initialDragLocation, cumulativeDisplacement);
 		
-		// Now select the component of the incremental displacement that matches 
-		// the surviving component of cumulativeDisplacement 
-		if(cumulativeDisplacement.x == 0)
-			displacement.x = 0;
-		if(cumulativeDisplacement.y == 0)
-			displacement.y = 0;
-		if(cumulativeDisplacement.z == 0)
-			displacement.z = 0;
+		// Get the displacement from the part's current position to the 
+		// constrained one. 
+		displacement = V3Sub(constrainedPosition, oldPosition);
 	}
 	
 	// Snap the displacement to the grid.
 	displacement			= [firstDirective position:displacement snappedToGrid:gridSpacing];
-	
 	
 	//---------- Update the parts' positions  ------------------------------
 	

@@ -33,31 +33,37 @@ LDrawColorPanel *sharedColorPanel = nil;
 //				table's data is even loaded, so you can't sort the data here.
 //
 //==============================================================================
-- (void) awakeFromNib {
-	LDrawColorCell *colorCell = [[LDrawColorCell alloc] init];
-	NSTableColumn *colorColumn = [colorTable tableColumnWithIdentifier:LDRAW_COLOR_CODE];
-	[colorColumn setDataCell:colorCell];
+- (void) awakeFromNib
+{
+	LDrawColorCell	*colorCell		= [[[LDrawColorCell alloc] init] autorelease];
+	NSTableColumn	*colorColumn	= [colorTable tableColumnWithIdentifier:LDRAW_COLOR_CODE];
 	
+	[colorColumn setDataCell:colorCell];
 	
 	//Remember, this method is called twice for an LDrawColorPanel; the first time 
 	// is for the File's Owner, which is promptly overwritten.
-}
+	
+}//end awakeFromNib
+
 
 #pragma mark -
 #pragma mark INITIALIZATION
 #pragma mark -
 
-//========== sharedColorPanel ==================================================
+//---------- sharedColorPanel ----------------------------------------[static]--
 //
 // Purpose:		Returns the global instance of the color panel.
 //
-//==============================================================================
-+ (LDrawColorPanel *) sharedColorPanel{
+//------------------------------------------------------------------------------
++ (LDrawColorPanel *) sharedColorPanel
+{
 	if(sharedColorPanel == nil)
 		sharedColorPanel = [[LDrawColorPanel alloc] init];
 	
 	return sharedColorPanel;
-}
+	
+}//end sharedColorPanel
+
 
 //========== init ==============================================================
 //
@@ -99,6 +105,7 @@ LDrawColorPanel *sharedColorPanel = nil;
 	
 }//end init
 
+
 #pragma mark -
 #pragma mark ACCESSORS
 #pragma mark -
@@ -111,8 +118,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 //				This method would be called in response to a limiting search.
 //
 //==============================================================================
-- (void) setViewingColors:(NSArray *)newList{
-	
+- (void) setViewingColors:(NSArray *)newList
+{
 	//This array is mutable for the sake of sorting. Otherwise, sorting a list 
 	// would require replacing the instance variable, so we'd have to call this 
 	// method. But that in turn would call sort: again, leading to an infinite
@@ -128,14 +135,17 @@ LDrawColorPanel *sharedColorPanel = nil;
 	// see awakeFromNib for details.
 	[self tableView:colorTable sortDescriptorsDidChange:[colorTable sortDescriptors]];
 	[colorTable reloadData];
-}
+	
+}//end setViewingColors:
+
 
 //========== LDrawColor ========================================================
 //
 // Purpose:		Returns the color code of the panel's currently-selected color.
 //
 //==============================================================================
-- (LDrawColorT) LDrawColor{
+- (LDrawColorT) LDrawColor
+{
 	int			selectedRow = [colorTable selectedRow];
 	LDrawColorT	selectedColor;
 	
@@ -152,17 +162,18 @@ LDrawColorPanel *sharedColorPanel = nil;
 	
 	
 	return selectedColor;
-}
+	
+}//end LDrawColor
 
 
-//========== setLDrawColor =====================================================
+//========== setLDrawColor: ====================================================
 //
 // Purpose:		Chooses newColor in the color table. As long as newColor is a 
 //				valid color, this method will select it, even if it has to 
 //				change the found set.
 //
 //==============================================================================
-- (void) setLDrawColor:(LDrawColorT)newColor;
+- (void) setLDrawColor:(LDrawColorT)newColor
 {
 	//Try to find the color we are after in the current list.
 	int rowToSelect = [self indexOfColorCode:newColor]; //will be the row index for the color we want.
@@ -179,7 +190,7 @@ LDrawColorPanel *sharedColorPanel = nil;
 		[colorBar setLDrawColor:newColor];
 	}
 	
-}//end setLDrawColor
+}//end setLDrawColor:
 
 #pragma mark -
 #pragma mark ACTIONS
@@ -191,7 +202,7 @@ LDrawColorPanel *sharedColorPanel = nil;
 //				well, it needs to deactivate.
 //
 //==============================================================================
-- (void)orderOut:(id)sender
+- (void) orderOut:(id)sender
 {
 	//deactivate active color well.
 	if([LDrawColorWell activeColorWell] != nil)
@@ -258,7 +269,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 //				search. After all, we only have 64 colors; that's no time.
 //
 //==============================================================================
-- (IBAction) searchFieldChanged:(id)sender{
+- (IBAction) searchFieldChanged:(id)sender
+{
 	LDrawColorT		 currentColor			= [self LDrawColor];
 	NSString		*searchString			= [sender stringValue];
 	NSArray			*searchResults			= nil;
@@ -284,7 +296,7 @@ LDrawColorPanel *sharedColorPanel = nil;
 		[colorTable selectRowIndexes: [NSIndexSet indexSetWithIndex:0]
 				byExtendingSelection: NO];
 		
-}
+}//end searchFieldChanged:
 
 
 //========== updateSelectionWithObjects: =======================================
@@ -316,7 +328,9 @@ LDrawColorPanel *sharedColorPanel = nil;
 	updatingToReflectFile = YES;
 		[self setLDrawColor:objectColor];
 	updatingToReflectFile = NO;
-}
+	
+}//end updateSelectionWithObjects:
+
 
 #pragma mark -
 #pragma mark UTILITIES
@@ -332,8 +346,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 //				search string consisting entirely of numerals.
 //
 //==============================================================================
-- (NSArray *) colorsMatchingString:(NSString *)searchString{
-
+- (NSArray *) colorsMatchingString:(NSString *)searchString
+{
 	int				 numberColors			= [colorList count];
 	NSDictionary	*currentColorRecord		= nil;
 	NSMutableArray	*matchingColors			= [NSMutableArray array];
@@ -352,7 +366,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 	
 	//If it is an LDraw code search, try to find a color code that begins with 
 	// the search number entered.
-	if(searchByCode == YES){
+	if(searchByCode == YES)
+	{
 		for(counter = 0; counter < numberColors; counter++){
 			
 			currentColorRecord	= [colorList objectAtIndex:counter];
@@ -366,8 +381,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 	else{
 		//This is a search based on color names. If we can find the search 
 		// string in any component of the color string, we consider it a match.
-		for(counter = 0; counter < numberColors; counter++){
-			
+		for(counter = 0; counter < numberColors; counter++)
+		{
 			currentColorRecord	= [colorList objectAtIndex:counter];
 			colorName			= [currentColorRecord objectForKey:COLOR_NAME];
 			
@@ -382,7 +397,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 	
 	//We have new search results.
 	return matchingColors;
-}
+	
+}//end colorsMatchingString:
 
 
 //========== indexOfColorCode: =================================================
@@ -391,8 +407,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 //				NSNotFound if colorCodeSought is not displayed.
 //
 //==============================================================================
-- (int) indexOfColorCode:(LDrawColorT)colorCodeSought{
-
+- (int) indexOfColorCode:(LDrawColorT)colorCodeSought
+{
 	//We shall use the table data source methods to find our color.
 	int				 numberColors = [self numberOfRowsInTableView:colorTable];
 	NSTableColumn	*colorColumn = [colorTable tableColumnWithIdentifier:LDRAW_COLOR_CODE];
@@ -413,7 +429,9 @@ LDrawColorPanel *sharedColorPanel = nil;
 	}
 	
 	return rowToSelect;
-}
+	
+}//end indexOfColorCode:
+
 
 #pragma mark -
 #pragma mark DATA SOURCES
@@ -430,7 +448,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 - (int)numberOfRowsInTableView:(NSTableView *)tableView
 {
 	return [viewingColors count];
-}//end numberOfRowsInTableView
+	
+}//end numberOfRowsInTableView:
 
 
 //**** NSTableDataSource ****
@@ -464,12 +483,13 @@ LDrawColorPanel *sharedColorPanel = nil;
 //==============================================================================
 - (void)tableView:(NSTableView *)tableView sortDescriptorsDidChange:(NSArray *)oldDescriptors
 {
-
 	NSArray *newDescriptors = [tableView sortDescriptors];
 	
 	[viewingColors sortUsingDescriptors:newDescriptors];
 	[tableView reloadData];
-}
+	
+}//end tableView:sortDescriptorsDidChange:
+
 
 #pragma mark -
 #pragma mark DELEGATES
@@ -499,11 +519,13 @@ LDrawColorPanel *sharedColorPanel = nil;
 //				allowing the undo request to forward on to the active document.
 //
 //==============================================================================
-- (NSUndoManager *)windowWillReturnUndoManager:(NSWindow *)sender
+- (NSUndoManager *) windowWillReturnUndoManager:(NSWindow *)sender
 {
 	NSDocument *currentDocument = [[NSDocumentController sharedDocumentController] currentDocument];
+	
 	return [currentDocument undoManager];
-}
+	
+}//end windowWillReturnUndoManager:
 
 
 #pragma mark -
@@ -515,11 +537,15 @@ LDrawColorPanel *sharedColorPanel = nil;
 // Purpose:		The Roll has been called up Yonder, and we will be there.
 //
 //==============================================================================
-- (void) dealloc {
+- (void) dealloc
+{
 	[colorList release];
 	[viewingColors release];
 	
 	[super dealloc];
-}
+	
+}//end dealloc
+
 
 @end
+

@@ -26,7 +26,8 @@
 // Purpose:		Creates things!
 //
 //==============================================================================
-- (void) awakeFromNib {
+- (void) awakeFromNib
+{
 	gridSegmentedControl = [[self makeGridSegmentControl] retain];
 	
 	//Retain all our custom views for toolbar items. Why? Because all of these 
@@ -78,7 +79,8 @@
 										NSToolbarFlexibleSpaceItemIdentifier,
 										NSToolbarCustomizeToolbarItemIdentifier,
 										nil ];
-}
+}//end toolbarAllowedItemIdentifiers:
+
 
 //========== toolbarDefaultItemIdentifiers: ====================================
 //
@@ -86,7 +88,7 @@
 //				will appear when the application is opened for the first time.
 //
 //==============================================================================
-- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
+- (NSArray *) toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
 {
 	return [NSArray arrayWithObjects:	TOOLBAR_ZOOM_IN,
 										TOOLBAR_ZOOM_SPECIFY,
@@ -102,7 +104,8 @@
 										TOOLBAR_ROTATE_POSITIVE_Z,
 										TOOLBAR_ROTATE_NEGATIVE_Z,
 										nil ];
-}
+}//end toolbarDefaultItemIdentifiers:
+
 
 //========== toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar: ==========
 //
@@ -113,23 +116,26 @@
 	 itemForItemIdentifier:(NSString *)itemIdentifier
  willBeInsertedIntoToolbar:(BOOL)flag
 {
-	NSToolbarItem *newItem = [[NSToolbarItem alloc] initWithItemIdentifier:itemIdentifier];
+	NSToolbarItem *newItem = [[[NSToolbarItem alloc] initWithItemIdentifier:itemIdentifier] autorelease];
 	
-	if([itemIdentifier isEqualToString:TOOLBAR_NUDGE_X_IDENTIFIER]) {
+	if([itemIdentifier isEqualToString:TOOLBAR_NUDGE_X_IDENTIFIER])
+	{
 		[newItem setLabel:NSLocalizedString(@"NudgeX", nil)];
 		[newItem setPaletteLabel:NSLocalizedString(@"NudgeX", nil)];
 		[newItem setView:nudgeXToolView];
 		[newItem setMinSize:[nudgeXToolView frame].size];
 	}
 	
-	else if([itemIdentifier isEqualToString:TOOLBAR_NUDGE_Y_IDENTIFIER]) {
+	else if([itemIdentifier isEqualToString:TOOLBAR_NUDGE_Y_IDENTIFIER])
+	{
 		[newItem setLabel:NSLocalizedString(@"NudgeY", nil)];
 		[newItem setPaletteLabel:NSLocalizedString(@"NudgeY", nil)];
 		[newItem setView:nudgeYToolView];
 		[newItem setMinSize:[nudgeYToolView frame].size];
 	}
 	
-	else if([itemIdentifier isEqualToString:TOOLBAR_NUDGE_Z_IDENTIFIER]) {
+	else if([itemIdentifier isEqualToString:TOOLBAR_NUDGE_Z_IDENTIFIER])
+	{
 		[newItem setLabel:NSLocalizedString(@"NudgeZ", nil)];
 		[newItem setPaletteLabel:NSLocalizedString(@"NudgeZ", nil)];
 		[newItem setView:nudgeZToolView];
@@ -173,9 +179,9 @@
 	}
 	
 
-
 	return newItem;
-}
+	
+}//end toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:
 
 
 #pragma mark -
@@ -189,11 +195,11 @@
 //				We need to update our indicator to this new state.
 //
 //==============================================================================
-- (void) setGridSpacingMode:(gridSpacingModeT)newMode {
-	//Blast. I wanted to do this with tags, but no...
-	// They didn't bother writing that method until Tiger.
-	[self->gridSegmentedControl setSelectedSegment:newMode];
-}
+- (void) setGridSpacingMode:(gridSpacingModeT)newMode
+{
+	[self->gridSegmentedControl selectSegmentWithTag:newMode];
+	
+}//end setGridSpacingMode:
 
 
 #pragma mark -
@@ -206,29 +212,30 @@
 //				Currently, this is implemented as a segmented control.
 //
 //==============================================================================
-- (NSToolbarItem *) makeGridSpacingItem {
+- (NSToolbarItem *) makeGridSpacingItem
+{
 	NSToolbarItem		*newItem		= [[NSToolbarItem alloc] initWithItemIdentifier:TOOLBAR_GRID_SPACING_IDENTIFIER];
 	gridSpacingModeT	gridMode		= [self->document gridSpacingMode];
 	
-	//And then the whole tag thing came crashing down when I discovered there 
-	// is no segmentForTag: method. Oops. Addendum: They managed to squeeze it 
-	// into Tiger. But I'm not developing for Tiger. Shoot!
-	[self->gridSegmentedControl setSelectedSegment:gridMode];
+	[self->gridSegmentedControl selectSegmentWithTag:gridMode];
 	
-	[newItem setView:gridSegmentedControl];
-	[newItem setMinSize:[[gridSegmentedControl cell] cellSize]];
+	[newItem setView:self->gridSegmentedControl];
+	[newItem setMinSize:[[self->gridSegmentedControl cell] cellSize]];
 	[newItem setLabel:NSLocalizedString(@"GridSpacing",nil)];
 	[newItem setPaletteLabel:NSLocalizedString(@"GridSpacing",nil)];
 	
 	return [newItem autorelease];
+	
 }//end makeGridSpacingItem
+
 
 //========== makeRotationPlusXItem =============================================
 //
 // Purpose:		Button that rotates counterclockwise around the X axis
 //
 //==============================================================================
-- (NSToolbarItem *) makeRotationPlusXItem {
+- (NSToolbarItem *) makeRotationPlusXItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ROTATE_POSITIVE_X];
 
@@ -240,14 +247,17 @@
 	[newItem setAction:@selector(rotatePositiveXClicked:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeRotationPlusXItem
+
 
 //========== makeRotationMinusXItem ============================================
 //
 // Purpose:		Button that rotates clockwise around the X axis
 //
 //==============================================================================
-- (NSToolbarItem *) makeRotationMinusXItem {
+- (NSToolbarItem *) makeRotationMinusXItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ROTATE_NEGATIVE_X];
 	
@@ -259,14 +269,17 @@
 	[newItem setAction:@selector(rotateNegativeXClicked:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeRotationMinusXItem
+
 
 //========== makeRotationPlusYItem =============================================
 //
 // Purpose:		Button that rotates counterclockwise around the Y axis
 //
 //==============================================================================
-- (NSToolbarItem *) makeRotationPlusYItem {
+- (NSToolbarItem *) makeRotationPlusYItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ROTATE_POSITIVE_Y];
 	
@@ -278,14 +291,17 @@
 	[newItem setAction:@selector(rotatePositiveYClicked:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeRotationPlusYItem
+
 
 //========== makeRotationMinusYItem ============================================
 //
 // Purpose:		Button that rotates clockwise around the Y axis
 //
 //==============================================================================
-- (NSToolbarItem *) makeRotationMinusYItem {
+- (NSToolbarItem *) makeRotationMinusYItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ROTATE_NEGATIVE_Y];
 	
@@ -297,14 +313,17 @@
 	[newItem setAction:@selector(rotateNegativeYClicked:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeRotationMinusYItem
+
 
 //========== makeRotationPlusZItem =============================================
 //
 // Purpose:		Button that rotates counterclockwise around the Z axis
 //
 //==============================================================================
-- (NSToolbarItem *) makeRotationPlusZItem {
+- (NSToolbarItem *) makeRotationPlusZItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ROTATE_POSITIVE_Z];
 	
@@ -316,14 +335,17 @@
 	[newItem setAction:@selector(rotatePositiveZClicked:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeRotationPlusZItem
+
 
 //========== makeRotationMinusZItem ============================================
 //
 // Purpose:		Button that rotates clockwise around the Z axis
 //
 //==============================================================================
-- (NSToolbarItem *) makeRotationMinusZItem {
+- (NSToolbarItem *) makeRotationMinusZItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ROTATE_NEGATIVE_Z];
 	
@@ -335,14 +357,17 @@
 	[newItem setAction:@selector(rotateNegativeZClicked:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeRotationMinusZItem
+
 
 //========== makeSnapToGridItem ================================================
 //
 // Purpose:		Button that aligns a part to the grid.
 //
 //==============================================================================
-- (NSToolbarItem *) makeSnapToGridItem {
+- (NSToolbarItem *) makeSnapToGridItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_SNAP_TO_GRID];
 	
@@ -354,14 +379,17 @@
 	[newItem setAction:@selector(snapSelectionToGrid:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeSnapToGridItem
+
 
 //========== makeZoomInItem ====================================================
 //
 // Purpose:		Button that enlarges the object being viewed
 //
 //==============================================================================
-- (NSToolbarItem *) makeZoomInItem {
+- (NSToolbarItem *) makeZoomInItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ZOOM_IN];
 	
@@ -373,7 +401,8 @@
 	[newItem setAction:@selector(zoomIn:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeZoomInItem
 
 
 //========== makeZoomOutItem ===================================================
@@ -381,7 +410,8 @@
 // Purpose:		Button that shrinks the object being viewed
 //
 //==============================================================================
-- (NSToolbarItem *) makeZoomOutItem {
+- (NSToolbarItem *) makeZoomOutItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ZOOM_OUT];
 	
@@ -393,7 +423,8 @@
 	[newItem setAction:@selector(zoomOut:)];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeZoomOutItem
 
 
 //========== makeZoomTextFieldItem =============================================
@@ -402,7 +433,8 @@
 //				exact zoom percentage.
 //
 //==============================================================================
-- (NSToolbarItem *) makeZoomTextFieldItem {
+- (NSToolbarItem *) makeZoomTextFieldItem
+{
 	NSToolbarItem *newItem = [[NSToolbarItem alloc]
 									initWithItemIdentifier:TOOLBAR_ZOOM_SPECIFY];
 	
@@ -412,7 +444,8 @@
 	[newItem setMinSize:[zoomToolTextField frame].size];
 	
 	return [newItem autorelease];
-}
+	
+}//end makeZoomTextFieldItem
 
 
 #pragma mark -
@@ -423,7 +456,8 @@
 //				System 10.4, this is all available in Interface Builder.
 //
 //==============================================================================
-- (NSSegmentedControl *) makeGridSegmentControl {
+- (NSSegmentedControl *) makeGridSegmentControl
+{
 	NSRect				segmentFrame	= NSMakeRect(0,0, 32, 32);
 	NSSegmentedControl	*gridSegments	= [[NSSegmentedControl alloc] initWithFrame:segmentFrame];
 	NSSegmentedCell		*segmentsCell	= [gridSegments cell];
@@ -432,6 +466,7 @@
 	// grid mode. This is total overkill; we could use indices. But I just got 
 	// done fixing a "simplification" like that at work today, so I'm wary.
 	[gridSegments setSegmentCount:3];
+	
 	[segmentsCell setTag:gridModeFine							forSegment:0];
 	[segmentsCell setImage:[NSImage imageNamed:@"GridFine"]		forSegment:0];
 	[segmentsCell setWidth:24.0									forSegment:0];
@@ -444,14 +479,11 @@
 	[segmentsCell setImage:[NSImage imageNamed:@"GridCoarse"]	forSegment:2];
 	[segmentsCell setWidth:24.0									forSegment:2];
 	
-	//And then the whole tag thing came crashing down when I discovered there 
-	// is no segmentForTag: method. Oops. Addendum: They managed to squeeze it 
-	// into Tiger. But I'm not developing for Tiger. Shoot!
-	
 	[gridSegments setTarget:self];
 	[gridSegments setAction:@selector(gridSpacingSegmentedControlClicked:)];
 	
 	return [gridSegments autorelease];
+	
 }//end makeGridSegmentControl
 
 
@@ -466,12 +498,15 @@
 //				grid spacing.
 //
 //==============================================================================
-- (void) gridSpacingSegmentedControlClicked:(id)sender {
+- (void) gridSpacingSegmentedControlClicked:(id)sender
+{
 	int					selectedSegment	= [sender selectedSegment];
 	gridSpacingModeT	newGridMode		= [[sender cell] tagForSegment:selectedSegment];
+//	gridSpacingModeT	newGridMode		= [sender selectedTag]; // WHY does this not work!? Sheesh!
 	
 	[self->document setGridSpacingMode:newGridMode];
-}
+	
+}//end gridSpacingSegmentedControlClicked:
 
 
 //========== nudgeXClicked: ====================================================
@@ -482,12 +517,14 @@
 //				movement.
 //
 //==============================================================================
-- (IBAction) nudgeXClicked:(id)sender {
-	Vector3	nudgeVector = {1,0,0};
+- (IBAction) nudgeXClicked:(id)sender
+{
+	Vector3	nudgeVector = V3Make(1,0,0);
 	nudgeVector.x *= [[sender selectedCell] tag];
 	
 	[document nudgeSelectionBy:nudgeVector];
-}
+	
+}//end nudgeXClicked:
 
 
 //========== nudgeYClicked: ====================================================
@@ -498,12 +535,15 @@
 //				movement.
 //
 //==============================================================================
-- (IBAction) nudgeYClicked:(id)sender {
-	Vector3	nudgeVector = {0,1,0};
+- (IBAction) nudgeYClicked:(id)sender
+{
+	Vector3	nudgeVector = V3Make(0,1,0);
 	nudgeVector.y *= [[sender selectedCell] tag];
 	
 	[document nudgeSelectionBy:nudgeVector];
-}
+	
+}//end nudgeYClicked:
+
 
 //========== nudgeZClicked: ====================================================
 //
@@ -513,72 +553,93 @@
 //				movement.
 //
 //==============================================================================
-- (IBAction) nudgeZClicked:(id)sender {
-	Vector3	nudgeVector = {0,0,1};
+- (IBAction) nudgeZClicked:(id)sender
+{
+	Vector3	nudgeVector = V3Make(0,0,1);
 	nudgeVector.z *= [[sender selectedCell] tag];
 	
 	[document nudgeSelectionBy:nudgeVector];
-}
+	
+}//end nudgeZClicked:
+
 
 //========== rotatePositiveXClicked ============================================
 //
 // Purpose:		Rotate counterclockwise around the X axis.
 //
 //==============================================================================
-- (void) rotatePositiveXClicked:(id)sender {
-	Vector3 rotation = {1,0,0};
+- (void) rotatePositiveXClicked:(id)sender
+{
+	Vector3 rotation = V3Make(1,0,0);
 	[self->document rotateSelectionAround:rotation];
-}
+	
+}//end rotatePositiveXClicked:
+
 
 //========== rotateNegativeXClicked ============================================
 //
 // Purpose:		Rotate clockwise around the X axis.
 //
 //==============================================================================
-- (void) rotateNegativeXClicked:(id)sender {
-	Vector3 rotation = {-1,0,0};
+- (void) rotateNegativeXClicked:(id)sender
+{
+	Vector3 rotation = V3Make(-1,0,0);
 	[self->document rotateSelectionAround:rotation];
-}
+	
+}//end rotateNegativeXClicked:
+
 
 //========== rotatePositiveYClicked ============================================
 //
 // Purpose:		Rotate counterclockwise around the Y axis.
 //
 //==============================================================================
-- (void) rotatePositiveYClicked:(id)sender {
-	Vector3 rotation = {0,1,0};
+- (void) rotatePositiveYClicked:(id)sender
+{
+	Vector3 rotation = V3Make(0,1,0);
 	[self->document rotateSelectionAround:rotation];
-}
+	
+}//end rotatePositiveYClicked:
+
 
 //========== rotateNegativeYClicked ============================================
 //
 // Purpose:		Rotate clockwise around the Y axis.
 //
 //==============================================================================
-- (void) rotateNegativeYClicked:(id)sender {
-	Vector3 rotation = {0,-1,0};
+- (void) rotateNegativeYClicked:(id)sender
+{
+	Vector3 rotation = V3Make(0,-1,0);
 	[self->document rotateSelectionAround:rotation];
-}
+	
+}//end rotateNegativeYClicked:
+
 
 //========== rotatePositiveZClicked ============================================
 //
 // Purpose:		Rotate counterclockwise around the Z axis.
 //
 //==============================================================================
-- (void) rotatePositiveZClicked:(id)sender {
-	Vector3 rotation = {0,0,1};
+- (void) rotatePositiveZClicked:(id)sender
+{
+	Vector3 rotation = V3Make(0,0,1);
 	[self->document rotateSelectionAround:rotation];
-}
+	
+}//end rotatePositiveZClicked:
+
 
 //========== rotateNegativeZClicked ============================================
 //
 // Purpose:		Rotate clockwise around the Z axis.
 //
 //==============================================================================
-- (void) rotateNegativeZClicked:(id)sender {
-	Vector3 rotation = {0,0,-1};
+- (void) rotateNegativeZClicked:(id)sender
+{
+	Vector3 rotation = V3Make(0,0,-1);
 	[self->document rotateSelectionAround:rotation];
-}
+	
+}//end rotateNegativeZClicked:
+
 
 //========== zoomScaleChanged: =================================================
 //
@@ -586,10 +647,13 @@
 //				The document needs to update something with that.
 //
 //==============================================================================
-- (IBAction) zoomScaleChanged:(id)sender {
+- (IBAction) zoomScaleChanged:(id)sender
+{
 	float newZoom = [sender floatValue];
 	[self->document setZoomPercentage:newZoom];
-}
+	
+}//end zoomScaleChanged:
+
 
 #pragma mark -
 #pragma mark VALIDATION
@@ -651,8 +715,8 @@
 //				(which comes with our NSDocument) does that automagically.
 //
 //==============================================================================
-- (void) dealloc {
-
+- (void) dealloc
+{
 	[nudgeXToolView			release];
 	[nudgeYToolView			release];
 	[nudgeZToolView			release];
@@ -661,6 +725,8 @@
 	[gridSegmentedControl	release];
 	
 	[super dealloc];
-}
+	
+}//end dealloc
+
 
 @end

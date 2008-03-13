@@ -161,6 +161,7 @@
 		0B9FE5BD08AD977F0046511D /* OneBrick.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 0B9FE5BC08AD977F0046511D /* OneBrick.tiff */; };
 		0B9FE5D208AD97990046511D /* LDraw Document.icns in Resources */ = {isa = PBXBuildFile; fileRef = 0B9FE5C908AD97990046511D /* LDraw Document.icns */; };
 		0B9FE5D308AD97990046511D /* Mac Brick.icns in Resources */ = {isa = PBXBuildFile; fileRef = 0B9FE5CA08AD97990046511D /* Mac Brick.icns */; };
+		0BB129EA0D7BD208004E8CEC /* Spin.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 0BB129E90D7BD208004E8CEC /* Spin.tiff */; };
 		0BC6992B08B5719000DAF996 /* LDrawMPDModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B6F384107C82025007B1075 /* LDrawMPDModel.h */; };
 		0BC6992C08B5719100DAF996 /* LDrawConditionalLine.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B6F3FA907CB0253007B1075 /* LDrawConditionalLine.h */; };
 		0BC6992D08B5719100DAF996 /* LDrawLine.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B6F3FAD07CB0253007B1075 /* LDrawLine.h */; };
@@ -412,6 +413,7 @@
 		0B9FE5BC08AD977F0046511D /* OneBrick.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = OneBrick.tiff; sourceTree = "<group>"; };
 		0B9FE5C908AD97990046511D /* LDraw Document.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "LDraw Document.icns"; sourceTree = "<group>"; };
 		0B9FE5CA08AD97990046511D /* Mac Brick.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "Mac Brick.icns"; sourceTree = "<group>"; };
+		0BB129E90D7BD208004E8CEC /* Spin.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Spin.tiff; sourceTree = "<group>"; };
 		0BC699CB08B93A0500DAF996 /* DimensionsPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DimensionsPanel.h; sourceTree = "<group>"; };
 		0BC699CC08B93A0500DAF996 /* DimensionsPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DimensionsPanel.m; sourceTree = "<group>"; };
 		0BC6AACD0987296700505A88 /* English */ = {isa = PBXFileReference; lastKnownFileType = folder; name = English; path = English.lproj/Help; sourceTree = "<group>"; };
@@ -667,6 +669,7 @@
 				0B2700E6098203320058A7BE /* Arrow.tiff */,
 				0B05899B09849F5A0089FD81 /* Crosshair.tiff */,
 				0B2700E5098203320058A7BE /* Hand.tiff */,
+				0BB129E90D7BD208004E8CEC /* Spin.tiff */,
 				0B8EBCEF0938383000D87E0C /* ZoomInCursor.tiff */,
 				0B8EBCF00938383000D87E0C /* ZoomOutCursor.tiff */,
 				0B8EBD000938393800D87E0C /* ZoomCursor.tiff */,
@@ -1119,6 +1122,7 @@
 				2BF2E2FD0AB0FC300026D5DB /* RotationPanel.nib in Resources */,
 				0B14DB940B94D4710002C053 /* GeneralPreferences.tiff in Resources */,
 				0BDC145A0B9D04E2001D1FF1 /* PartBrowser.nib in Resources */,
+				0BB129EA0D7BD208004E8CEC /* Spin.tiff in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

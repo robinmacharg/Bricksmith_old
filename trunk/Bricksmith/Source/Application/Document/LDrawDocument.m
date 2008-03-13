@@ -2529,6 +2529,11 @@
 		
 		if([currentDirective isKindOfClass:[LDrawDrawableElement class]])
 		{
+			// Even though the directive has been drag-deleted, we still need to 
+			// delete it in an undo-friendly way. That means we need to restore 
+			// its visibility, since we hid the part when dragging began. 
+			[currentDirective setHidden:NO];
+		
 			[self deleteDirective:currentDirective];
 		}
 	}

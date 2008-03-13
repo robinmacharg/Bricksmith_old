@@ -235,16 +235,68 @@
 //				working automatically (touching, copying, I don't know). But 
 //				it never just happened when the application was first installed.
 //
+// Addendum:	I think the files need to be run through some help 
+//				utility/indexer in the Developer Tools. But Help Viewer in 
+//				Leopard is so abominable that I'm just going to launch a 
+//				browser. On my  PowerBook G4, the Leopard Help Viewer takes 
+//				2 minutes 42 seconds to launch and become responsive to events. 
+//				That is shockingly unacceptible. 
+//
 //==============================================================================
 - (IBAction) doHelp:(id)sender
 {
-	NSBundle *applicationBundle = [NSBundle mainBundle];
-	NSString *helpRoot = [applicationBundle pathForResource:@"index"
-													 ofType:@"html"
-												inDirectory:@"Help"];
-	[[NSWorkspace sharedWorkspace] openFile:helpRoot withApplication:@"Help Viewer.app"];
+	NSBundle	*applicationBundle	= [NSBundle mainBundle];
+	NSString	*helpPath			= [applicationBundle pathForResource:@"index"
+																  ofType:@"html"
+															 inDirectory:@"Help"];
+	NSURL		*helpURL			= [NSURL fileURLWithPath:helpPath];
 
+//	[[NSWorkspace sharedWorkspace] openFile:helpRoot withApplication:@"Help Viewer.app"];
+	[[NSWorkspace sharedWorkspace] openURL:helpURL];
+	
 }//end doHelp:
+
+
+//========== doKeyboardShortcutHelp: ===========================================
+//
+// Purpose:		Display a help page about keyboard shortcuts.
+//
+// Notes:		Don't use Help Viewer. See addendum  in -doHelp:.
+//
+//==============================================================================
+- (IBAction) doKeyboardShortcutHelp:(id)sender
+{
+	NSBundle	*applicationBundle	= [NSBundle mainBundle];
+	NSString	*helpPath			= [applicationBundle pathForResource:@"KeyboardShortcuts"
+																  ofType:@"html"
+															 inDirectory:@"Help"];
+	NSURL		*helpURL			= [NSURL fileURLWithPath:helpPath];
+
+//	[[NSWorkspace sharedWorkspace] openFile:helpRoot withApplication:@"Help Viewer.app"];
+	[[NSWorkspace sharedWorkspace] openURL:helpURL];
+	
+}//end doKeyboardShortcutHelp:
+
+
+//========== doGettingNewPartsHelp: ============================================
+//
+// Purpose:		Display a help page about installing unofficial LDraw parts.
+//
+// Notes:		Don't use Help Viewer. See addendum  in -doHelp:.
+//
+//==============================================================================
+- (IBAction) doGettingNewPartsHelp:(id)sender
+{
+	NSBundle	*applicationBundle	= [NSBundle mainBundle];
+	NSString	*helpPath			= [applicationBundle pathForResource:@"AboutLDraw"
+																  ofType:@"html"
+															 inDirectory:@"Help"];
+	NSURL		*helpURL			= [NSURL fileURLWithPath:helpPath];
+
+//	[[NSWorkspace sharedWorkspace] openFile:helpRoot withApplication:@"Help Viewer.app"];
+	[[NSWorkspace sharedWorkspace] openURL:helpURL];
+	
+}//end doKeyboardShortcutHelp:
 
 
 #pragma mark -

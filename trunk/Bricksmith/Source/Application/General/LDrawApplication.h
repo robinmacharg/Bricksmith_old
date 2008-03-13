@@ -16,6 +16,12 @@
 @class Inspector;
 @class PartLibrary;
 
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// class LDrawApplication
+//
+////////////////////////////////////////////////////////////////////////////////
 @interface LDrawApplication : NSObject
 {
 	PartLibrary		*partLibrary; //centralized location for part information.
@@ -24,8 +30,10 @@
 }
 
 //Actions
-- (IBAction)doPreferences:(id)sender;
-- (IBAction)doHelp:(id)sender;
+- (IBAction) doPreferences:(id)sender;
+- (IBAction) doHelp:(id)sender;
+- (IBAction) doKeyboardShortcutHelp:(id)sender;
+- (IBAction) doGettingNewPartsHelp:(id)sender;
 - (IBAction) showColors:(id)sender;
 - (IBAction) showInspector:(id)sender;
 - (IBAction) showMouseTools:(id)sender;

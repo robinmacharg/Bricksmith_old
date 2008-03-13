@@ -56,11 +56,11 @@
 	[self->partPreview setDelegate:self];
 	
 	//Configure the search field's menu
-	recentsItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"NoRecentSearches", nil)
-											 action:NULL
-									  keyEquivalent:@"" ];
-	[recentsItem setTag:NSSearchFieldNoRecentsMenuItemTag];
-	[searchMenuTemplate insertItem:recentsItem atIndex:0];
+	noRecentsItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"NoRecentSearches", nil)
+											   action:NULL
+										keyEquivalent:@"" ];
+	[noRecentsItem setTag:NSSearchFieldNoRecentsMenuItemTag];
+	[searchMenuTemplate insertItem:noRecentsItem atIndex:0];
 	
 	recentsItem = [[NSMenuItem alloc] initWithTitle:@"recent items placeholder"
 											 action:NULL

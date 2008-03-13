@@ -91,9 +91,10 @@ typedef enum
 	BOOL				 isTrackingDrag;		// true if the last mousedown was followed by a drag, and we're tracking it (drag-and-drop doesn't count)
 	NSTimer				*mouseDownTimer;		// countdown to beginning drag-and-drop
 	BOOL				 canBeginDragAndDrop;	// the next mouse-dragged will initiate a drag-and-drop.
+	BOOL				 didPartSelection;		// tried part selection during this click
 	BOOL				 dragEndedInOurDocument;// YES if the drag we initiated ended in the document we display
 	Vector3				 draggingOffset;		// displacement between part 0's position and the initial click point of the drag
-	Point3				 intialDragLocation;	// point in model where part was positioned at draggingEntered
+	Point3				 initialDragLocation;	// point in model where part was positioned at draggingEntered
 }
 
 // Drawing

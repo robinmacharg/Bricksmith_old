@@ -39,11 +39,12 @@
 #define LDRAW_GL_VIEW_PROJECTION					@"LDrawGLView Viewing Projection"
 #define LDRAW_PATH_KEY								@"LDraw Path"
 #define LDRAW_VIEWER_BACKGROUND_COLOR_KEY			@"LDraw Viewer Background Color"
-#define PART_BROWSER_STYLE_KEY						@"Part Browser Style"
+#define MOUSE_DRAGGING_BEHAVIOR_KEY					@"Mouse Dragging Behavior"
 #define PART_BROWSER_DRAWER_STATE					@"Part Browser Drawer State"
 #define PART_BROWSER_PANEL_SHOW_AT_LAUNCH			@"Part Browser Panel Show at Launch"
 #define PART_BROWSER_PREVIOUS_CATEGORY				@"Part Browser Previous Category"
 #define PART_BROWSER_PREVIOUS_SELECTED_ROW			@"Part Browser Previous Selected Row"
+#define PART_BROWSER_STYLE_KEY						@"Part Browser Style"
 #define PREFERENCES_LAST_TAB_DISPLAYED				@"Preferences Tab"
 #define SYNTAX_COLOR_COMMENTS_KEY					@"Syntax Color Comments"
 #define SYNTAX_COLOR_MODELS_KEY						@"Syntax Color Models"
@@ -333,6 +334,17 @@ typedef enum MenuTags
 // Data types which would otherwise be homeless
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+typedef enum MouseDragBehavior
+{
+	MouseDraggingOff									= 0,
+	MouseDraggingBeginImmediately						= 1,
+	MouseDraggingBeginAfterDelay						= 2,
+	MouseDraggingImmediatelyInOrthoNeverInPerspective	= 3
+	
+
+} MouseDragBehaviorT;
+
 
 typedef enum PartBrowserStyle
 {

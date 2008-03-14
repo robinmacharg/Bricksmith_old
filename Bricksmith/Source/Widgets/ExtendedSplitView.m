@@ -4,6 +4,9 @@
 //
 // Purpose:		Fills in some of the many blanks Apple left in NSSplitView.
 //
+// Notes:		The blanks are less multitudinous in Leopard, so this class is 
+//				essentially a no-op under that OS and its descendants.
+//
 //  Created by Allen Smith on 11/11/05.
 //  Copyright 2005. All rights reserved.
 //==============================================================================
@@ -27,7 +30,7 @@
 - (NSString *) autosaveName
 {
 	// Use the Leopard implementation if we can.
-	if([super respondsToSelector:@selector(autosaveName)])
+	if([NSSplitView instancesRespondToSelector:@selector(autosaveName)])
 	   return [(id)super autosaveName];
 	else
 	   return self->autosaveName;
@@ -41,11 +44,13 @@
 //				itself to preferences. It will be saved automatically upon 
 //				deallocation.
 //
+// Notes:		Obsolete under Leopard.
+//
 //==============================================================================
 - (void) setAutosaveName:(NSString *)newName
 {
 	// Use the Leopard implementation if we can.
-	if([super respondsToSelector:@selector(setAutosaveName:)])
+	if([NSSplitView instancesRespondToSelector:@selector(setAutosaveName:)])
 	   [(id)super setAutosaveName:newName];
 	else
 	{
@@ -66,11 +71,13 @@
 // Purpose:		Restores the split view from preferences, if an autosave name 
 //				has been set.
 //
+// Notes:		Obsolete under Leopard.
+//
 //==============================================================================
 - (void) restoreConfiguration
 {
 	// Unnecessary under Leopard
-	if([super respondsToSelector:@selector(setAutosaveName:)] == NO)
+	if([NSSplitView instancesRespondToSelector:@selector(setAutosaveName:)] == NO)
 	{
 		NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
 		NSArray			*subviews		= [self subviews];
@@ -85,7 +92,8 @@
 			frameSizes = [userDefaults objectForKey:self->autosaveName];
 			if(frameSizes != nil && [subviews count] == [frameSizes count])
 			{
-				for(counter = 0; counter < [subviews count]; counter++){
+				for(counter = 0; counter < [subviews count]; counter++)
+				{
 					currentSubview	= [subviews objectAtIndex:counter];
 					rectString		= [frameSizes objectAtIndex:counter];
 					currentRect		= NSRectFromString(rectString);
@@ -96,7 +104,8 @@
 					// of a collapsed subview gets set to (1,000,000 , 1,000,000).
 					// But if we just restore that frame, it WON'T WORK! Sooooo...
 					// we set the size to 0, which forcesit it out of view.
-					if(NSMinX(currentRect) == 1e6 && NSMinY(currentRect) == 1e6) {
+					if(NSMinX(currentRect) == 1e6 && NSMinY(currentRect) == 1e6)
+					{
 						currentRect.size.height = 0;
 						currentRect.size.width = 0;
 					}				   
@@ -128,11 +137,13 @@
 // Purpose:		Saves the splitview into preferences, provided an autosave name 
 //				has been set.
 //
+// Notes:		Obsolete under Leopard.
+//
 //==============================================================================
 - (void) saveConfiguration
 {
 	// Unnecessary under Leopard
-	if([super respondsToSelector:@selector(setAutosaveName:)] == NO)
+	if([NSSplitView instancesRespondToSelector:@selector(setAutosaveName:)] == NO)
 	{
 		NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
 		NSArray			*subviews		= [self subviews];
@@ -142,7 +153,8 @@
 		NSMutableArray	*frameSizes		= [NSMutableArray array];
 		int				 counter		= 0;
 		
-		for(counter = 0; counter < [subviews count]; counter++){
+		for(counter = 0; counter < [subviews count]; counter++)
+		{
 			currentSubview	= [subviews objectAtIndex:counter];
 			currentRect		= [currentSubview frame];
 			rectString		= NSStringFromRect(currentRect);

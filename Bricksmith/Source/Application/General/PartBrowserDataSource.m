@@ -388,15 +388,16 @@
 //==============================================================================
 - (NSString *)comboBox:(NSComboBox *)comboBox completedString:(NSString *)uncompletedString
 {
-	NSString			*currentCategory;
-	BOOL				 foundMatch = NO;
-	NSComparisonResult	 comparisonResult;
-	NSString			*completedString;
-	int					 counter = 0;
+	NSString			*currentCategory	= nil;
+	BOOL				 foundMatch			= NO;
+	NSComparisonResult	 comparisonResult	= NSOrderedSame;
+	NSString			*completedString	= nil;
+	int					 counter			= 0;
 	
 	//Search through all available categories, trying to find one with a 
 	// case-insensitive prefix of uncompletedString
-	while(counter < [categoryList count] && foundMatch == NO){
+	while(counter < [categoryList count] && foundMatch == NO)
+	{
 		currentCategory = [categoryList objectAtIndex:counter];
 		
 		//See if the current category starts with the string we are looking for.

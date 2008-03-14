@@ -1266,25 +1266,30 @@
 //				The toolbar is trickier.
 //
 //==============================================================================
-- (IBAction) gridGranularityMenuChanged:(id)sender {
+- (IBAction) gridGranularityMenuChanged:(id)sender
+{
 	int					menuTag		= [sender tag];
-	gridSpacingModeT	newGridMode;
+	gridSpacingModeT	newGridMode	= gridModeFine;;
 	
 	
-	switch(menuTag) {
+	switch(menuTag)
+	{
 		case gridFineMenuTag:
 			newGridMode = gridModeFine;
 			break;
+		
 		case gridMediumMenuTag:
 			newGridMode = gridModeMedium;
 			break;
+		
 		case gridCoarseMenuTag:
 			newGridMode = gridModeCoarse;
 			break;
 	}
 	
 	[self setGridSpacingMode:newGridMode];
-}
+	
+}//end gridGranularityMenuChanged:
 
 
 //========== showDimensions: ===================================================

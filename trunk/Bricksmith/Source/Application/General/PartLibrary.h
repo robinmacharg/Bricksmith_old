@@ -13,7 +13,7 @@
 @class LDrawModel;
 @class LDrawPart;
 
-#import "LDrawColor.h"
+#import "ColorLibrary.h"
 
 @interface PartLibrary : NSObject {
 

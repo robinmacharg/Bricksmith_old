@@ -57,7 +57,7 @@ ToolPalette *sharedToolPalette = nil;
 	[[palettePanel standardWindowButton:NSWindowZoomButton]			setHidden:YES];
 	
 	
-	[self->colorWell setColorCode:[[LDrawColorPanel sharedColorPanel] LDrawColor]];
+	[self->colorWell setLDrawColor:[[LDrawColorPanel sharedColorPanel] LDrawColor]];
 	
 	
 	[notificationCenter addObserver:self
@@ -204,7 +204,7 @@ ToolPalette *sharedToolPalette = nil;
 {
 	LDrawColorT	 newColor = [[LDrawColorPanel sharedColorPanel] LDrawColor];
 	
-	[self->colorWell setColorCode:newColor];
+	[self->colorWell setLDrawColor:newColor];
 	
 }//end colorDidChange:
 

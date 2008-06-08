@@ -23,6 +23,7 @@
 #import "LDrawMPDModel.h"
 #import "LDrawStep.h"
 
+#import "LDrawColor.h"
 #import "LDrawComment.h"
 #import "LDrawConditionalLine.h"
 #import "LDrawDirective.h"
@@ -52,7 +53,6 @@
 #import "PartReport.h"
 #import "PieceCountPanel.h"
 #import "RotationPanel.h"
-#import "ScrollViewCategory.h"
 #import "UserDefaultsCategory.h"
 
 @implementation LDrawDocument
@@ -147,11 +147,6 @@
 	if(drawerState == NSDrawerOpenState)
 		[fileContentsDrawer open];
 	
-	[[fileGraphicView enclosingScrollView] centerDocumentView];
-	[[fileDetailView1 enclosingScrollView] centerDocumentView];
-	[[fileDetailView2 enclosingScrollView] centerDocumentView];
-	[[fileDetailView3 enclosingScrollView] centerDocumentView];
-	
 	//Restore the state of our 3D viewers.
 	[fileGraphicView	setAutosaveName:@"fileGraphicView"];
 	[fileDetailView1	setAutosaveName:@"fileDetailView1"];
@@ -174,7 +169,9 @@
 
 	[[self foremostWindow] makeFirstResponder:fileGraphicView]; //so we can move it immediately.
 
-	//We have to do the splitview saving manually. C'mon Apple, get with it!
+	// We have to do the splitview saving manually. C'mon Apple, get with it!
+	// Note: They did in Leopard. These calls will use the system function 
+	//		 there. 
 	[horizontalSplitView		setAutosaveName:@"Horizontal LDraw Splitview"];
 	[verticalDetailSplitView	setAutosaveName:@"Vertical LDraw Splitview"];
 	
@@ -1226,6 +1223,36 @@
 	[panel makeKeyAndOrderFront:self];
 
 }//end openRotationPanel:
+
+
+#pragma mark -
+
+//========== quickRotateClicked: ===============================================
+//
+// Purpose:		One of the quick rotation shortcuts was clicked. Build a 
+//				rotation in the requested direction (deduced from the sender's 
+//				tag). 
+//
+//==============================================================================
+- (IBAction) quickRotateClicked:(id)sender
+{
+	menuTagsT	tag			= [sender tag];
+	Vector3		rotation	= ZeroPoint3;
+	
+	switch(tag)
+	{
+		case rotatePositiveXTag:	rotation = V3Make( 1,  0,  0);	break;
+		case rotateNegativeXTag:	rotation = V3Make(-1,  0,  0);	break;
+		case rotatePositiveYTag:	rotation = V3Make( 0,  1,  0);	break;
+		case rotateNegativeYTag:	rotation = V3Make( 0, -1,  0);	break;
+		case rotatePositiveZTag:	rotation = V3Make( 0,  0,  1);	break;
+		case rotateNegativeZTag:	rotation = V3Make( 0,  0, -1);	break;
+		default:													break;
+	}
+	[self rotateSelectionAround:rotation];
+	
+}//end quickRotateClicked:
+
 
 #pragma mark -
 #pragma mark Tools Menu
@@ -2853,7 +2880,8 @@
 	LDrawMPDModel	*activeModel	= [[self documentContents] activeModel];
 	BOOL			 enable			= NO;
 	
-	switch(tag) {
+	switch(tag)
+	{
 
 		////////////////////////////////////////
 		//
@@ -2865,6 +2893,12 @@
 		case copyMenuTag:
 		case deleteMenuTag:
 		case duplicateMenuTag:
+		case rotatePositiveXTag:
+		case rotateNegativeXTag:
+		case rotatePositiveYTag:
+		case rotateNegativeYTag:
+		case rotatePositiveZTag:
+		case rotateNegativeZTag:
 			if([selectedItems count] > 0)
 				enable = YES;
 			break;
@@ -3376,6 +3410,9 @@
 			[item isKindOfClass:[LDrawQuadrilateral		class]] ||
 			[item isKindOfClass:[LDrawConditionalLine	class]]    )
 		colorKey = SYNTAX_COLOR_PRIMITIVES_KEY;
+	
+	else if([item isKindOfClass:[LDrawColor class]])
+		colorKey = SYNTAX_COLOR_COLORS_KEY;
 	
 	else
 		colorKey = SYNTAX_COLOR_UNKNOWN_KEY;

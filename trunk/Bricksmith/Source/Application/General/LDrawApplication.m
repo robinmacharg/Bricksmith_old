@@ -349,7 +349,7 @@
 	
 	// Register for Notifications
 	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(partBrawserStyleDidChange:)
+											 selector:@selector(partBrowserStyleDidChange:)
 												 name:LDrawPartBrowserStyleDidChangeNotification
 											   object:nil ];
 	
@@ -397,13 +397,13 @@
 #pragma mark NOTIFICATIONS
 #pragma mark -
 
-//========== partBrawserStyleDidChange: ========================================
+//========== partBrowserStyleDidChange: ========================================
 //
 // Purpose:		Reconfigure the part browser display based on new user 
 //				preferences.
 //
 //==============================================================================
-- (void) partBrawserStyleDidChange:(NSNotification *)notification
+- (void) partBrowserStyleDidChange:(NSNotification *)notification
 {
 	NSUserDefaults			*userDefaults		= [NSUserDefaults standardUserDefaults];
 	PartBrowserStyleT		 newStyle			= [userDefaults integerForKey:PART_BROWSER_STYLE_KEY];
@@ -441,7 +441,7 @@
 			break;
 	} 
 	
-}//end partBrawserStyleDidChange:
+}//end partBrowserStyleDidChange:
 
 
 #pragma mark -

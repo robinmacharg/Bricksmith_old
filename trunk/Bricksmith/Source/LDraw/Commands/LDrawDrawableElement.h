@@ -10,7 +10,7 @@
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 
-#import "LDrawColor.h"
+#import "ColorLibrary.h"
 #import "LDrawDirective.h"
 #import "MatrixMath.h"
 

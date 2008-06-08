@@ -5,14 +5,6 @@
 	<key>IBClasses</key>
 	<array>
 		<dict>
-			<key>CLASS</key>
-			<string>NSForm</string>
-			<key>LANGUAGE</key>
-			<string>ObjC</string>
-			<key>SUPERCLASS</key>
-			<string>NSMatrix</string>
-		</dict>
-		<dict>
 			<key>ACTIONS</key>
 			<dict>
 				<key>backgroundColorWellChanged</key>
@@ -20,6 +12,8 @@
 				<key>changeTab</key>
 				<string>id</string>
 				<key>chooseLDrawFolder</key>
+				<string>id</string>
+				<key>colorsColorWellChanged</key>
 				<string>id</string>
 				<key>commentsColorWellChanged</key>
 				<string>id</string>
@@ -54,6 +48,8 @@
 				<string>NSTextField</string>
 				<key>backgroundColorWell</key>
 				<string>NSColorWell</string>
+				<key>colorsColorWell</key>
+				<string>NSColorWell</string>
 				<key>commentsColorWell</key>
 				<string>NSColorWell</string>
 				<key>folderChooserAccessoryView</key>
@@ -85,6 +81,14 @@
 			</dict>
 			<key>SUPERCLASS</key>
 			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSForm</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSMatrix</string>
 		</dict>
 		<dict>
 			<key>CLASS</key>

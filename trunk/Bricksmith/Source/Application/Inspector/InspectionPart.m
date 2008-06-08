@@ -95,7 +95,7 @@
 	[partDescriptionField setToolTip:description]; //in case it overflows the field.
 	[partNameField setStringValue:[representedObject displayName]];
 	
-	[colorWell setColorCode:[representedObject LDrawColor]];
+	[colorWell setLDrawColor:[representedObject LDrawColor]];
 
 	position	= components.translate;
 	

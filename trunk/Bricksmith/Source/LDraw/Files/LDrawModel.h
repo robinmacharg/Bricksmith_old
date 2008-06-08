@@ -10,6 +10,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "LDrawContainer.h"
+@class ColorLibrary;
 @class LDrawFile;
 @class LDrawStep;
 
@@ -31,9 +32,10 @@ typedef enum {
 	NSString				*author;
 	LDrawDotOrgModelStatusT	 ldrawDotOrgStatus;
 	
-	Box3					*cachedBounds; //used only for optimized parts
-	BOOL					 stepDisplayActive; //YES if we are only display steps 1-currentStepDisplayed
-	int						 currentStepDisplayed; //display up to and including this step index
+	Box3					*cachedBounds;			// used only for optimized parts
+	ColorLibrary			*colorLibrary;			// in-scope !COLOURS local to the model
+	BOOL					 stepDisplayActive;		// YES if we are only display steps 1-currentStepDisplayed
+	int						 currentStepDisplayed;	// display up to and including this step index
 	
 	//steps are stored in the superclass.
 	
@@ -49,6 +51,7 @@ typedef enum {
 
 //Accessors
 - (NSString *) category;
+- (ColorLibrary *) colorLibrary;
 - (NSArray *) draggingDirectives;
 - (LDrawFile *)enclosingFile;
 - (NSString *)modelDescription;

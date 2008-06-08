@@ -9,20 +9,23 @@
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 
-#import "LDrawColor.h"
+#import "ColorLibrary.h"
 
 @class LDrawColorBar;
 
-
+////////////////////////////////////////////////////////////////////////////////
+//
+// Class:		LDrawColorPanel
+//
+////////////////////////////////////////////////////////////////////////////////
 @interface LDrawColorPanel : NSPanel <LDrawColorable>
 {
 	IBOutlet	LDrawColorPanel		*colorPanel;
 	IBOutlet	LDrawColorBar		*colorBar;
 	IBOutlet	NSTableView			*colorTable;
 	IBOutlet	NSSearchField		*searchField;
-	
-				NSArray				*colorList;
-				NSMutableArray		*viewingColors;
+				
+				NSArrayController	*colorListController;
 				
 				//YES if we are in the middle of updating the color panel to 
 				// reflect the current selection, NO any other time.
@@ -33,7 +36,6 @@
 + (LDrawColorPanel *) sharedColorPanel;
 
 //Accessors
-- (void) setViewingColors:(NSArray *)newList;
 - (LDrawColorT) LDrawColor;
 - (void) setLDrawColor:(LDrawColorT)newColor;
 
@@ -43,7 +45,7 @@
 - (void) updateSelectionWithObjects:(NSArray *)selectedObjects;
 
 //Utilities
-- (NSArray *) colorsMatchingString:(NSString *)searchString;
+- (NSPredicate *) predicateForSearchString:(NSString *)searchString;
 - (int) indexOfColorCode:(LDrawColorT)colorCodeSought;
 
 

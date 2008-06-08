@@ -10,7 +10,7 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/OpenGL.h>
 
-#import "LDrawColor.h"
+#import "ColorLibrary.h"
 #import "MatrixMath.h"
 #import "ToolPalette.h"
 

@@ -61,7 +61,8 @@
 	
 	//A malformed part could easily cause a string indexing error, which would 
 	// raise an exception. We don't want this to happen here.
-	NS_DURING
+	@try
+	{
 		//Read in the line code and advance past it.
 		parsedField = [LDrawUtilities readNextField:  workingLine
 										  remainder: &workingLine ];
@@ -129,10 +130,12 @@
 			
 		}
 		
-	NS_HANDLER
+	}	
+	@catch(NSException *exception)
+	{
 		NSLog(@"the conditional line primitive %@ was fatally invalid", lineFromFile);
-		NSLog(@" raised exception %@", [localException name]);
-	NS_ENDHANDLER
+		NSLog(@" raised exception %@", [exception name]);
+	}
 	
 	return parsedConditionalLine;
 }//end directiveWithString

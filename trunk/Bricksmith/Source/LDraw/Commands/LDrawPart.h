@@ -11,9 +11,9 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl.h>
 
+#import "ColorLibrary.h"
 #import "LDrawDirective.h"
 #import "LDrawDrawableElement.h"
-#import "LDrawColor.h"
 #import "MatrixMath.h"
 
 @class LDrawFile;
@@ -23,7 +23,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// class LDrawPart
+// Class:		LDrawPart
 //
 ////////////////////////////////////////////////////////////////////////////////
 @interface LDrawPart : LDrawDrawableElement <NSCoding>

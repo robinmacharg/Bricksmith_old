@@ -16,6 +16,7 @@
 //==============================================================================
 #import "DocumentToolbarController.h"
 
+#import "MacLDraw.h"
 #import "MatrixMath.h"
 
 
@@ -243,8 +244,9 @@
 	[newItem setPaletteLabel:NSLocalizedString(TOOLBAR_ROTATE_POSITIVE_X, nil)];
 	[newItem setImage:[NSImage imageNamed:TOOLBAR_ROTATE_POSITIVE_X]];
 
-	[newItem setTarget:self];
-	[newItem setAction:@selector(rotatePositiveXClicked:)];
+	[newItem setTarget:self->document];
+	[newItem setAction:@selector(quickRotateClicked:)];
+	[newItem setTag:rotatePositiveXTag];
 	
 	return [newItem autorelease];
 	
@@ -265,8 +267,9 @@
 	[newItem setPaletteLabel:NSLocalizedString(TOOLBAR_ROTATE_NEGATIVE_X, nil)];
 	[newItem setImage:[NSImage imageNamed:TOOLBAR_ROTATE_NEGATIVE_X]];
 	
-	[newItem setTarget:self];
-	[newItem setAction:@selector(rotateNegativeXClicked:)];
+	[newItem setTarget:self->document];
+	[newItem setAction:@selector(quickRotateClicked:)];
+	[newItem setTag:rotateNegativeXTag];
 	
 	return [newItem autorelease];
 	
@@ -287,8 +290,9 @@
 	[newItem setPaletteLabel:NSLocalizedString(TOOLBAR_ROTATE_POSITIVE_Y, nil)];
 	[newItem setImage:[NSImage imageNamed:TOOLBAR_ROTATE_POSITIVE_Y]];
 	
-	[newItem setTarget:self];
-	[newItem setAction:@selector(rotatePositiveYClicked:)];
+	[newItem setTarget:self->document];
+	[newItem setAction:@selector(quickRotateClicked:)];
+	[newItem setTag:rotatePositiveYTag];
 	
 	return [newItem autorelease];
 	
@@ -309,8 +313,9 @@
 	[newItem setPaletteLabel:NSLocalizedString(TOOLBAR_ROTATE_NEGATIVE_Y, nil)];
 	[newItem setImage:[NSImage imageNamed:TOOLBAR_ROTATE_NEGATIVE_Y]];
 	
-	[newItem setTarget:self];
-	[newItem setAction:@selector(rotateNegativeYClicked:)];
+	[newItem setTarget:self->document];
+	[newItem setAction:@selector(quickRotateClicked:)];
+	[newItem setTag:rotateNegativeYTag];
 	
 	return [newItem autorelease];
 	
@@ -331,8 +336,9 @@
 	[newItem setPaletteLabel:NSLocalizedString(TOOLBAR_ROTATE_POSITIVE_Z, nil)];
 	[newItem setImage:[NSImage imageNamed:TOOLBAR_ROTATE_POSITIVE_Z]];
 	
-	[newItem setTarget:self];
-	[newItem setAction:@selector(rotatePositiveZClicked:)];
+	[newItem setTarget:self->document];
+	[newItem setAction:@selector(quickRotateClicked:)];
+	[newItem setTag:rotatePositiveZTag];
 	
 	return [newItem autorelease];
 	
@@ -353,8 +359,9 @@
 	[newItem setPaletteLabel:NSLocalizedString(TOOLBAR_ROTATE_NEGATIVE_Z, nil)];
 	[newItem setImage:[NSImage imageNamed:TOOLBAR_ROTATE_NEGATIVE_Z]];
 	
-	[newItem setTarget:self];
-	[newItem setAction:@selector(rotateNegativeZClicked:)];
+	[newItem setTarget:self->document];
+	[newItem setAction:@selector(quickRotateClicked:)];
+	[newItem setTag:rotateNegativeZTag];
 	
 	return [newItem autorelease];
 	
@@ -561,84 +568,6 @@
 	[document nudgeSelectionBy:nudgeVector];
 	
 }//end nudgeZClicked:
-
-
-//========== rotatePositiveXClicked ============================================
-//
-// Purpose:		Rotate counterclockwise around the X axis.
-//
-//==============================================================================
-- (void) rotatePositiveXClicked:(id)sender
-{
-	Vector3 rotation = V3Make(1,0,0);
-	[self->document rotateSelectionAround:rotation];
-	
-}//end rotatePositiveXClicked:
-
-
-//========== rotateNegativeXClicked ============================================
-//
-// Purpose:		Rotate clockwise around the X axis.
-//
-//==============================================================================
-- (void) rotateNegativeXClicked:(id)sender
-{
-	Vector3 rotation = V3Make(-1,0,0);
-	[self->document rotateSelectionAround:rotation];
-	
-}//end rotateNegativeXClicked:
-
-
-//========== rotatePositiveYClicked ============================================
-//
-// Purpose:		Rotate counterclockwise around the Y axis.
-//
-//==============================================================================
-- (void) rotatePositiveYClicked:(id)sender
-{
-	Vector3 rotation = V3Make(0,1,0);
-	[self->document rotateSelectionAround:rotation];
-	
-}//end rotatePositiveYClicked:
-
-
-//========== rotateNegativeYClicked ============================================
-//
-// Purpose:		Rotate clockwise around the Y axis.
-//
-//==============================================================================
-- (void) rotateNegativeYClicked:(id)sender
-{
-	Vector3 rotation = V3Make(0,-1,0);
-	[self->document rotateSelectionAround:rotation];
-	
-}//end rotateNegativeYClicked:
-
-
-//========== rotatePositiveZClicked ============================================
-//
-// Purpose:		Rotate counterclockwise around the Z axis.
-//
-//==============================================================================
-- (void) rotatePositiveZClicked:(id)sender
-{
-	Vector3 rotation = V3Make(0,0,1);
-	[self->document rotateSelectionAround:rotation];
-	
-}//end rotatePositiveZClicked:
-
-
-//========== rotateNegativeZClicked ============================================
-//
-// Purpose:		Rotate clockwise around the Z axis.
-//
-//==============================================================================
-- (void) rotateNegativeZClicked:(id)sender
-{
-	Vector3 rotation = V3Make(0,0,-1);
-	[self->document rotateSelectionAround:rotation];
-	
-}//end rotateNegativeZClicked:
 
 
 //========== zoomScaleChanged: =================================================

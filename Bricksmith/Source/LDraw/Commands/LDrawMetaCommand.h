@@ -9,14 +9,18 @@
 //==============================================================================
 #import "LDrawDirective.h"
 
-
-@interface LDrawMetaCommand : LDrawDirective {
-	
+////////////////////////////////////////////////////////////////////////////////
+//
+// class LDrawMetaCommand
+//
+////////////////////////////////////////////////////////////////////////////////
+@interface LDrawMetaCommand : LDrawDirective
+{
 	NSString		*commandString;
-	
 }
 
 + (LDrawMetaCommand *) commandWithDirectiveText:(NSString *)directive;
+- (BOOL) finishParsing:(NSScanner *)scanner;
 
 - (void) draw:(unsigned int) optionsMask parentColor:(GLfloat *)parentColor;
 - (NSString *) write;

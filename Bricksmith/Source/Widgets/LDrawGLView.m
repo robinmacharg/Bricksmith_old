@@ -36,6 +36,7 @@
 #import <OpenGL/glu.h>
 
 #import "LDrawApplication.h"
+#import "LDrawColor.h"
 #import "LDrawDirective.h"
 #import "LDrawDocument.h"
 #import "LDrawFile.h"
@@ -44,6 +45,7 @@
 #import "LDrawStep.h"
 #import "LDrawUtilities.h"
 #import "MacLDraw.h"
+#import "ScrollViewCategory.h"
 #import "UserDefaultsCategory.h"
 
 @implementation LDrawGLView
@@ -62,6 +64,10 @@
 	id		superview	= [self superview];
 	NSRect	frame		= [self frame];
 	
+	// If we are in a scroller, make sure we appear centered when smaller than 
+	// the scroll view. 
+	[[self enclosingScrollView] centerDocumentView];
+
 	if([superview isKindOfClass:[NSClipView class]])
 	{
 		//Center the view inside its scrollers.
@@ -738,7 +744,18 @@
 	self->color = newColor;
 	
 	//Look up the OpenGL color now so we don't have to whenever we draw.
-	rgbafForCode(self->color, self->glColor);
+	ColorLibrary	*colorLibrary	= [ColorLibrary sharedColorLibrary];
+	LDrawColor		*colorObject	= nil;
+	
+	// Honestly, how often is the parent model color going to be a custom color? 
+	// Never! 
+//	if([self->fileBeingDrawn isKindOfClass:[LDrawFile class]] == YES)
+//		colorLibrary = [[(LDrawFile*)fileBeingDrawn activeModel] colorLibrary];
+//	else if([fileBeingDrawn isKindOfClass:[LDrawModel class]] == YES)
+//		colorLibrary = [(LDrawModel*)fileBeingDrawn colorLibrary];
+
+	colorObject = [colorLibrary colorForCode:newColor];
+	[colorObject getColorRGBA:self->glColor]; 
 	
 }//end setColor
 
@@ -1177,32 +1194,18 @@
 				[self nudgeKeyDown:theEvent];
 				break;
 			
-			case NSDeleteCharacter: //regular delete character, apparently.
-			case NSDeleteFunctionKey: //forward delete--documented! My gosh!
-				[NSApp sendAction:@selector(delete:)
-							   to:nil //just send it somewhere!
-							 from:self];
+			// handled by menu item
+//			case NSDeleteCharacter: //regular delete character, apparently.
+//			case NSDeleteFunctionKey: //forward delete--documented! My gosh!
+//				[NSApp sendAction:@selector(delete:)
+//							   to:nil //just send it somewhere!
+//							 from:self];
 
-			//rotation shortcuts
-			case 'x':
-				[self->document rotateSelectionAround:V3Make(1,0,0)];
+			case ' ':
+				// Swallow the spacebar, since it is a special tool-palette key. 
+				// If we pass it up to super, it will cause a beep. 
 				break;
-			case 'X':
-				[self->document rotateSelectionAround:V3Make(-1,0,0)];
-				break;
-			case 'y':
-				[self->document rotateSelectionAround:V3Make(0,1,0)];
-				break;
-			case 'Y':
-				[self->document rotateSelectionAround:V3Make(0,-1,0)];
-				break;
-			case 'z':
-				[self->document rotateSelectionAround:V3Make(0,0,1)];
-				break;
-			case 'Z':
-				[self->document rotateSelectionAround:V3Make(0,0,-1)];
-				break;
-				
+
 			//viewing angle
 			case '4':
 				[self setProjectionMode:ProjectionModeOrthographic];
@@ -1232,6 +1235,10 @@
 			case '0':
 				[self setProjectionMode:ProjectionModePerspective];
 				[self setViewingAngle:ViewingAngle3D];
+				break;
+				
+			default:
+				[super keyDown:theEvent];
 				break;
 		}
 		
@@ -1807,8 +1814,6 @@
 	NSArray			*fineDrawParts		= nil;
 	LDrawDirective	*clickedDirective	= nil;
 	BOOL			 extendSelection	= NO;
-	
-	NSLog(@"%s", __func__);
 	
 	// Per the AHIG, both command and shift are used for multiple selection. In 
 	// Bricksmith, there is no difference between contiguous and non-contiguous 

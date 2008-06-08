@@ -46,6 +46,7 @@
 #define PART_BROWSER_PREVIOUS_SELECTED_ROW			@"Part Browser Previous Selected Row"
 #define PART_BROWSER_STYLE_KEY						@"Part Browser Style"
 #define PREFERENCES_LAST_TAB_DISPLAYED				@"Preferences Tab"
+#define SYNTAX_COLOR_COLORS_KEY						@"Syntak Color Colors"
 #define SYNTAX_COLOR_COMMENTS_KEY					@"Syntax Color Comments"
 #define SYNTAX_COLOR_MODELS_KEY						@"Syntax Color Models"
 #define SYNTAX_COLOR_PARTS_KEY						@"Syntax Color Parts"
@@ -190,6 +191,20 @@
 #define LDRAW_COMMENT_PRINT						@"PRINT"
 #define LDRAW_COMMENT_SLASH						@"//"
 
+// Color definition
+#define LDRAW_COLOR_DEFINITION					@"!COLOUR"
+#define LDRAW_COLOR_DEF_CODE					@"CODE"
+#define LDRAW_COLOR_DEF_VALUE					@"VALUE"
+#define LDRAW_COLOR_DEF_EDGE					@"EDGE"
+#define LDRAW_COLOR_DEF_ALPHA					@"ALPHA"
+#define LDRAW_COLOR_DEF_LUMINANCE				@"LUMINANCE"
+#define LDRAW_COLOR_DEF_MATERIAL_CHROME			@"CHROME"
+#define LDRAW_COLOR_DEF_MATERIAL_PEARLESCENT	@"PEARLESCENT"
+#define LDRAW_COLOR_DEF_MATERIAL_RUBBER			@"RUBBER"
+#define LDRAW_COLOR_DEF_MATERIAL_MATTE_METALLIC	@"MATTE_METALLIC"
+#define LDRAW_COLOR_DEF_MATERIAL_METAL			@"METAL"
+#define LDRAW_COLOR_DEF_MATERIAL_CUSTOM			@"MATERIAL"
+
 //File header
 #define LDRAW_HEADER_NAME						@"Name:"
 #define LDRAW_HEADER_AUTHOR						@"Author:"
@@ -294,6 +309,12 @@ typedef enum MenuTags
 	deleteMenuTag				= 205,
 	selectAllMenuTag			= 206,
 	duplicateMenuTag			= 207,
+	rotatePositiveXTag			= 220,
+	rotateNegativeXTag			= 221,
+	rotatePositiveYTag			= 222,
+	rotateNegativeYTag			= 223,
+	rotatePositiveZTag			= 224,
+	rotateNegativeZTag			= 225,
 	
 	//Tools Menu
 	toolsMenuTag				= 3,

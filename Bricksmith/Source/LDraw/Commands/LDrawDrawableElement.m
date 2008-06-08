@@ -11,6 +11,7 @@
 //==============================================================================
 #import "LDrawDrawableElement.h"
 
+#import "ColorLibrary.h"
 #import "LDrawColor.h"
 #import "LDrawContainer.h"
 #import "MacLDraw.h"
@@ -148,10 +149,18 @@
 		}
 		else
 		{
+			// We'll need to turn this on to support file-local colors.
+//			ColorLibrary	*colorLibrary	= [[[self enclosingDirective] enclosingModel] colorLibrary];
+//			LDrawColor		*colorObject	= [colorLibrary colorForCode:self->color];
+			
 			if(self->color == LDrawEdgeColor)
-				complimentColor(parentColor, glColor);
+				complimentColor(parentColor, self->glColor);
+//			else
+//			{
+//				[colorObject getColorRGBA:self->glColor];
+//			}
 	
-			[self drawElement:optionsMask withColor:glColor];
+			[self drawElement:optionsMask withColor:self->glColor];
 		}
 			
 		// Done drawing a selected part? Then switch back to normal filled 
@@ -266,7 +275,18 @@
 	self->color = newColor;
 	
 	//Look up the OpenGL color now so we don't have to whenever we draw.
-	rgbafForCode(color, glColor);
+	// -- Now that we are complying with the LDraw Colour Definition 
+	// Language, we must look up the color at draw time because of 
+	// registration/scoping issues. It shouldn't be a big deal because parts are 
+	// optimized into a display list. I hope.
+	
+	// Model-local colors got messy with optimization. Decided not to be 
+	// compliant right now. 
+	
+	ColorLibrary	*colorLibrary	= [ColorLibrary sharedColorLibrary]; //[[[self enclosingDirective] enclosingModel] colorLibrary];
+	LDrawColor		*colorObject	= [colorLibrary colorForCode:self->color];
+	
+	[colorObject getColorRGBA:self->glColor];
 	
 }//end setLDrawColor:
 

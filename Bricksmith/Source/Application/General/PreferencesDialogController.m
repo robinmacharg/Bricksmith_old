@@ -164,6 +164,7 @@ PreferencesDialogController *preferencesDialog = nil;
 	NSColor			*stepsColor			= [userDefaults colorForKey:SYNTAX_COLOR_STEPS_KEY];
 	NSColor			*partsColor			= [userDefaults colorForKey:SYNTAX_COLOR_PARTS_KEY];
 	NSColor			*primitivesColor	= [userDefaults colorForKey:SYNTAX_COLOR_PRIMITIVES_KEY];
+	NSColor			*colorsColor		= [userDefaults colorForKey:SYNTAX_COLOR_COLORS_KEY];
 	NSColor			*commentsColor		= [userDefaults colorForKey:SYNTAX_COLOR_COMMENTS_KEY];
 	NSColor			*unknownColor		= [userDefaults colorForKey:SYNTAX_COLOR_UNKNOWN_KEY];
 	
@@ -174,6 +175,7 @@ PreferencesDialogController *preferencesDialog = nil;
 	[partsColorWell			setColor:partsColor];
 	[primitivesColorWell	setColor:primitivesColor];
 	[commentsColorWell		setColor:commentsColor];
+	[colorsColorWell		setColor:colorsColor];
 	[unknownColorWell		setColor:unknownColor];
 
 }//end setStylesTabValues
@@ -447,6 +449,25 @@ PreferencesDialogController *preferencesDialog = nil;
 }//end primitivesColorWellChanged:
 
 
+//========== colorsColorWellChanged: ===========================================
+//
+// Purpose:		This syntax-color well changed. Update the value in preferences.
+//
+//==============================================================================
+- (IBAction) colorsColorWellChanged:(id)sender
+{
+	NSColor			*newColor		= [sender color];
+	NSUserDefaults	*userDefaults	= [NSUserDefaults standardUserDefaults];
+	
+	[userDefaults setColor:newColor forKey:SYNTAX_COLOR_COLORS_KEY];
+	
+	[[NSNotificationCenter defaultCenter] 
+			postNotificationName:LDrawSyntaxColorsDidChangeNotification
+						  object:NSApp ];
+	
+}//end colorsColorWellChanged:
+
+
 //========== commentsColorWellChanged: =========================================
 //
 // Purpose:		This syntax-color well changed. Update the value in preferences.
@@ -618,6 +639,10 @@ PreferencesDialogController *preferencesDialog = nil;
 	NSColor				*stepsColor			= [NSColor blackColor];
 	NSColor				*partsColor			= [NSColor blackColor];
 	NSColor				*primitivesColor	= [NSColor blueColor];
+	NSColor				*colorsColor		= [NSColor colorWithDeviceRed:  0./ 255
+																    green:128./ 255
+																	 blue:128./ 255
+																    alpha:1.0 ];
 	NSColor				*commentsColor		= [NSColor colorWithDeviceRed: 35./ 255
 																    green:110./ 255
 																	 blue: 37./ 255
@@ -640,6 +665,7 @@ PreferencesDialogController *preferencesDialog = nil;
 	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:partsColor]		forKey:SYNTAX_COLOR_PARTS_KEY];
 	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:primitivesColor]	forKey:SYNTAX_COLOR_PRIMITIVES_KEY];
 	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:commentsColor]	forKey:SYNTAX_COLOR_COMMENTS_KEY];
+	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:colorsColor]		forKey:SYNTAX_COLOR_COLORS_KEY];
 	[initialDefaults setObject:[NSArchiver archivedDataWithRootObject:unknownColor]		forKey:SYNTAX_COLOR_UNKNOWN_KEY];
 	
 	//

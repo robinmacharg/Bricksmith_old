@@ -45,6 +45,7 @@
 	IBOutlet NSColorWell	*stepsColorWell;
 	IBOutlet NSColorWell	*partsColorWell;
 	IBOutlet NSColorWell	*primitivesColorWell;
+	IBOutlet NSColorWell	*colorsColorWell;
 	IBOutlet NSColorWell	*commentsColorWell;
 	IBOutlet NSColorWell	*unknownColorWell;
 	
@@ -74,6 +75,7 @@
 - (IBAction) stepsColorWellChanged:(id)sender;
 - (IBAction) partsColorWellChanged:(id)sender;
 - (IBAction) primitivesColorWellChanged:(id)sender;
+- (IBAction) colorsColorWellChanged:(id)sender;
 - (IBAction) commentsColorWellChanged:(id)sender;
 - (IBAction) unknownColorWellChanged:(id)sender;
 

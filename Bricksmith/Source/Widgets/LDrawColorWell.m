@@ -26,6 +26,7 @@
 //==============================================================================
 #import "LDrawColorWell.h"
 
+#import "LDrawColor.h"
 #import "LDrawColorPanel.h"
 
 @implementation LDrawColorWell
@@ -98,31 +99,26 @@ static LDrawColorWell *sharedActiveColorWell = nil;
 //				redraws the receiever.
 //
 //==============================================================================
-- (void) setLDrawColor:(LDrawColorT)newColor
+- (void) setLDrawColor:(LDrawColorT)newColorCode
 {
-	colorCode = newColor;
+	LDrawColor	*color			= [[ColorLibrary sharedColorLibrary] colorForCode:newColorCode];
+	GLfloat		 components[4];
+	
+	// assign ivar
+	self->colorCode = newColorCode;
+	
+	// Set cached NSColor too
+	[color getColorRGBA:components];
+	
+	[self->nsColor release];
+	self->nsColor = [[NSColor colorWithCalibratedRed:components[0]
+											   green:components[1]
+												blue:components[2]
+											   alpha:1.0 ] retain];
+	
 	[self setNeedsDisplay:YES];
-}
-
-//========== colorCode =========================================================
-//
-// Purpose:		**** Deprecated ****
-//
-//==============================================================================
-- (LDrawColorT) colorCode
-{
-	return [self LDrawColor];
-}
-
-//========== setColorCode: =====================================================
-//
-// Purpose:		**** Deprecated ****
-//
-//==============================================================================
-- (void) setColorCode:(LDrawColorT) newColorCode
-{
-	[self setLDrawColor:newColorCode];
-}
+	
+}//end setLDrawColor:
 
 
 #pragma mark -
@@ -138,10 +134,9 @@ static LDrawColorWell *sharedActiveColorWell = nil;
 {
 	[super drawRect:aRect];
 	
-	NSColor	*colorRepresented = [LDrawColor colorForCode:colorCode];
 	NSRect	 colorRect = NSInsetRect(aRect, 4, 4);
 	
-	[colorRepresented set];
+	[self->nsColor set];
 	NSRectFill(colorRect);
 	
 }
@@ -248,7 +243,10 @@ static LDrawColorWell *sharedActiveColorWell = nil;
 	if([LDrawColorWell activeColorWell] == self)
 		[LDrawColorWell setActiveColorWell:nil];
 	
+	[self->nsColor	release];
+	
 	[super dealloc];
-}
+	
+}//end dealloc
 
 @end

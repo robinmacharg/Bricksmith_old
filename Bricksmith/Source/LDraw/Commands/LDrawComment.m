@@ -29,7 +29,7 @@
 #pragma mark INITIALIZATION
 #pragma mark -
 
-//========== commentWithDirectiveText: =========================================
+//---------- commentWithDirectiveText: -------------------------------[static]--
 //
 // Purpose:		Given a line from an LDraw file, parse a basic comment line.
 //
@@ -39,55 +39,38 @@
 //					or
 //				0 PRINT message-text
 //
-//==============================================================================
-+ (LDrawComment *) commentWithDirectiveText:(NSString *)directive{
+//------------------------------------------------------------------------------
++ (LDrawComment *) commentWithDirectiveText:(NSString *)directive
+{
 	return [LDrawComment directiveWithString:directive];
-}
+	
+}//end commentWithDirectiveText:
 
 
-//========== directiveWithString: ==============================================
+//========== finishParsing: ====================================================
 //
-// Purpose:		Returns the LDraw directive based on lineFromFile, a single line 
-//				of LDraw code from a file.
+// Purpose:		+directiveWithString: is responsible for parsing out the line 
+//				code and comment command (i.e., "0 //"); now we just have to 
+//				finish the comment-command specific syntax. As it happens, that 
+//				is everything after the comment command. 
 //
 //==============================================================================
-+ (id) directiveWithString:(NSString *)lineFromFile{
-		
-	LDrawComment	*parsedComment	= nil;
-	NSString		*workingLine	= lineFromFile;
-	NSString		*parsedField	= nil;
+- (BOOL) finishParsing:(NSScanner *)scanner
+{
+	NSString	*remainder	= nil;
+
+	// skip to first word of comment
+	[scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet] intoString:nil];
 	
+	remainder = [[scanner string] substringFromIndex:[scanner scanLocation]];
+	[self setStringValue:remainder];
+//	[self setStringValue:
+//			[lineRemainder stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
 	
-	//A malformed part could easily cause a string indexing error, which would 
-	// raise an exception. We don't want this to happen here.
-	NS_DURING
-		//Read in the line code and advance past it.
-		parsedField = [LDrawUtilities readNextField:  workingLine
-										  remainder: &workingLine ];
-		//Only attempt to create the part if this is a valid line.
-		if([parsedField intValue] == 0){
-			//A comment must begin with a 
-			parsedField = [LDrawUtilities readNextField:  workingLine
-											  remainder: &workingLine ];
-			if([parsedField isEqualToString:LDRAW_COMMENT_SLASH] ||
-			   [parsedField isEqualToString:LDRAW_COMMENT_WRITE] ||
-			   [parsedField isEqualToString:LDRAW_COMMENT_PRINT]    )
-			{
-				parsedComment = [[LDrawComment new] autorelease];
-		
-				[parsedComment setStringValue:
-						[workingLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
-			}
-											  
-		}
-		
-	NS_HANDLER
-		NSLog(@"the comment %@ was fatally invalid", lineFromFile);
-		NSLog(@" raised exception %@", [localException name]);
-	NS_ENDHANDLER
+	return YES;
 	
-	return parsedComment;
 }//end lineWithDirectiveText
+
 
 #pragma mark -
 #pragma mark DIRECTIVES
@@ -104,13 +87,13 @@
 //				preferred. http://ldraw.org/Article218.html#lt0
 //
 //==============================================================================
-- (NSString *) write{
-	return [NSString stringWithFormat:
-				@"0 %@ %@",
-				LDRAW_COMMENT_SLASH,
-				[self stringValue]
-			];
+- (NSString *) write
+{
+	return [NSString stringWithFormat:	@"0 %@ %@",
+										LDRAW_COMMENT_SLASH,
+										[self stringValue]	];
 }//end write
+
 
 #pragma mark -
 #pragma mark DISPLAY
@@ -122,10 +105,11 @@
 //				which can be presented to the user.
 //
 //==============================================================================
-- (NSString *)browsingDescription
+- (NSString *) browsingDescription
 {
 	return [self stringValue];
-}
+	
+}//end browsingDescription
 
 
 //========== iconName ==========================================================
@@ -134,9 +118,11 @@
 //				object, or nil if there is no icon.
 //
 //==============================================================================
-- (NSString *) iconName{
+- (NSString *) iconName
+{
 	return @"Comment";
-}
+	
+}//end iconName
 
 
 //========== inspectorClassName ================================================
@@ -144,9 +130,11 @@
 // Purpose:		Returns the name of the class used to inspect this one.
 //
 //==============================================================================
-- (NSString *) inspectorClassName{
+- (NSString *) inspectorClassName
+{
 	return @"InspectionComment";
-}
+	
+}//end inspectorClassName
 
 
 @end

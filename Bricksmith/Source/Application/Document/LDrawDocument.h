@@ -11,7 +11,7 @@
 //==============================================================================
 #import <Cocoa/Cocoa.h>
 
-#import "LDrawColor.h"
+#import "ColorLibrary.h"
 #import "MatrixMath.h"
 #import "RotationPanel.h"
 
@@ -107,6 +107,7 @@ typedef enum gridSpacingMode { //Keep these 0,1,2,...
 - (IBAction) delete:(id)sender;
 - (IBAction) duplicate:(id)sender;
 - (IBAction) orderFrontRotationPanel:(id)sender;
+- (IBAction) quickRotateClicked:(id)sender;
 
 // - Tools menu
 - (IBAction) showInspector:(id)sender;

@@ -17,7 +17,9 @@
 //==============================================================================
 #import "LDrawModel.h"
 
+#import <string.h>
 #import <AddressBook/AddressBook.h>
+
 #import "ColorLibrary.h"
 #import "LDrawConditionalLine.h"
 #import "LDrawFile.h"
@@ -25,10 +27,10 @@
 #import "LDrawQuadrilateral.h"
 #import "LDrawStep.h"
 #import "LDrawTriangle.h"
+#import "LDrawUtilities.h"
 #import "MacLDraw.h"
 #import "StringCategory.h"
 
-#import <string.h>
 
 @implementation LDrawModel
 
@@ -359,10 +361,25 @@
 //==============================================================================
 - (Box3) boundingBox3
 {
+	Box3 totalBounds	= InvalidBox;
+	Box3 draggingBounds	= InvalidBox;
+
 	if(self->cachedBounds != NULL)
-		return *cachedBounds;
+		totalBounds = *cachedBounds;
 	else
-		return [super boundingBox3];
+	{
+		// Find the bounding box of all the normal members of this model
+		totalBounds = [super boundingBox3];
+		
+		// If drag-and-drop objects are present, add them into the bounds.
+		if(self->draggingDirectives != nil)
+		{
+			draggingBounds	= [LDrawUtilities boundingBox3ForDirectives:[self->draggingDirectives subdirectives]];
+			totalBounds		= V3UnionBox(draggingBounds, totalBounds);
+		}
+	}
+	
+	return totalBounds;
 		
 }//end boundingBox3
 

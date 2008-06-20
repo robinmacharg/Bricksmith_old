@@ -2689,7 +2689,7 @@
 				
 				newBounds = [(id)fileBeingDrawn boundingBox3]; //cast to silence warning.
 				
-				if(V3EqualsBoxes(&newBounds, &InvalidBox) == NO)
+				if(V3EqualBoxes(newBounds, InvalidBox) == NO)
 				{
 					//
 					// Find bounds size, based on model dimensions.

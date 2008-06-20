@@ -53,19 +53,13 @@
 		currentDirective = [directives objectAtIndex:counter];
 		if([currentDirective respondsToSelector:@selector(boundingBox3)])
 		{
-			partBounds = [currentDirective boundingBox3];
-			
-			bounds.min.x = MIN(bounds.min.x, partBounds.min.x);
-			bounds.min.y = MIN(bounds.min.y, partBounds.min.y);
-			bounds.min.z = MIN(bounds.min.z, partBounds.min.z);
-			
-			bounds.max.x = MAX(bounds.max.x, partBounds.max.x);
-			bounds.max.y = MAX(bounds.max.y, partBounds.max.y);
-			bounds.max.z = MAX(bounds.max.z, partBounds.max.z);
+			partBounds	= [currentDirective boundingBox3];
+			bounds		= V3UnionBox(bounds, partBounds);
 		}
 	}
 	
 	return bounds;
+	
 }//end boundingBox3ForDirectives
 
 

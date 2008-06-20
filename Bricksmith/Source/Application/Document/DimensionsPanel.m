@@ -180,15 +180,18 @@
 	[floatFormatter setPositiveFormat:@"0.0"];
 	
 	//If we got valid bounds, analyze them.
-	if(V3EqualsBoxes(&bounds, (Box3*)&InvalidBox) == NO) {
+	if(V3EqualBoxes(bounds, InvalidBox) == NO)
+	{
 		width	= bounds.max.x - bounds.min.x;
 		height	= bounds.max.y - bounds.min.y;
 		length	= bounds.max.z - bounds.min.z;
 	}
 
 	//Units Lable?
-	if([[tableColumn identifier] isEqualToString:UNITS_COLUMN]) {
-		switch(rowIndex){
+	if([[tableColumn identifier] isEqualToString:UNITS_COLUMN])
+	{
+		switch(rowIndex)
+		{
 			case STUDS_ROW_INDEX:			object = NSLocalizedString(@"Studs", nil);			break;
 			case INCHES_ROW_INDEX:			object = NSLocalizedString(@"Inches", nil);			break;
 			case CENTIMETERS_ROW_INDEX:		object = NSLocalizedString(@"Centimeters", nil);	break;

@@ -393,21 +393,48 @@ Box3 V3BoundsFromPoints(Point3 point1, Point3 point2)
 }//end V3BoundsFromPoints
 
 
-//========== V3EqualsBoxes =====================================================
+//========== V3EqualBoxes ======================================================
 //
 // Purpose:		Returns 1 (YES) if the two boxes are equal; 0 otherwise.
 //
 //==============================================================================
-int V3EqualsBoxes(const Box3 *box1, const Box3 *box2)
+int V3EqualBoxes(Box3 box1, Box3 box2)
 {
-	return (	box1->min.x == box2->min.x
-			&&	box1->min.y == box2->min.y
-			&&	box1->min.z == box2->min.z
+	return (	box1.min.x == box2.min.x
+			&&	box1.min.y == box2.min.y
+			&&	box1.min.z == box2.min.z
 				
-			&&	box1->max.x == box2->max.x
-			&&	box1->max.y == box2->max.y
-			&&	box1->max.z == box2->max.z  );
-}//end V3EqualsBoxes
+			&&	box1.max.x == box2.max.x
+			&&	box1.max.y == box2.max.y
+			&&	box1.max.z == box2.max.z  );
+			
+}//end V3EqualBoxes
+
+
+//========== V3UnionBox ========================================================
+//
+// Purpose:		Returns the smallest box that completely encloses both aBox and 
+//				bBox. 
+//
+// Notes:		If you pass something stupid in as the parameter, you will get 
+//				an appropriately stupid answer. 
+//
+//==============================================================================
+Box3 V3UnionBox(Box3 aBox, Box3 bBox)
+{
+	Box3	bounds				= InvalidBox;
+	
+	bounds.min.x = MIN(aBox.min.x, bBox.min.x);
+	bounds.min.y = MIN(aBox.min.y, bBox.min.y);
+	bounds.min.z = MIN(aBox.min.z, bBox.min.z);
+	
+	bounds.max.x = MAX(aBox.max.x, bBox.max.x);
+	bounds.max.y = MAX(aBox.max.y, bBox.max.y);
+	bounds.max.z = MAX(aBox.max.z, bBox.max.z);
+	
+	return bounds;
+
+}//end V3UnionBox
 
 
 //========== V3IsolateGreatestComponent ========================================

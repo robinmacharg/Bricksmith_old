@@ -19,6 +19,8 @@
 #import "MacLDraw.h"
 #import "StringCategory.h"
 
+#define COLOR_SORT_DESCRIPTORS_KEY @"ColorTable Sort Ordering"
+
 @implementation LDrawColorPanel
 
 //There is supposed to be only one of these.
@@ -88,13 +90,12 @@ LDrawColorPanel *sharedColorPanel = nil;
 	// changeColor: message, so we turn on this flag.
 	updatingToReflectFile = YES;
 	
-		//Obtain the list of colors to display.
-		self->colorListController	= [[NSArrayController alloc] initWithContent:colorList];
+		// Set the list of colors to display.
+		[self->colorListController setContent:colorList];
+		[self->colorListController addObserver:self forKeyPath:@"selectedObjects" options:kNilOptions context:NULL];
+		[self->colorListController addObserver:self forKeyPath:@"sortDescriptors" options:kNilOptions context:NULL];
 		
-		//Owing to the very messy way I set up this Nib, I must force a resort here.
-		// see awakeFromNib for details.
-		[self tableView:colorTable sortDescriptorsDidChange:[colorTable sortDescriptors]];
-		[colorTable reloadData];
+		[self loadInitialSortDescriptors];
 		
 		[self setLDrawColor:LDrawRed];
 	updatingToReflectFile = NO;
@@ -103,6 +104,8 @@ LDrawColorPanel *sharedColorPanel = nil;
 	[self setWorksWhenModal:YES];
 	[self setLevel:NSStatusWindowLevel];
 	[self setBecomesKeyOnlyIfNeeded:YES];
+	
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillTerminate:) name:NSApplicationWillTerminateNotification object:NSApp];
 	
 	[oldself release];
 	
@@ -122,15 +125,15 @@ LDrawColorPanel *sharedColorPanel = nil;
 //==============================================================================
 - (LDrawColorT) LDrawColor
 {
-	int			selectedRow			= [colorTable selectedRow];
+	NSArray		*selection			= [self->colorListController selectedObjects];
 	LDrawColor	*selectedColor		= nil;
 	LDrawColorT	selectedColorCode	= LDrawColorBogus;
 	
 	//It is possible there are no rows selected, if a search has limited the 
 	// color list out of existence.
-	if(selectedRow >= 0)
+	if([selection count] > 0)
 	{
-		selectedColor		= [[self->colorListController arrangedObjects] objectAtIndex:selectedRow];
+		selectedColor		= [selection objectAtIndex:0];
 		selectedColorCode	= [selectedColor colorCode];
 	}
 	//Just return whatever was last selected.
@@ -164,7 +167,7 @@ LDrawColorPanel *sharedColorPanel = nil;
 	//We'd better have found it by now!
 	if(rowToSelect != NSNotFound)
 	{
-		[colorTable selectRow:rowToSelect byExtendingSelection:NO];
+		[self->colorListController setSelectionIndex:rowToSelect];
 		[colorBar setLDrawColor:newColor];
 	}
 	
@@ -258,22 +261,16 @@ LDrawColorPanel *sharedColorPanel = nil;
 	
 	//Update the table with our results.
 	[self->colorListController setFilterPredicate:searchPredicate];
-	[self->colorTable reloadData];
 	
-	//Restore the selection
+	// The array controller will automatically maintain the selection if it can. 
+	// But if it can't, we need to come up a reasonable new answer. 
 	indexOfPreviousSelection = [self indexOfColorCode:currentColor];
-	if(indexOfPreviousSelection != NSNotFound)
+	// If the previous color is no longer in the list, what should we do? I have 
+	// chosen to automatically select the first color, since I don't want to 
+	// introduce the UI confusion of empty selection. 
+	if(indexOfPreviousSelection == NSNotFound)
 	{
-		[colorTable selectRowIndexes: [NSIndexSet indexSetWithIndex:indexOfPreviousSelection]
-				byExtendingSelection: NO];
-	}
-	// The previous color is no longer in the list. This is a major dilemma.
-	// I have chosen to automatically select the first color, since I don't want 
-	// to introduce the UI confusion of empty selection.
-	else
-	{
-		[colorTable selectRowIndexes: [NSIndexSet indexSetWithIndex:0]
-				byExtendingSelection: NO];
+		[self->colorListController setSelectionIndex:0];
 	}
 	
 }//end searchFieldChanged:
@@ -316,6 +313,74 @@ LDrawColorPanel *sharedColorPanel = nil;
 #pragma mark -
 #pragma mark UTILITIES
 #pragma mark -
+
+//========== indexOfColorCode: =================================================
+//
+// Purpose:		Returns the row index of colorCodeSought in the panel's table, 
+//				or NSNotFound if colorCodeSought is not displayed. 
+//
+//==============================================================================
+- (int) indexOfColorCode:(LDrawColorT)colorCodeSought
+{
+	NSArray			*visibleColors	= [self->colorListController arrangedObjects];
+	int				 numberColors	= [visibleColors count];
+	LDrawColor		*currentColor	= nil;
+	LDrawColorT		 currentCode	= LDrawColorBogus;
+	int				 rowToSelect	= NSNotFound; //will be the row index for the color we want.
+	int				 counter		= 0;
+	
+	//Search through all the colors in the current color set and see if the 
+	// one we are after is in there. A brute force search.
+	for(counter = 0; counter < numberColors && rowToSelect == NSNotFound; counter++)
+	{
+		currentColor	= [visibleColors objectAtIndex:counter];
+		currentCode		= [currentColor colorCode];
+		
+		if(currentCode == colorCodeSought)
+			rowToSelect = counter;
+	}
+	
+	return rowToSelect;
+	
+}//end indexOfColorCode:
+
+
+//========== loadInitialSortDescriptors ========================================
+//
+// Purpose:		Reads the last-used sort descriptors from preferences and 
+//				applies them to the color list. 
+//
+// Notes:		Once moved entirely to Leopard, we can dispense with some of 
+//				this and bind directly to the data using 
+//				NSKeyedUnarchiveFromData. That would also be an easy class to 
+//				replicate on Tiger, but I'm not feeling like I need it all that 
+//				much. 
+//
+//==============================================================================
+- (void) loadInitialSortDescriptors
+{
+	NSData				*savedDescriptorData	= nil;
+	NSArray				*savedDescriptors		= nil;
+	NSSortDescriptor	*initialDescriptor		= nil;
+	NSUserDefaults		*userDefaults			= [NSUserDefaults standardUserDefaults];
+	
+	// Get the object from preferences.
+	savedDescriptorData = [userDefaults objectForKey:COLOR_SORT_DESCRIPTORS_KEY];
+	if(savedDescriptorData != nil)
+		savedDescriptors = [NSKeyedUnarchiver unarchiveObjectWithData:savedDescriptorData];
+	
+	// Regenerate them if needed
+	if(savedDescriptors == nil)
+	{
+		initialDescriptor	= [[self->colorTable tableColumnWithIdentifier:@"colorCode"] sortDescriptorPrototype];
+		savedDescriptors	= [NSArray arrayWithObject:initialDescriptor];
+	}
+	
+	// and sort.
+	[self->colorListController setSortDescriptors:savedDescriptors];
+
+}//end loadInitialSortDescriptors
+
 
 //========== predicateForSearchString: =========================================
 //
@@ -365,114 +430,48 @@ LDrawColorPanel *sharedColorPanel = nil;
 }//end predicateForSearchString:
 
 
-//========== indexOfColorCode: =================================================
-//
-// Purpose:		Returns the row index of colorCodeSought in the panel's table, 
-//				or NSNotFound if colorCodeSought is not displayed. 
-//
-//==============================================================================
-- (int) indexOfColorCode:(LDrawColorT)colorCodeSought
-{
-	NSArray			*visibleColors	= [self->colorListController arrangedObjects];
-	int				 numberColors	= [visibleColors count];
-	LDrawColor		*currentColor	= nil;
-	LDrawColorT		 currentCode	= LDrawColorBogus;
-	int				 rowToSelect	= NSNotFound; //will be the row index for the color we want.
-	int				 counter		= 0;
-	
-	//Search through all the colors in the current color set and see if the 
-	// one we are after is in there. A brute force search.
-	for(counter = 0; counter < numberColors && rowToSelect == NSNotFound; counter++)
-	{
-		currentColor	= [visibleColors objectAtIndex:counter];
-		currentCode		= [currentColor colorCode];
-		
-		if(currentCode == colorCodeSought)
-			rowToSelect = counter;
-	}
-	
-	return rowToSelect;
-	
-}//end indexOfColorCode:
-
-
-#pragma mark -
-#pragma mark DATA SOURCES
-#pragma mark -
-#pragma mark Table
-
-//**** NSTableDataSource ****
-//========== numberOfRowsInTableView: ==========================================
-//
-// Purpose:		Should return the number of parts in the category currently 
-//				being browsed.
-//
-//==============================================================================
-- (int)numberOfRowsInTableView:(NSTableView *)tableView
-{
-	return [[self->colorListController arrangedObjects] count];
-	
-}//end numberOfRowsInTableView:
-
-
-//**** NSTableDataSource ****
-//========== tableView:objectValueForTableColumn:row: ===============================
-//
-// Purpose:		Displays information for the part in the record.
-//
-//==============================================================================
-- (id)				tableView:(NSTableView *)tableView
-	objectValueForTableColumn:(NSTableColumn *)tableColumn
-						  row:(int)rowIndex
-{
-	if(rowIndex == -1 )
-		NSLog(@"AAAAAA!");
-
-	LDrawColor		*colorObject		= [[self->colorListController arrangedObjects] objectAtIndex:rowIndex];
-	NSString		*columnIdentifier	= [tableColumn identifier];
-	
-	id				 cellValue			= [colorObject valueForKey:columnIdentifier];
-	
-	return cellValue;
-	
-}//end tableView:objectValueForTableColumn:row:
-
-
-//**** NSTableDataSource ****
-//========== tableView:sortDescriptorsDidChange: ===============================
-//
-// Purpose:		Resort the table elements.
-//
-//==============================================================================
-- (void)tableView:(NSTableView *)tableView sortDescriptorsDidChange:(NSArray *)oldDescriptors
-{
-	NSArray *newDescriptors = [tableView sortDescriptors];
-	
-	[self->colorListController setSortDescriptors:newDescriptors];
-	[tableView reloadData];
-	
-}//end tableView:sortDescriptorsDidChange:
-
-
 #pragma mark -
 #pragma mark DELEGATES
 #pragma mark -
 
-//**** NSTableView ****
-//========== tableViewSelectionDidChange: ======================================
+//========== observeValueForKeyPath:ofObject:change:context: ===================
 //
-// Purpose:		Need to update everything to indicate that a new color was 
-//				selected.
+// Purpose:		We need to know when our color selection changes, so we use 
+//				Key-Value Observing. 
 //
 //==============================================================================
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
+- (void)observeValueForKeyPath:(NSString *)keyPath
+					  ofObject:(id)object
+						change:(NSDictionary *)change
+					   context:(void *)context
 {
-	//Update internal information.
-	[self->colorBar setLDrawColor:[self LDrawColor]];
+	// Selected color has changed. Need to update everything to indicate that a 
+	// new color was selected. 
+	if([keyPath isEqualToString:@"selectedObjects"])
+	{
+		if([[self->colorListController selectedObjects] count] > 0)
+		{
+			//Update internal information.
+			[self->colorBar setLDrawColor:[self LDrawColor]];
+			
+			[self sendAction];
+		}
+	}
 	
-	[self sendAction];
+	// Sort descriptors changed; save in preferences.
+	// Once we are Leopard-only, we can dispense with this and just use the 
+	// NSKeyedUnarchiveFromData transformer. 
+	else if([keyPath isEqualToString:@"sortDescriptors"])
+	{
+		NSArray			*newDescriptors			= [self->colorListController sortDescriptors];;
+		NSData			*savedDescriptorData	= [NSKeyedArchiver archivedDataWithRootObject:newDescriptors];
+		NSUserDefaults	*userDefaults			= [NSUserDefaults standardUserDefaults];
+		
+		// Set the object in preferences.
+		[userDefaults setObject:savedDescriptorData forKey:COLOR_SORT_DESCRIPTORS_KEY];
+	}
 	
-}//end tableViewSelectionDidChange:
+}//end observeValueForKeyPath:ofObject:change:context:
 
 
 //**** NSWindow ****
@@ -491,6 +490,11 @@ LDrawColorPanel *sharedColorPanel = nil;
 }//end windowWillReturnUndoManager:
 
 
+- (void) applicationWillTerminate:(NSNotification *)notification
+{
+	[self release];
+}
+
 #pragma mark -
 #pragma mark DESTRUCTOR
 #pragma mark -
@@ -502,6 +506,9 @@ LDrawColorPanel *sharedColorPanel = nil;
 //==============================================================================
 - (void) dealloc
 {
+	[colorListController removeObserver:self forKeyPath:@"selectedObjects"];
+	[colorListController removeObserver:self forKeyPath:@"sortDescriptors"];
+
 	[colorListController	release];
 	
 	[super dealloc];

@@ -13,14 +13,6 @@
 			<string>NSView</string>
 		</dict>
 		<dict>
-			<key>CLASS</key>
-			<string>FirstResponder</string>
-			<key>LANGUAGE</key>
-			<string>ObjC</string>
-			<key>SUPERCLASS</key>
-			<string>NSObject</string>
-		</dict>
-		<dict>
 			<key>ACTIONS</key>
 			<dict>
 				<key>searchFieldChanged</key>
@@ -34,6 +26,8 @@
 			<dict>
 				<key>colorBar</key>
 				<string>LDrawColorBar</string>
+				<key>colorListController</key>
+				<string>NSArrayController</string>
 				<key>colorPanel</key>
 				<string>LDrawColorPanel</string>
 				<key>colorTable</key>
@@ -43,6 +37,14 @@
 			</dict>
 			<key>SUPERCLASS</key>
 			<string>NSPanel</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>FirstResponder</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
 		</dict>
 		<dict>
 			<key>CLASS</key>

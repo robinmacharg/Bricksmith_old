@@ -43,7 +43,7 @@
 #pragma mark ACCESSORS
 #pragma mark -
 
-//========== sharedInspector ===================================================
+//---------- sharedInspector -----------------------------------------[static]--
 //
 // Purpose:		Returns the inspector object, which is created when the 
 //				application launches.
@@ -51,21 +51,25 @@
 // Note:		This method is static, so we don't have to keep passing pointers 
 //				to this class around.
 //
-//==============================================================================
-+ (Inspector *) sharedInspector{
-	return [[NSApp delegate] inspector];	
-}
+//------------------------------------------------------------------------------
++ (Inspector *) sharedInspector
+{
+	return [[NSApp delegate] inspector];
+	
+}//end sharedInspector
 
 
-//========== sharedOpenGLContext ===============================================
+//---------- sharedOpenGLContext -------------------------------------[static]--
 //
 // Purpose:		Returns the OpenGLContext which unifies our display-list tags.
 //				Every LDrawGLView should share this context.
 //
-//==============================================================================
-+ (NSOpenGLContext *) sharedOpenGLContext {
+//------------------------------------------------------------------------------
++ (NSOpenGLContext *) sharedOpenGLContext
+{
 	return [[NSApp delegate] openGLContext];
-}
+	
+}//end sharedOpenGLContext
 
 
 //========== sharedPartLibrary =================================================
@@ -86,6 +90,7 @@
 	// it an instance variable of the Application Controller class, of which 
 	// there is only one instance. This class is the application delegate too.
 	return [[NSApp delegate] partLibrary];
+	
 }//end sharedPartLibrary
 
 
@@ -95,9 +100,11 @@
 //				the only copy of it in the program.
 //
 //==============================================================================
-- (Inspector *) inspector{
-	return inspector;	
-}
+- (Inspector *) inspector
+{
+	return inspector;
+	
+}//end inspector
 
 
 //========== partLibrary =======================================================
@@ -109,6 +116,7 @@
 - (PartLibrary *) partLibrary
 {
 	return partLibrary;
+	
 }//end partLibrary
 
 
@@ -121,7 +129,8 @@
 - (NSOpenGLContext *) openGLContext
 {
 	return self->sharedGLContext;
-}
+	
+}//end openGLContext
 
 
 #pragma mark -
@@ -136,10 +145,11 @@
 // Purpose:		Show the preferences window.
 //
 //==============================================================================
-- (IBAction)doPreferences:(id)sender
+- (IBAction) doPreferences:(id)sender
 {
 	[PreferencesDialogController doPreferences];
-}
+	
+}//end doPreferences:
 
 
 #pragma mark -
@@ -154,7 +164,8 @@
 - (IBAction) showInspector:(id)sender
 {
 	[inspector show:sender];
-}
+	
+}//end showInspector:
 
 
 //========== doPartBrowser: ====================================================
@@ -200,7 +211,8 @@
 - (IBAction) showMouseTools:(id)sender
 {
 	[[ToolPalette sharedToolPalette] showToolPalette:sender];
-}
+	
+}//end showMouseTools:
 
 
 #pragma mark -
@@ -216,6 +228,14 @@
 	LDrawColorPanel *colorPanel = [LDrawColorPanel sharedColorPanel];
 	
 	[colorPanel makeKeyAndOrderFront:sender];
+	
+	// It seems some DOS old-timers want to enter colors WITHOUT EVER CLICKING 
+	// THE MOUSE. So, we assume that if the color panel was summoned by its key 
+	// equivalent, we are probably dealing with one of these rabid anti-mouse 
+	// people. We automatically make the color search field key, so they can 
+	// enter color codes to their heart's content. 
+	if([[NSApp currentEvent] type] == NSKeyDown)
+		[colorPanel focusSearchField:sender];
 	
 }//end showColors:
 
@@ -354,7 +374,8 @@
 											   object:nil ];
 	
 	[pixelFormat release];
-}
+	
+}//end applicationWillFinishLaunching:
 
 
 //**** NSApplication ****
@@ -520,12 +541,14 @@
 // Purpose:		The curtain falls.
 //
 //==============================================================================
-- (void) dealloc{
+- (void) dealloc
+{
 	[partLibrary		release];
 	[inspector			release];
 	[sharedGLContext	release];
 
 	[super dealloc];
-}
+	
+}//end dealloc
 
 @end

@@ -177,6 +177,22 @@ LDrawColorPanel *sharedColorPanel = nil;
 #pragma mark ACTIONS
 #pragma mark -
 
+//========== focusSearchField: =================================================
+//
+// Purpose:		Makes the search field the first responder.
+//
+// Notes:		This is to pacify those who wish to type in color codes rather 
+//				than clicking them. Once the search field is made key by some 
+//				keyboard combination, the color code can be typed in. 
+//
+//==============================================================================
+- (void) focusSearchField:(id)sender
+{
+	[self makeFirstResponder:self->searchField];
+	
+}//end focusSearchField:
+
+
 //========== orderOut: =========================================================
 //
 // Purpose:		The color panel is being closed. If there is an active color 

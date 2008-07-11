@@ -481,11 +481,13 @@
 //				used in this document.
 //
 //==============================================================================
-- (void) setGridSpacingMode:(gridSpacingModeT)newMode {
+- (void) setGridSpacingMode:(gridSpacingModeT)newMode
+{
 	self->gridMode = newMode;
 	
 	[self->toolbarController setGridSpacingMode:newMode];
-}
+	
+}//end setGridSpacingMode:
 
 
 //========== setLastSelectedPart: ==============================================
@@ -502,7 +504,8 @@
 	[lastSelectedPart release];
 	
 	lastSelectedPart = newPart;
-}
+	
+}//end setLastSelectedPart:
 
 #pragma mark -
 #pragma mark ACTIVITIES
@@ -757,9 +760,11 @@
 // Purpose:		Zooms the selected LDraw view to the specified percentage.
 //
 //==============================================================================
-- (void) setZoomPercentage:(float)newPercentage {
+- (void) setZoomPercentage:(float)newPercentage
+{
 	[mostRecentLDrawView setZoomPercentage:newPercentage];
-}
+	
+}//end setZoomPercentage:
 
 
 #pragma mark -
@@ -793,7 +798,8 @@
 	}
 	if([selectedObjects count] > 0)
 		[[self documentContents] setNeedsDisplay];
-}
+		
+}//end changeLDrawColor:
 
 
 //========== insertLDrawPart: ==================================================
@@ -1267,9 +1273,11 @@
 //				necessarily a good thing, but oh well.
 //
 //==============================================================================
-- (IBAction) showInspector:(id)sender{
+- (IBAction) showInspector:(id)sender
+{
 	[[LDrawApplication sharedInspector] show:sender];
-}
+	
+}//end showInspector:
 
 
 //========== toggleFileContentsDrawer: =========================================
@@ -1277,9 +1285,11 @@
 // Purpose:		Either open or close the file contents outline.
 //
 //==============================================================================
-- (IBAction) toggleFileContentsDrawer:(id)sender{
+- (IBAction) toggleFileContentsDrawer:(id)sender
+{
 	[fileContentsDrawer toggle:sender];
-}
+	
+}//end toggleFileContentsDrawer:
 
 
 //========== gridGranularityMenuChanged: =======================================
@@ -1367,9 +1377,11 @@
 // Purpose:		Zoom to 100%.
 //
 //==============================================================================
-- (IBAction) zoomActual:(id)sender {
+- (IBAction) zoomActual:(id)sender
+{
 	[mostRecentLDrawView setZoomPercentage:100];
-}
+	
+}//end zoomActual:
 
 
 //========== zoomIn: ===========================================================
@@ -1377,9 +1389,11 @@
 // Purpose:		Enlarge the scale of the current LDraw view.
 //
 //==============================================================================
-- (IBAction) zoomIn:(id)sender {
+- (IBAction) zoomIn:(id)sender
+{
 	[mostRecentLDrawView zoomIn:sender];
-}
+	
+}//end zoomIn:
 
 
 //========== zoomOut: ==========================================================
@@ -1387,9 +1401,11 @@
 // Purpose:		Shrink the scale of the current LDraw view.
 //
 //==============================================================================
-- (IBAction) zoomOut:(id)sender {
+- (IBAction) zoomOut:(id)sender
+{
 	[mostRecentLDrawView zoomOut:sender];
-}
+	
+}//end zoomOut:
 
 
 //========== orientationSelected: ==============================================
@@ -1403,9 +1419,11 @@
 //				because this method has the same name as the one in LDrawGLView.
 //
 //==============================================================================
-- (IBAction) viewingAngleSelected:(id)sender {
+- (IBAction) viewingAngleSelected:(id)sender
+{
 	[self->mostRecentLDrawView viewingAngleSelected:sender];
-}
+	
+}//end viewingAngleSelected:
 
 
 //========== toggleStepDisplay: ================================================
@@ -1414,7 +1432,8 @@
 //				active model.
 //
 //==============================================================================
-- (IBAction) toggleStepDisplay:(id)sender {
+- (IBAction) toggleStepDisplay:(id)sender
+{
 	LDrawMPDModel	*activeModel	= [[self documentContents] activeModel];
 	BOOL			 stepDisplay	= [activeModel stepDisplay];
 	
@@ -1424,7 +1443,8 @@
 		[activeModel setStepDisplay:NO];
 	
 	[[self documentContents] setNeedsDisplay];
-}
+	
+}//end toggleStepDisplay:
 
 
 //========== advanceOneStep: ===================================================
@@ -1432,14 +1452,16 @@
 // Purpose:		Moves the step display forward one step.
 //
 //==============================================================================
-- (IBAction) advanceOneStep:(id)sender {
+- (IBAction) advanceOneStep:(id)sender
+{
 	LDrawMPDModel	*activeModel	= [[self documentContents] activeModel];
 	int				currentStep		= [activeModel maximumStepDisplayed];
 	int				numberSteps		= [[activeModel steps] count];
 	
 	[activeModel setMaximumStepDisplayed: (currentStep+1) % numberSteps ];
 	[[self documentContents] setNeedsDisplay];
-}
+	
+}//end advanceOneStep:
 
 
 //========== backOneStep: ======================================================
@@ -1447,7 +1469,8 @@
 // Purpose:		Displays the previous step.
 //
 //==============================================================================
-- (IBAction) backOneStep:(id)sender {
+- (IBAction) backOneStep:(id)sender
+{
 	LDrawMPDModel	*activeModel	= [[self documentContents] activeModel];
 	int				currentStep		= [activeModel maximumStepDisplayed];
 	int				numberSteps		= [[activeModel steps] count];
@@ -1457,7 +1480,8 @@
 	
 	[activeModel setMaximumStepDisplayed: (currentStep-1) % numberSteps ];
 	[[self documentContents] setNeedsDisplay];
-}
+	
+}//end backOneStep:
 
 
 #pragma mark -
@@ -1468,9 +1492,11 @@
 // Purpose:		Un-hides all selected parts.
 //
 //==============================================================================
-- (IBAction) showParts:(id)sender {
+- (IBAction) showParts:(id)sender
+{
 	[self setSelectionToHidden:NO];	//unhide 'em
-}
+	
+}//end showParts:
 
 
 //========== hideParts: ========================================================
@@ -1478,9 +1504,11 @@
 // Purpose:		Hides all selected parts so that they are not drawn.
 //
 //==============================================================================
-- (IBAction) hideParts:(id)sender {
+- (IBAction) hideParts:(id)sender
+{
 	[self setSelectionToHidden:YES]; //hide 'em
-}
+	
+}//end hideParts:
 
 
 //========== snapSelectionToGrid: ==============================================
@@ -1545,8 +1573,8 @@
 // Purpose:		Create a new model and add it to the current file.
 //
 //==============================================================================
-- (IBAction) addModelClicked:(id)sender {
-	
+- (IBAction) addModelClicked:(id)sender
+{
 	LDrawMPDModel	*newModel		= [LDrawMPDModel newModel];
 
 	[self addModel:newModel];
@@ -1561,12 +1589,14 @@
 // Purpose:		Adds a new step wherever it belongs.
 //
 //==============================================================================
-- (IBAction) addStepClicked:(id)sender {
+- (IBAction) addStepClicked:(id)sender
+{
 
 	LDrawStep		*newStep		= [LDrawStep emptyStep];
 
 	[self addStep:newStep];
-}
+	
+}//end addStepClicked:
 
 
 //========== addPartClicked: ===================================================
@@ -1618,7 +1648,8 @@
 // Parameters:	sender: the NSMenuItem representing the submodel to add.
 //
 //==============================================================================
-- (void) addSubmodelReferenceClicked:(id)sender {
+- (void) addSubmodelReferenceClicked:(id)sender
+{
 	NSString		*partName		= nil;
 	
 	partName = [[sender representedObject] modelName];
@@ -1627,7 +1658,7 @@
 	if(partName != nil){
 		[self addPartNamed:partName];
 	}
-}
+}//end addSubmodelReferenceClicked:
 
 
 //========== addLineClicked: ===================================================
@@ -1635,8 +1666,8 @@
 // Purpose:		Adds a new line primitive to the currently-displayed model.
 //
 //==============================================================================
-- (IBAction) addLineClicked:(id)sender {
-	
+- (IBAction) addLineClicked:(id)sender
+{
 	LDrawLine		*newLine		= [[[LDrawLine alloc] init] autorelease];
 	NSUndoManager	*undoManager	= [self undoManager];
 	LDrawColorT		 selectedColor	= [[LDrawColorPanel sharedColorPanel] LDrawColor];
@@ -1647,6 +1678,7 @@
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAddLine", nil)];
 	[[self documentContents] setNeedsDisplay];
+	
 }//end addLineClicked:
 
 
@@ -1676,8 +1708,8 @@
 //				model.
 //
 //==============================================================================
-- (IBAction) addQuadrilateralClicked:(id)sender {
-	
+- (IBAction) addQuadrilateralClicked:(id)sender
+{
 	LDrawQuadrilateral	*newQuadrilateral	= [[[LDrawQuadrilateral alloc] init] autorelease];
 	NSUndoManager		*undoManager		= [self undoManager];
 	LDrawColorT			 selectedColor		= [[LDrawColorPanel sharedColorPanel] LDrawColor];
@@ -1688,6 +1720,7 @@
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAddQuadrilateral", nil)];
 	[[self documentContents] setNeedsDisplay];
+	
 }//end addQuadrilateralClicked:
 
 
@@ -1697,8 +1730,8 @@
 //				model.
 //
 //==============================================================================
-- (IBAction) addConditionalClicked:(id)sender {
-	
+- (IBAction) addConditionalClicked:(id)sender
+{
 	LDrawConditionalLine	*newConditional	= [[[LDrawConditionalLine alloc] init] autorelease];
 	NSUndoManager			*undoManager	= [self undoManager];
 	LDrawColorT				selectedColor	= [[LDrawColorPanel sharedColorPanel] LDrawColor];
@@ -1709,6 +1742,7 @@
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAddConditionalLine", nil)];
 	[[self documentContents] setNeedsDisplay];
+	
 }//end addConditionalClicked:
 
 
@@ -1717,8 +1751,8 @@
 // Purpose:		Adds a new comment primitive to the currently-displayed model.
 //
 //==============================================================================
-- (IBAction) addCommentClicked:(id)sender {
-	
+- (IBAction) addCommentClicked:(id)sender
+{
 	LDrawComment	*newComment		= [[[LDrawComment alloc] init] autorelease];
 	NSUndoManager	*undoManager	= [self undoManager];
 	
@@ -1770,7 +1804,8 @@
 // Parameters:	sender: an NSMenuItem representing the model to make active.
 //
 //==============================================================================
-- (void) modelSelected:(id)sender {
+- (void) modelSelected:(id)sender
+{
 	LDrawMPDModel *newActiveModel = [sender representedObject];
 	[[self documentContents] setActiveModel:newActiveModel];
 	
@@ -1805,7 +1840,9 @@
 	[self addDirective:newDirective
 			  toParent:parent
 			   atIndex:index];
-}
+			   
+}//end addDirective:toParent:
+
 
 //========== addDirective:toParent:atIndex: ====================================
 //
@@ -2397,7 +2434,9 @@
 		theImage = [NSImage imageNamed:imageName];
 		
 	[(IconTextCell *)cell setImage:theImage];
-}
+	
+}//end outlineView:willDisplayCell:forTableColumn:item:
+
 
 //**** NSOutlineView ****
 //========== outlineViewSelectionDidChange: ====================================
@@ -2431,7 +2470,8 @@
 	//Update things which need to take into account the entire selection.
 	[[LDrawApplication sharedInspector] inspectObjects:selectedObjects];
 	[[LDrawColorPanel sharedColorPanel] updateSelectionWithObjects:selectedObjects];
-	if(selectedModel != nil){
+	if(selectedModel != nil)
+	{
 		//put the selection on screen
 		[[self documentContents] setActiveModel:selectedModel];
 		[selectedModel makeStepVisible:selectedStep];
@@ -2442,7 +2482,7 @@
 	if([lastSelectedItem isKindOfClass:[LDrawPart class]])
 		[self setLastSelectedPart:lastSelectedItem];
 
-}
+}//end outlineViewSelectionDidChange:
 
 
 #pragma mark -
@@ -2680,7 +2720,8 @@
 - (BOOL)splitView:(NSSplitView *)sender canCollapseSubview:(NSView *)subview
 {
 	return YES;
-}
+	
+}//end splitView:canCollapseSubview:
 
 
 //**** NSSplitView ****
@@ -2785,7 +2826,7 @@
 //				possibility that our data could be stale now.
 //
 //==============================================================================
-- (void)partChanged:(NSNotification *)notification
+- (void) partChanged:(NSNotification *)notification
 {
 	LDrawDirective *changedDirective = [notification object];
 	
@@ -2801,7 +2842,7 @@
 			||	[[notification object] isKindOfClass:[LDrawModel class]])
 			[self addModelsToMenu];
 	}
-}
+}//end partChanged:
 
 //========== syntaxColorChanged: ===============================================
 //
@@ -2809,10 +2850,10 @@
 //				display.
 //
 //==============================================================================
-- (void)syntaxColorChanged:(NSNotification *)notification
+- (void) syntaxColorChanged:(NSNotification *)notification
 {
 	[fileContentsOutline reloadData];
-}
+}//end syntaxColorChanged:
 
 
 //**** NSWindow ****
@@ -2821,11 +2862,13 @@
 // Purpose:		The window has come to the foreground.
 //
 //==============================================================================
-- (void)windowDidBecomeMain:(NSNotification *)aNotification {
+- (void) windowDidBecomeMain:(NSNotification *)aNotification
+{
 	[self updateInspector];
 	
 	[self addModelsToMenu];
-}
+	
+}//end windowDidBecomeMain:
 
 
 //**** NSWindow ****
@@ -2871,7 +2914,7 @@
 //				MacLDraw.h.
 //
 //==============================================================================
-- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+- (BOOL) validateMenuItem:(NSMenuItem *)menuItem
 {
 	int				 tag			= [menuItem tag];
 	NSArray			*selectedItems	= [self selectedObjects];
@@ -2994,7 +3037,8 @@
 	}
 	
 	return enable;
-}
+	
+}//end validateMenuItem:
 
 //========== validateToolbarItem: ==============================================
 //
@@ -3022,7 +3066,8 @@
 		enabled = YES;
 
 	return enabled;
-}
+	
+}//end validateToolbarItem:
 
 #pragma mark -
 
@@ -3124,12 +3169,13 @@
 // Purpose:		Add newModel it to the current file.
 //
 //==============================================================================
-- (void) addModel:(LDrawMPDModel *)newModel {
-
+- (void) addModel:(LDrawMPDModel *)newModel
+{
 	LDrawModel		*selectedModel	= [self selectedModel];
 	NSUndoManager	*undoManager	= [self undoManager];
 	
-	if(selectedModel != nil){
+	if(selectedModel != nil)
+	{
 		int indexOfModel = [[self documentContents] indexOfDirective:selectedModel];
 		[self addDirective:newModel
 				  toParent:[self documentContents]
@@ -3147,7 +3193,7 @@
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAddModel", nil)];
 	
-}
+}//end addModel:
 
 
 //========== addStep: ==========================================================
@@ -3157,7 +3203,8 @@
 //				selection. Otherwise, the step appears at the end of the list.
 //
 //==============================================================================
-- (void) addStep:(LDrawStep *)newStep {
+- (void) addStep:(LDrawStep *)newStep
+{
 	LDrawStep		*selectedStep	= [self selectedStep];
 	LDrawMPDModel	*selectedModel	= [self selectedModel];
 	NSUndoManager	*undoManager	= [self undoManager];
@@ -3187,7 +3234,7 @@
 	
 	[undoManager setActionName:NSLocalizedString(@"UndoAddStep", nil)];
 	
-}
+}//end addStep:
 
 
 //========== addPartNamed: =====================================================
@@ -3490,7 +3537,9 @@
 	}
 	
 	return selectedObjects;
-}
+	
+}//end selectedObjects
+
 
 //========== selectedModel =====================================================
 //
@@ -3502,7 +3551,8 @@
 //				active model.
 //
 //==============================================================================
-- (LDrawMPDModel *) selectedModel {
+- (LDrawMPDModel *) selectedModel
+{
 	int	selectedRow		= [fileContentsOutline selectedRow];
 	id	selectedItem	= [fileContentsOutline itemAtRow:selectedRow];
 	
@@ -3520,7 +3570,8 @@
 		return (LDrawMPDModel *)[enclosingStep enclosingModel];
 		
 	}
-}
+}//end selectedModel
+
 
 //========== selectedModel =====================================================
 //
@@ -3528,7 +3579,8 @@
 //				nil if there is no step in the selection chain.
 //
 //==============================================================================
-- (LDrawStep *) selectedStep {
+- (LDrawStep *) selectedStep
+{
 	int	selectedRow		= [fileContentsOutline selectedRow];
 	id	selectedItem	= [fileContentsOutline itemAtRow:selectedRow];
 	
@@ -3545,7 +3597,7 @@
 	else { //some kind of basic element.
 		return (LDrawStep*)[selectedItem enclosingDirective];
 	}
-}//end selectedStep:
+}//end selectedStep
 
 
 //========== selectedStepComponent =============================================
@@ -3557,7 +3609,8 @@
 //				commands.
 //
 //==============================================================================
-- (LDrawDirective *) selectedStepComponent {
+- (LDrawDirective *) selectedStepComponent
+{
 	int	selectedRow		= [fileContentsOutline selectedRow];
 	id	selectedItem	= [fileContentsOutline itemAtRow:selectedRow];
 	
@@ -3572,7 +3625,7 @@
 			// looking for.
 		return selectedItem;
 	}
-}//end selectedStep:
+}//end selectedStep
 
 
 //========== selectedPart ======================================================
@@ -3581,12 +3634,14 @@
 //				part is selected.
 //
 //==============================================================================
-- (LDrawPart *) selectedPart {
+- (LDrawPart *) selectedPart
+{
 	NSArray	*selectedObjects	= [self selectedObjects];
 	id		 currentObject		= nil;
 	int		 counter			= 0;
 	
-	while(counter < [selectedObjects count]){
+	while(counter < [selectedObjects count])
+	{
 		currentObject = [selectedObjects objectAtIndex:counter];
 		if([currentObject isKindOfClass:[LDrawPart class]])
 			break;
@@ -3596,7 +3651,7 @@
 	
 	//Either we just found one, on we found nothing.
 	return currentObject;
-}
+}//end 
 
 
 //========== updateInspector ===================================================
@@ -3606,12 +3661,14 @@
 //				changing actions on a directive.
 //
 //==============================================================================
-- (void) updateInspector{
+- (void) updateInspector
+{
 	NSArray *selectedObjects = [self selectedObjects];
 	
 	[[LDrawApplication sharedInspector] inspectObjects:selectedObjects];
 	[[LDrawColorPanel sharedColorPanel] updateSelectionWithObjects:selectedObjects];
-}
+	
+}//end updateInspector
 
 
 //========== writeDirectives:toPasteboard: =====================================
@@ -3772,8 +3829,8 @@
 //				does that automagically.
 //
 //==============================================================================
-- (void) dealloc{
-
+- (void) dealloc
+{
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
 	[documentContents	release];
@@ -3781,6 +3838,7 @@
 	[selectedDirectives	release];
 
 	[super dealloc];
-}
+	
+}//end dealloc
 
 @end

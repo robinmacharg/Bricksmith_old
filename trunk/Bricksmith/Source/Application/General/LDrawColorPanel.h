@@ -40,6 +40,7 @@
 - (void) setLDrawColor:(LDrawColorT)newColor;
 
 //Actions
+- (void) focusSearchField:(id)sender;
 - (void) sendAction;
 - (IBAction) searchFieldChanged:(id)sender;
 - (void) updateSelectionWithObjects:(NSArray *)selectedObjects;

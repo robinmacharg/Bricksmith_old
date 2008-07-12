@@ -2194,10 +2194,21 @@
 			 endedAt:(NSPoint)aPoint
 		   operation:(NSDragOperation)operation
 {
+	// If the drag didn't wind up in one of the GL views belonging to this 
+	// document, then we need to delete the part's ghost from our model.
 	if(self->dragEndedInOurDocument == NO)
 	{
 		if([self->delegate respondsToSelector:@selector(LDrawGLViewPartsWereDraggedIntoOblivion:)])
 			[self->delegate LDrawGLViewPartsWereDraggedIntoOblivion:self];
+	}
+	
+	// When nobody else received the drag, the part is just deleted and is gone 
+	// forever. We bring the solemnity of this sad and otherwise obscure passing 
+	// to the user's attention by running that cute little poof animation.
+	if(operation == NSDragOperationNone)
+	{
+		NSShowAnimationEffect (NSAnimationEffectDisappearingItemDefault,
+							   aPoint, NSZeroSize, nil, NULL, NULL);
 	}
 }//end draggedImage:endedAt:operation:
 

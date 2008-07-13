@@ -326,7 +326,7 @@
 			glMatrixMode(GL_MODELVIEW);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glLineWidth(1.2);
+			glLineWidth(1.0);
 			glColor4fv(glColor);
 			
 			// DRAW!
@@ -1173,7 +1173,7 @@
 //==============================================================================
 - (void)keyDown:(NSEvent *)theEvent
 {
-	NSString		*characters	= [theEvent characters];
+	NSString		*characters	= [theEvent charactersIgnoringModifiers];
 	
 //		[self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
 	//We are circumventing the AppKit's key processing system here, because we 

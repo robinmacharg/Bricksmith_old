@@ -11,8 +11,11 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface BricksmithApplication : NSApplication {
+@interface BricksmithApplication : NSApplication
+{
 
 }
+
+- (BOOL) shouldPropogateEvent:(NSEvent *)event;
 
 @end

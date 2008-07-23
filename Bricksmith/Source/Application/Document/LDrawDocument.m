@@ -2742,7 +2742,7 @@
 	// Later when the parent window finally flushes we re-enable updates
 	// so that everything hits the screen at once.
 		
-//	[(LDrawDocumentWindow *)[self foremostWindow] disableUpdatesUntilFlush];
+//	[[self foremostWindow] disableScreenUpdatesUntilFlush];
 	
 }//end splitViewWillResizeSubviews:
 

@@ -123,13 +123,13 @@
 - (id) initWithCoder: (NSCoder *) coder
 {	
 	NSOpenGLPixelFormatAttribute	pixelAttributes[]	= { NSOpenGLPFADoubleBuffer,
-															NSOpenGLPFADepthSize, 32,
-															NSOpenGLPFASampleBuffers, 1,
-															NSOpenGLPFASamples, 2,
+															NSOpenGLPFADepthSize,		32,
+															NSOpenGLPFASampleBuffers,	1,
+															NSOpenGLPFASamples,			2,
 															0};
 	NSOpenGLContext					*context			= nil;
 	NSOpenGLPixelFormat				*pixelFormat		= nil;
-	GLint							 swapInterval		= 15;
+	GLint							 swapInterval		= 1;
 	
 	self = [super initWithCoder: coder];
 	
@@ -156,7 +156,7 @@
 	[[self openGLContext] makeCurrentContext];
 		
 	[self setPixelFormat:pixelFormat];
-	[[self openGLContext] setValues: &swapInterval
+	[[self openGLContext] setValues: &swapInterval // prevent "tearing"
 					   forParameter: NSOpenGLCPSwapInterval ];
 			
 	[pixelFormat release];

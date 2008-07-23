@@ -51,6 +51,8 @@ ToolPalette *sharedToolPalette = nil;
 	paletteFrame.size.width = NSWidth(buttonFrame) + NSMinX(buttonFrame) * 2;
 	[palettePanel setFrame:paletteFrame display:NO];
 	[palettePanel setBecomesKeyOnlyIfNeeded:YES];
+	[palettePanel setWorksWhenModal:YES];
+	
 	
 	//remove other window widgets (kosher by Human Interface Guidelines!)
 	[[palettePanel standardWindowButton:NSWindowMiniaturizeButton]	setHidden:YES];
@@ -421,10 +423,10 @@ ToolPalette *sharedToolPalette = nil;
 			break;
 			
 		case SmoothZoomTool:
-			//command
+			//command-option
 			characters = @"";
 //			*modifiersOut = (NSCommandKeyMask | NSShiftKeyMask);
-			*modifiersOut = (NSControlKeyMask | NSAlternateKeyMask);
+			*modifiersOut = (NSCommandKeyMask | NSAlternateKeyMask);
 			break;
 			
 		case ZoomInTool:
@@ -440,9 +442,9 @@ ToolPalette *sharedToolPalette = nil;
 			break;
 			
 		case SpinTool:
-			// shift
+			// command
 			characters = @"";
-			*modifiersOut = (NSCommandKeyMask | NSAlternateKeyMask);
+			*modifiersOut = (NSCommandKeyMask);
 			break;
 			
 	}

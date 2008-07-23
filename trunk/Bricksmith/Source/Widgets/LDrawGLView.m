@@ -1818,8 +1818,10 @@
 	// Per the AHIG, both command and shift are used for multiple selection. In 
 	// Bricksmith, there is no difference between contiguous and non-contiguous 
 	// selection, so both keys do the same thing. 
-	extendSelection =	([theEvent modifierFlags] & NSShiftKeyMask) != 0
-					 ||	([theEvent modifierFlags] & NSCommandKeyMask) != 0;
+	// -- We desperately need simple modifiers for rotating the view. Otherwise, 
+	// I doubt people would discover it. 
+	extendSelection =	([theEvent modifierFlags] & NSShiftKeyMask) != 0;
+//					 ||	([theEvent modifierFlags] & NSCommandKeyMask) != 0;
 	
 	// Only try to select if we are actually drawing something, and can actually 
 	// select it. 
@@ -2202,10 +2204,12 @@
 			[self->delegate LDrawGLViewPartsWereDraggedIntoOblivion:self];
 	}
 	
-	// When nobody else received the drag, the part is just deleted and is gone 
-	// forever. We bring the solemnity of this sad and otherwise obscure passing 
-	// to the user's attention by running that cute little poof animation.
-	if(operation == NSDragOperationNone)
+	// When nobody else received the drag and nobody cares, the part is just 
+	// deleted and is gone forever. We bring the solemnity of this sad and 
+	// otherwise obscure passing to the user's attention by running that cute 
+	// little poof animation. 
+	if(		operation == NSDragOperationNone
+	   &&	[self->delegate respondsToSelector:@selector(LDrawGLViewPartsWereDraggedIntoOblivion:)] )
 	{
 		NSShowAnimationEffect (NSAnimationEffectDisappearingItemDefault,
 							   aPoint, NSZeroSize, nil, NULL, NULL);

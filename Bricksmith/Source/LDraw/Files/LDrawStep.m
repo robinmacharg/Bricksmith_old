@@ -124,7 +124,7 @@
 #pragma mark DIRECTIVES
 #pragma mark -
 
-//========== draw ==============================================================
+//========== draw:parentColor: =================================================
 //
 // Purpose:		Draw all the commands in the step.
 //
@@ -150,16 +150,16 @@
 		int				 counter			= 0;
 		
 		//Check for optimized steps.
-		if(stepFlavor == LDrawStepQuadrilaterals)
+		if(self->stepFlavor == LDrawStepQuadrilaterals)
 			glBegin(GL_QUADS);
-		else if(stepFlavor == LDrawStepTriangles)
+		else if(self->stepFlavor == LDrawStepTriangles)
 			glBegin(GL_TRIANGLES);
 		else if(self->stepFlavor == LDrawStepLines)
 			glBegin(GL_LINES);
 		
 		//If we have any specialized flavor above, then we have already begun 
 		// drawing. This little tidbit must be passed on down to the lower reaches.
-		if(stepFlavor != LDrawStepAnyDirectives){
+		if(self->stepFlavor != LDrawStepAnyDirectives){
 			optionsMask |= DRAW_BEGUN;
 		}
 		
@@ -174,7 +174,7 @@
 			glEnd();
 	}
 
-}
+}//end draw:parentColor:
 
 
 //========== write =============================================================

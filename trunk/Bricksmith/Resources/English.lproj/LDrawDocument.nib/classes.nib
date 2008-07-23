@@ -85,6 +85,8 @@
 				<string>id</string>
 				<key>paste</key>
 				<string>id</string>
+				<key>quickRotateClicked</key>
+				<string>id</string>
 				<key>showDimensions</key>
 				<string>id</string>
 				<key>showInspector</key>

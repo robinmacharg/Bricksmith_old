@@ -2327,11 +2327,17 @@
 //==============================================================================
 - (BOOL) validateMenuItem:(NSMenuItem *)menuItem
 {
-	if([menuItem tag] == self->viewingAngle)
-		[menuItem setState:NSOnState];
-	else
-		[menuItem setState:NSOffState];
-		
+	// Check the appropriate item for the viewing angle. We have to check the 
+	// action selector here so as not to start checking other items like zoomIn: 
+	// that happen to have a tag which matches one of the viewing angles.) 
+	if([menuItem action] == @selector(viewingAngleSelected:))
+	{
+		if([menuItem tag] == self->viewingAngle)
+			[menuItem setState:NSOnState];
+		else
+			[menuItem setState:NSOffState];
+	}
+	
 	return YES;
 }//end validateMenuItem:
 

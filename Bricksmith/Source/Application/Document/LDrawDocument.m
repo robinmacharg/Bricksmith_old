@@ -54,6 +54,8 @@
 #import "PieceCountPanel.h"
 #import "RotationPanel.h"
 #import "UserDefaultsCategory.h"
+#import "WindowCategory.h"
+
 
 @implementation LDrawDocument
 
@@ -114,7 +116,7 @@
     [super windowControllerDidLoadNib:aController];
 	
 	
-	//Create the toolbar.
+	// Create the toolbar.
 	NSToolbar *toolbar = [[[NSToolbar alloc] initWithIdentifier:@"LDrawDocumentToolbar"] autorelease];
 	[toolbar setAutosavesConfiguration:YES];
 	[toolbar setAllowsUserCustomization:YES];
@@ -126,15 +128,14 @@
 	[fileContentsOutline registerForDraggedTypes:[NSArray arrayWithObject:LDrawDirectivePboardType]];
 	
 	
-	//Set our size to whatever it was last time. (We don't do the whole frame 
+	// Set our size to whatever it was last time. (We don't do the whole frame 
 	// because we want the origin to be nicely staggered as documents open; that 
 	// normally happens automatically.)
-	NSString *savedSize = [userDefaults objectForKey:DOCUMENT_WINDOW_SIZE];
-	if(savedSize != nil)
+	NSString *savedSizeString = [userDefaults objectForKey:DOCUMENT_WINDOW_SIZE];
+	if(savedSizeString != nil)
 	{
-		NSRect frame = [window frame];
-		frame.size = NSSizeFromString(savedSize);
-		[window setFrame:frame display:YES];
+		NSSize	size	= NSSizeFromString(savedSizeString);
+		[window resizeToSize:size animate:NO];
 	}
 	
 	

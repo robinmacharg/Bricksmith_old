@@ -2545,8 +2545,7 @@
 	}
 	else
 	{
-		[self writeDirectives:directives
-				 toPasteboard:pasteboard];
+		[self writeDirectives:directives toPasteboard:pasteboard];
 		[self pasteFromPasteboard:pasteboard];
 		[undoManager setActionName:NSLocalizedString(@"UndoDrop", nil)];
 	}
@@ -2655,6 +2654,13 @@
 // Purpose:		Begin a drag-and-drop part insertion initiated in the directive 
 //				view. 
 //
+// Notes:		The parts you see being dragged around are always copies of the 
+//				originals. When we aren't actually doing a copy drag, we just 
+//				hide the originals. At the end of the drag, we update the 
+//				originals with the new dragged positions, unhide them, and 
+//				discard the stuff on the pasteboard. This frees us from having 
+//				to remember what step each dragged element belonged to. 
+//
 //==============================================================================
 - (BOOL)         LDrawGLView:(LDrawGLView *)glView
  writeDirectivesToPasteboard:(NSPasteboard *)pasteboard
@@ -2683,15 +2689,13 @@
 				// visual manifestation of this part as it moves. 
 				[currentDirective setHidden:YES];
 			}
-			else
-			{
-				// Copying, so DESELECT the current directive as a visual 
-				// indicator that it will stay put. Since currentDirective is 
-				// already selected, we deselect by calling as follows: 
-				[self selectDirective:currentDirective byExtendingSelection:YES];
-			}
 		}
 	}
+	
+	// If copying, DESELECT all current directives as a visual indicator that 
+	// the originals will stay put. 
+	if(copyFlag == YES)
+		[self selectDirective:nil byExtendingSelection:YES];
 	
 	// Set up pasteboard
 	if([archivedParts count] > 0)
